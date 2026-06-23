@@ -440,90 +440,88 @@ function parseSheetGuilleGames(lines,sh,map){
   }
 }
 
-// URQUIZA: "⚡POWER ADAPTER 20W -" fila 1, "19 USD" fila 2 / "SAM A07 4/64GB -" + "98 USD"
-// también: "IPHONE 17E 512GB - 810 USD" en una sola línea
+// URQUIZA: múltiples formatos mezclados
 function parseSheetUrquiza(lines,sh,map){
-  let pendingName='';
-  let pendingColor='';
-  lines.forEach(raw=>{
-    const line=strip(raw);
-    if(!line||/^(lista|aceptamos|usdt)/i.test(line)||/^(accesorios)/i.test(line)) return;
-    if(/^[-—=]{3,}$/.test(line)) return;
+  function extractPrice(s){
+    const m=s.match(/U\$\s*([\d,]+)/i)||s.match(/([\d,.]+)\s+USD/i)||s.match(/\$\s*([\d,]+)/);
+    return m?parseFloat(m[1].replace(',','.')):0;
+  }
+  function isPriceLine(s){
+    return /^U?\$?\s*[\d,.]+\s*(USD)?$/i.test(s.trim())||/^[\d,.]+\s+USD$/i.test(s.trim());
+  }
+  function isModelCode(s){return /^[A-Z0-9]{5,}[\/\-]/.test(s.trim());}
+  function hasPriceInline(s){return /U\$\s*[\d,]+/i.test(s)||/[\d,.]+\s+USD/i.test(s);}
+  function isColorLine(s){
+    // línea que es solo color/info: "white", "black", "blue/orange", "(e-sim)", "silver"
+    return !hasPriceInline(s)&&!isPriceLine(s)&&s.length<40&&/^[a-zA-Z\/\s\(\)\-\.]+$/.test(s);
+  }
+  function isHeader(s){
+    return !s||s.length<3||
+      /^(lista|aceptamos|usdt|accesorios|ingresando)/i.test(s)||
+      /^\*?(SAMSUNG|APPLE|XIAOMI|MOTOROLA|RAYBAN)\*?\s*$/i.test(s)||
+      /^[-—=✨💫⚡►]{2,}/.test(s);
+  }
+  function cleanName(s){
+    return s.replace(/[\uFE0F\u20E3]/g,'').replace(/[^\x20-\x7E\xC0-\xFF]/g,'').replace(/\s+/g,' ').trim();
+  }
+  // Detectar si línea tiene "color - precio USD" (precio al final con guion)
+  function isColorPrice(s){
+    return /^[a-zA-Z\/\s]+-\s*[\d,.]+\s*USD$/i.test(s.trim());
+  }
 
-    // una sola línea: "nombre - precio USD"
-    const mOne=line.match(/^(.+?)\s+-\s+([\d,]+)\s+USD\s*$/i);
-    if(mOne){
-      const price=parseFloat(mOne[2].replace(',','.'));
-      if(price>0) addProduct(map,sheetRaw,sh,mOne[1].trim(),price,0,'');
-      pendingName='';pendingColor='';
-      return;
+  let pendingName='',i=0;
+  const arr=lines.map(l=>strip(l));
+
+  while(i<arr.length){
+    const line=arr[i];
+    if(isHeader(line)){i++;continue;}
+
+    // "color - 1250 USD" → precio con color, asociar a pendingName
+    if(isColorPrice(line)&&pendingName){
+      const price=extractPrice(line);
+      if(price>0) addProduct(map,sheetRaw,sh,pendingName,price,0,'');
+      i++;continue;
     }
 
-    // precio en línea sola: "810 USD" o "$810"
-    const mPrice=line.match(/^([\d,]+)\s+USD\s*$/i)||line.match(/^\$([\d,]+)\s*$/);
-    if(mPrice&&pendingName){
-      const price=parseFloat(mPrice[1].replace(',','.'));
-      if(price>0) addProduct(map,sheetRaw,sh,pendingName,price,0,pendingColor);
-      pendingName='';pendingColor='';
-      return;
+    // Línea con precio inline Y nombre propio (no es código de modelo ni color)
+    if(hasPriceInline(line)&&!isModelCode(line)&&!isColorLine(line)){
+      const price=extractPrice(line);
+      if(price>0){
+        let name=line
+          .replace(/\s*[-–—]\s*[\d,.]+\s*USD.*/gi,'')
+          .replace(/U\$\s*[\d,]+.*/gi,'')
+          .replace(/\s*[-–—]\s*$/,'')
+          .replace(/\*[^*]*\*/g,'')
+          .trim();
+        name=cleanName(name);
+        if(name&&name.length>2) addProduct(map,sheetRaw,sh,name,price,0,'');
+        else if(pendingName) addProduct(map,sheetRaw,sh,pendingName,price,0,'');
+      }
+      pendingName='';i++;continue;
     }
 
-    // nombre terminado en " -" o nombre solo
-    const mName=line.match(/^(.+?)\s*-\s*$/);
-    if(mName){pendingName=mName[1].trim();pendingColor='';return;}
-
-    // color entre nombre y precio
-    if(pendingName&&!/^\d/.test(line)&&line.length<40&&!/USD/i.test(line)){
-      pendingColor=line;return;
+    // Código de modelo con precio → usar pendingName
+    if(isModelCode(line)&&hasPriceInline(line)&&pendingName){
+      const price=extractPrice(line);
+      if(price>0) addProduct(map,sheetRaw,sh,pendingName,price,0,'');
+      i++;continue;
     }
 
-    // nombre sin guion final seguido de precio en siguiente linea
-    if(!/USD/i.test(line)&&!/\$/.test(line)&&line.length>4&&!/^[-*►]/.test(line)){
-      pendingName=line;pendingColor='';
+    // Precio puro → usar pendingName
+    if(isPriceLine(line)){
+      if(pendingName){const price=extractPrice(line);if(price>0) addProduct(map,sheetRaw,sh,pendingName,price,0,'');}
+      pendingName='';i++;continue;
     }
-  });
-}
 
-// TRONADOR: "SAMSUNG A37 5G 6/128GB LAVANDER $299"
-function parseSheetTronador(lines,sh,map){
-  lines.forEach(raw=>{
-    const line=strip(raw);
-    if(!line) return;
-    const m=line.match(/^(.+?)\s+\$\s*(\d+)\s*$/);
-    if(!m) return;
-    const price=parseFloat(m[2]);
-    if(price>0) addProduct(map,sheetRaw,sh,m[1].trim(),price,0,'');
-  });
-}
+    // Línea de color sola o código de modelo sola → skip (no es nombre)
+    if(isColorLine(line)||isModelCode(line)){i++;continue;}
 
-// LALO: "📲SAMSUNG A06 4/64GB - u$100 black/lightblue"
-function parseSheetLalo(lines,sh,map){
-  lines.forEach(raw=>{
-    const line=strip(raw);
-    if(!line) return;
-    const m=line.match(/^(.+?)\s+-\s+u\$\s*([\d.]+)\s*(.*)?$/i);
-    if(!m) return;
-    const price=parseFloat(m[2]);
-    if(!price||price<=0) return;
-    // limpiar emojis del color
-    const color=(m[3]||'').replace(/[^\w\s\/\-]/g,'').trim();
-    addProduct(map,sheetRaw,sh,m[1].trim(),price,0,color);
-  });
-}
-
-// MATIAS BELGRANO y SEBASTIAN BELGRANO: CSV "nombre,$precio"
-function parseSheetCSV2Col(lines,sh,map){
-  lines.forEach(raw=>{
-    const cols=splitCSV(raw.replace(/\r/g,''));
-    if(cols.length<2) return;
-    const rawName=cols[0].trim();
-    if(!rawName||rawName.length<3) return;
-    const name=stripColors(rawName);
-    if(!name||name.length<3) return;
-    const price=parseFloat((cols[1]||'').replace(/[$\s,]/g,''));
-    if(!price||price<=0) return;
-    addProduct(map,sheetRaw,sh,name,price,0,'');
-  });
+    // Nombre de producto
+    if(line.length>3){
+      pendingName=cleanName(line.replace(/\s*[-–—]\s*$/,'').replace(/\*[^*]*\*/g,'').trim());
+    }
+    i++;
+  }
 }
 
 // GASTON TOMY: multi-fila — nombre, [color], precio en filas separadas
