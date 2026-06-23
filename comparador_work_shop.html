@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)file:///Users/matiasfrancois/Downloads/comparador_work_shop_22.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Work Shop · Operaciones</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f7f7f5;--surface:#fff;--border:#e8e8e4;--border-strong:#d0d0c8;
+  --text:#1a1a18;--muted:#6b6b65;--hint:#9e9e96;
+  --green:#1D9E75;--green-bg:#E1F5EE;--green-dark:#0F6E56;
+  --red:#D85A30;--red-bg:#FAECE7;--red-dark:#712B13;
+  --amber:#BA7517;--amber-bg:#FAEEDA;--amber-dark:#633806;
+  --blue:#185FA5;--blue-bg:#E6F1FB;
+  --orange:#C05A10;--orange-bg:#FEF0E0;--orange-border:#F0B070;
+}
+html,body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.6}
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;padding:0 14px}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between;height:50px;gap:10px;max-width:960px;margin:0 auto}
+.logo{font-size:16px;font-weight:600;letter-spacing:-.3px;white-space:nowrap;flex-shrink:0}
+.logo span{color:var(--green)}
+.status{font-size:12px;color:var(--hint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-refresh{background:none;border:1px solid var(--border-strong);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.main{max-width:960px;margin:0 auto;padding:12px}
+.mod-nav{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+.mod-nav::-webkit-scrollbar{display:none}
+.mod-btn{flex-shrink:0;display:flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap}
+.mod-btn.active{background:var(--text);color:#fff;border-color:var(--text)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px}
+.stat-label{font-size:10px;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.stat-value{font-size:21px;font-weight:600;letter-spacing:-.5px}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.tabs-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tabs-hdr{display:flex;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:none}
+.tabs-hdr::-webkit-scrollbar{display:none}
+.tab{padding:12px 14px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap;border:none;border-bottom:2px solid transparent;background:none;flex-shrink:0;min-height:44px;display:flex;align-items:center;gap:4px}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+.tab-n{font-size:11px;color:var(--hint);font-weight:400}
+.tab.t-alert.active{color:var(--orange);border-bottom-color:var(--orange)}
+.tab.t-red.active{color:var(--red);border-bottom-color:var(--red)}
+.controls{padding:11px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border)}
+.sw{position:relative;flex:1;min-width:150px}
+.sw-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--hint)}
+input[type=text]{width:100%;padding:9px 10px 9px 30px;border:1px solid var(--border-strong);border-radius:8px;font-size:16px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none}
+input[type=text]:focus{border-color:var(--green);background:var(--surface)}
+select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-radius:8px;font-size:15px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239e9e96' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.rcount{font-size:13px;color:var(--hint);flex:none;white-space:nowrap}
+.tab-body{padding:10px}
+.loading-wrap{text-align:center;padding:40px 20px;color:var(--muted)}
+.spinner{width:26px;height:26px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-box{background:var(--red-bg);border:1px solid #F0997B;border-radius:10px;padding:12px 15px;color:var(--red-dark);font-size:14px;margin-bottom:12px}
+.sec-lbl{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--hint);margin:12px 0 7px 2px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 14px;margin-bottom:7px}
+.card.ws-win{border-left:3px solid var(--green)}
+.card.ws-lose{border-left:3px solid #F0997B}
+.card.c-low{border-left:3px solid var(--orange)}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+.prod-name{font-size:15px;font-weight:500;line-height:1.3;flex:1}
+.badges{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.bdg{font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.bg{background:var(--green-bg);color:var(--green-dark)}
+.br{background:var(--red-bg);color:var(--red-dark)}
+.ba{background:var(--amber-bg);color:var(--amber-dark)}
+.bb{background:var(--blue-bg);color:var(--blue)}
+.bn{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.bo{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
+.pt{width:100%;border-collapse:collapse;font-size:14px}
+.pt tr{border-top:1px solid var(--border)}
+.pt tr:first-child{border-top:none}
+.pt td{padding:6px 4px;vertical-align:middle}
+.pt-prov{color:var(--muted);min-width:120px}
+.pt-price{font-weight:600;white-space:nowrap;padding-right:8px}
+.pt-note{color:var(--hint);font-size:12px}
+.pt tr.is-win .pt-prov{color:var(--green-dark);font-weight:500}
+.pt tr.is-win .pt-price{color:var(--green-dark)}
+.pt tr.is-ws .pt-prov{color:var(--blue)}
+.pt tr.is-ws .pt-price{color:var(--blue)}
+.best-tag{display:inline-block;font-size:10px;font-weight:600;background:var(--green-bg);color:var(--green-dark);padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle}
+.sell-price{font-size:11px;color:var(--blue);font-weight:600;background:var(--blue-bg);padding:2px 6px;border-radius:8px;margin-left:4px;white-space:nowrap}
+.copy-btn{display:inline-flex;align-items:center;gap:4px;margin-top:9px;padding:7px 13px;border-radius:20px;border:1px solid var(--border-strong);background:var(--bg);font-size:13px;color:var(--muted);cursor:pointer}
+.copy-btn.copied{background:var(--green-bg);border-color:#5DCAA5;color:var(--green-dark)}
+.low-card{background:var(--surface);border:1px solid var(--orange-border);border-left:3px solid var(--orange);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.low-top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px}
+.low-name{font-size:15px;font-weight:500;line-height:1.3}
+.low-brand{font-size:12px;color:var(--hint);margin-top:2px}
+.low-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;margin-left:10px}
+.stock-num{font-size:24px;font-weight:700;color:var(--orange);line-height:1}
+.stock-lbl{font-size:11px;color:var(--hint)}
+.reponer{border-top:1px solid var(--orange-border);background:var(--orange-bg);padding:9px 14px}
+.reponer-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--orange);margin-bottom:7px}
+.reponer-chips{display:flex;flex-wrap:wrap;gap:5px}
+.rchip{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:20px;background:var(--surface);border:1px solid var(--orange-border);font-size:13px}
+.rchip.r-win{background:var(--green-bg);border-color:#5DCAA5}
+.rchip.r-win .rcp,.rchip.r-win .rcv{color:var(--green-dark)}
+.rchip.r-win .rcv{font-weight:700}
+.rcp{font-size:11px;color:var(--muted)}
+.rcv{font-weight:600;color:var(--text)}
+.prov-section{border:1px solid var(--border);border-radius:10px;margin-bottom:6px;overflow:hidden}
+.prov-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:var(--surface);user-select:none;-webkit-user-select:none}
+.prov-header:active{background:var(--bg)}
+.prov-title{font-size:14px;font-weight:500}
+.prov-meta{font-size:12px;color:var(--hint);margin-top:1px}
+.chevron{font-size:14px;color:var(--hint);transition:transform .2s;display:inline-block}
+.prov-section.open .chevron{transform:rotate(180deg)}
+.prov-body{display:none;border-top:1px solid var(--border)}
+.prov-section.open .prov-body{display:block}
+.prov-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface)}
+.prov-item:last-child{border-bottom:none}
+.prov-item.item-low{border-left:3px solid var(--orange)}
+.pi-name{font-size:14px;font-weight:500}
+.pi-note{font-size:12px;color:var(--hint);margin-top:1px}
+.pi-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.pi-price{font-size:17px;font-weight:600;color:var(--green-dark)}
+.margin-bar{background:var(--blue-bg);border:1px solid #B0CCE8;border-radius:10px;padding:10px 13px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.margin-bar-label{font-size:13px;color:var(--blue);font-weight:500;white-space:nowrap}
+.margin-btn{padding:7px 13px;border-radius:20px;border:1px solid #B0CCE8;background:var(--surface);font-size:13px;font-weight:500;color:var(--blue);cursor:pointer;white-space:nowrap}
+.margin-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.margin-off{background:var(--bg);color:var(--hint);border-color:var(--border)}
+.margin-off.active{background:var(--muted);color:#fff}
+.cc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.cc-stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center}
+.cc-stat-label{font-size:10px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.cc-stat-value{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.cc-stat.s-red{border-color:#F0997B;background:var(--red-bg)}
+.cc-stat.s-red .cc-stat-value{color:var(--red-dark)}
+.cc-stat.s-green{border-color:#5DCAA5;background:var(--green-bg)}
+.cc-stat.s-green .cc-stat-value{color:var(--green-dark)}
+.cc-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.cc-card.c-debe{border-left:3px solid var(--red)}
+.cc-card.c-favor{border-left:3px solid var(--green)}
+.cc-left{flex:1;min-width:0}
+.cc-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-obs{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:3px}
+.obs-hablarle{background:#DCFCE7;color:#166534}
+.obs-comunicado{background:var(--amber-bg);color:var(--amber-dark)}
+.obs-default{background:var(--bg);color:var(--hint);border:1px solid var(--border)}
+.cc-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
+.cc-amount{font-size:17px;font-weight:700;white-space:nowrap}
+.cc-amount.a-debe{color:var(--red-dark)}
+.cc-amount.a-favor{color:var(--green-dark)}
+.cc-label{font-size:11px;color:var(--hint)}
+.debt-filter{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.debt-filter-label{font-size:13px;color:var(--muted);white-space:nowrap}
+.debt-chips{display:flex;gap:6px;flex-wrap:wrap}
+.debt-chip{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:13px;font-weight:500;color:var(--muted);cursor:pointer}
+.debt-chip.active{background:var(--red);color:#fff;border-color:var(--red)}
+.empty{text-align:center;padding:32px;color:var(--muted);font-size:14px}
+.footer{text-align:center;padding:14px;font-size:11px;color:var(--hint)}
+@media(max-width:480px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .status{max-width:90px}
+  .pt-note{display:none}
+}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="logo">Work <span>Shop</span></div>
+    <div class="status" id="statusTxt">Actualizando...</div>
+    <button class="btn-refresh" onclick="onRefresh()">↻ Actualizar</button>
+  </div>
+</header>
+<main class="main">
+  <div class="mod-nav">
+    <button class="mod-btn active" id="mod-precios" onclick="setMod(&#39;precios&#39;)">💰 Precios</button>
+    <button class="mod-btn" id="mod-cuentas" onclick="setMod(&#39;cuentas&#39;)">📋 Cuentas corrientes</button>
+  </div>
+  <div id="modPrecios">
+    <div id="loadDiv" class="loading-wrap" style="display: none;"><div class="spinner"></div><p style="font-size:14px">Cargando precios...</p></div>
+    <div id="errDiv" style="display: block;"><div class="err-box"><strong>No se encontraron productos.</strong><br>Hojas cargadas: 0/13</div></div>
+    <div id="appDiv" style="display:none">
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Productos</div><div class="stat-value" id="sTotal">—</div><div class="stat-sub">comparados</div></div>
+        <div class="stat"><div class="stat-label">WS mejor precio</div><div class="stat-value" id="sBest" style="color:var(--green)">—</div><div class="stat-sub">ganamos</div></div>
+        <div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value" id="sProvs">—</div><div class="stat-sub">activos</div></div>
+        <div class="stat"><div class="stat-label">Stock WS</div><div class="stat-value" id="sStock">—</div><div class="stat-sub">unidades</div></div>
+      </div>
+      <div class="margin-bar">
+        <span class="margin-bar-label">💹 Precio de venta:</span>
+        <button class="margin-btn margin-off active" onclick="setMargin(0)" id="mb0">Sin margen</button>
+        <button class="margin-btn" onclick="setMargin(3)" id="mb3">+3%</button>
+        <button class="margin-btn" onclick="setMargin(4)" id="mb4">+4%</button>
+        <button class="margin-btn" onclick="setMargin(5)" id="mb5">+5%</button>
+        <button class="margin-btn" onclick="setMargin(7)" id="mb7">+7%</button>
+        <button class="margin-btn" onclick="setMargin(10)" id="mb10">+10%</button>
+      </div>
+      <div class="tabs-wrap">
+        <div class="tabs-hdr" id="tabsHdr"></div>
+        <div class="controls" id="ctrlRow">
+          <div class="sw"><span class="sw-icon">🔍</span><input type="text" id="q" placeholder="Buscar producto..." oninput="render()" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+          <select id="bf" onchange="render()"><option value="">Todas las marcas</option></select>
+          <select id="sf" onchange="render()"><option value="all">Con y sin stock</option><option value="yes">Con stock WS</option><option value="no">Sin stock WS</option></select>
+          <select id="wf" onchange="render()"><option value="all">Todos</option><option value="win">WS mejor precio</option><option value="lose">WS no es mejor</option></select>
+          <div class="rcount" id="rc"></div>
+        </div>
+        <div class="tab-body" id="tabBody"></div>
+      </div>
+    </div>
+  </div>
+  <div id="modCuentas" style="display:none">
+    <div id="ccLoadDiv" class="loading-wrap" style="display:none"><div class="spinner"></div><p style="font-size:14px">Cargando cuentas...</p></div>
+    <div id="ccContent" style="display:none">
+      <div class="cc-stats">
+        <div class="cc-stat s-red"><div class="cc-stat-label">Total deben</div><div class="cc-stat-value" id="ccTotalDebe">—</div></div>
+        <div class="cc-stat"><div class="cc-stat-label">Clientes</div><div class="cc-stat-value" id="ccTotalCli">—</div></div>
+        <div class="cc-stat s-green"><div class="cc-stat-label">A favor WS</div><div class="cc-stat-value" id="ccTotalFavor">—</div></div>
+      </div>
+      <div class="debt-filter">
+        <span class="debt-filter-label">Mostrar desde:</span>
+        <div class="debt-chips">
+          <div class="debt-chip active" onclick="setDebtMin(0,this)">Todas</div>
+          <div class="debt-chip" onclick="setDebtMin(100,this)">+u$100</div>
+          <div class="debt-chip" onclick="setDebtMin(500,this)">+u$500</div>
+          <div class="debt-chip" onclick="setDebtMin(1000,this)">+u$1.000</div>
+          <div class="debt-chip" onclick="setDebtMin(5000,this)">+u$5.000</div>
+        </div>
+      </div>
+      <div class="tabs-wrap">
+        <div class="tabs-hdr">
+          <button class="tab active" id="cct-todos" onclick="setCCTab(&#39;todos&#39;)">Todos <span class="tab-n" id="ccN0"></span></button>
+          <button class="tab t-red" id="cct-deben" onclick="setCCTab(&#39;deben&#39;)">🔴 Deben <span class="tab-n" id="ccN1"></span></button>
+          <button class="tab" id="cct-hablarle" onclick="setCCTab(&#39;hablarle&#39;)">📞 Hablarle <span class="tab-n" id="ccN2"></span></button>
+          <button class="tab" id="cct-comunicado" onclick="setCCTab(&#39;comunicado&#39;)">✉ Comunicado <span class="tab-n" id="ccN3"></span></button>
+          <button class="tab" id="cct-favor" onclick="setCCTab(&#39;favor&#39;)">✅ A favor <span class="tab-n" id="ccN4"></span></button>
+        </div>
+        <div class="controls">
+          <div class="sw"><span class="sw-icon">🔍</span><input type="text" id="ccQ" placeholder="Buscar cliente..." oninput="renderCC()" autocomplete="off"></div>
+          <select id="ccSort" onchange="renderCC()">
+            <option value="desc">Mayor deuda primero</option>
+            <option value="asc">Menor deuda primero</option>
+            <option value="alpha">A-Z</option>
+          </select>
+          <div class="rcount" id="ccRc"></div>
+        </div>
+        <div class="tab-body" id="ccBody"></div>
+      </div>
+    </div>
+    <div id="ccErr" class="err-box" style="display:none"></div>
+  </div>
+</main>
+<div class="footer">Work Shop · Sistema operativo · v3.0</div>
+<script>
+const BASE='https://docs.google.com/spreadsheets/d/e/2PACX-1vRUE7lN4X9Y9TOU_5vKD8dBy5LYhPedJYvN_dLZ-RCMB0PXPROLJqcxuHO-Yb4CApk23NFD77Jf_8u8/pub?output=csv';
+const GID_CC='1313251460';
+const STOCK_ALERT=10;
+const SHEETS=[
+  {name:'WS-COSTOS',          gid:'1169477995',isWS:true,wsType:'costo'},
+  {name:'WS-VIP',             gid:'2103310165',isWS:true,wsType:'vip'},
+  {name:'GUILLE GAMES',       gid:'221847934', isWS:false},
+  {name:'URQUIZA',            gid:'1411427043',isWS:false},
+  {name:'TRONADOR',           gid:'1291580792',isWS:false},
+  {name:'LALO',               gid:'376933543', isWS:false},
+  {name:'MATIAS BELGRANO',    gid:'457070983', isWS:false},
+  {name:'GASTON TOMY',        gid:'1697227894',isWS:false},
+  {name:'ALEJO',              gid:'1580662582',isWS:false},
+  {name:'LUCHO PILAR',        gid:'1980722139',isWS:false},
+  {name:'SERVICELL',          gid:'125678359', isWS:false},
+  {name:'MAZZEO',             gid:'803403481', isWS:false},
+  {name:'SEBASTIAN BELGRANO', gid:'1798307347',isWS:false},
+];
+
+// ── UTILS ──────────────────────────────────────────────
+let activeMod='precios',lastStatus='',debtMin=0,ccTab='todos',activeMargin=0;
+let allProducts=[],sheetRaw={},loadedCount=0,activeTab='comparativa';
+
+function strip(s){
+  return(s||'').replace(/\r/g,'').replace(/^[\s\u00B7\u25A0\u25AA\u25CF\u2022\u25B6\u25AA\uFEFF📲🔥✅💥💫⚡\u{1F300}-\u{1FAFF}]+/gu,'').trim();
+}
+function splitCSV(line){
+  const r=[];let c='',q=false;
+  for(let i=0;i<line.length;i++){
+    if(line[i]==='"')q=!q;
+    else if(line[i]===','&&!q){r.push(c);c='';}
+    else c+=line[i];
+  }
+  r.push(c);return r;
+}
+function nkey(n){
+  let s=(n||'').toUpperCase().replace(/\r/g,'');
+  // quitar contenido entre asteriscos y paréntesis
+  s=s.replace(/\*[^*]*\*/g,' ').replace(/\([^)]*\)/g,' ');
+  // quitar palabras de ruido, colores, variantes
+  s=s.replace(/\b(C\/CARGADOR|S\/CARGADOR|C\/CARG|S\/CARG|CON CARGADOR|SIN CARGADOR|SIN CARG|CON CARG|SCARG|IMPORTADO|NACIONAL|GLOBAL|SLIM|GARANTIA|OFICIAL|GTIA|ESIM|E-SIM|DUAL SIM|4G|5G|3G|LTE|DS|SS|US|BR|EU|BLACK|WHITE|BLUE|GREEN|GRAY|GREY|SILVER|GOLD|PURPLE|PINK|RED|ORANGE|YELLOW|BROWN|LAVENDER|NAVY|TEAL|VIOLET|GRAPHITE|CHARCOAL|CELESTIAL|ARCTIC|MIDNIGHT|NATURAL|ULTRAMARINE|JADE|MOTO|GALAXY|REDMI|POCO|EDGE|NOTE|SMART)\b/g,' ');
+  // quitar unidades antes de separar numeros
+  s=s.replace(/(\d+)\s*GB/g,'$1').replace(/(\d+)\s*TB/g,(m,p1)=>String(parseInt(p1)*1024));
+  s=s.replace(/\bMB\b|\bRAM\b/g,' ');
+  // separar combinaciones RAM/Storage: 4/128, 4+4/64, 4+128
+  s=s.replace(/(\d+)[+](\d+)[\/](\d+)/g,'$1 $2 $3');
+  s=s.replace(/(\d+)[\/](\d+)/g,'$1 $2');
+  s=s.replace(/(\d+)[+](\d+)/g,'$1 $2');
+  s=s.replace(/\s+[-–—]\s+/g,' ');
+  s=s.replace(/[^A-Z0-9\s]/g,' ');
+  // identificar storage (potencias de 2 >= 32)
+  const STORAGE=new Set([32,64,128,256,512,1024,2048]);
+  const nums=(s.match(/\d+/g)||[]).map(Number);
+  const mainStorage=Math.max(0,...nums.filter(x=>STORAGE.has(x)));
+  // quitar todos los numeros del texto
+  s=s.replace(/\b\d+\b/g,' ').replace(/\s+/g,' ').trim();
+  // reconstruir: texto + storage principal
+  return (s+(mainStorage>0?' '+mainStorage:'')).replace(/\s+/g,' ').trim();
+}
+function detectBrand(n){
+  const u=(n||'').toUpperCase();
+  if(u.includes('SAMSUNG')||u.includes('GALAXY'))return 'Samsung';
+  if(u.includes('MOTOROLA')||u.includes('MOTO '))return 'Motorola';
+  if(u.includes('EDGE')||u.includes('RAZR'))return 'Motorola';
+  if(u.includes('XIAOMI')||u.includes('REDMI')||u.includes('POCO'))return 'Xiaomi';
+  if(u.includes('IPHONE')||u.includes('APPLE'))return 'iPhone';
+  if(u.includes('NOKIA'))return 'Nokia';
+  if(u.includes('INFINIX'))return 'Infinix';
+  if(u.includes('PIXEL'))return 'Pixel';
+  if(u.includes('MULTILASER'))return 'Multilaser';
+  return 'Otros';
+}
+function addProduct(map,sheetRaw,sh,name,price,stock,color){
+  if(!name||name.length<3||!price||price<=0) return;
+  name=name.replace(/\r/g,'').trim();
+  const brand=detectBrand(name);
+  sheetRaw[sh.name].push({name,brand,price,stock,color,isWS:sh.isWS,wsType:sh.wsType||null});
+  const k=nkey(name);
+  if(!map[k]) map[k]={name,brand,prices:[],wsStock:0,wsCost:null,wsVip:null};
+  if(sh.isWS&&sh.wsType==='costo'){map[k].wsCost=price;if(stock>0)map[k].wsStock=stock;}
+  else if(sh.isWS&&sh.wsType==='vip') map[k].wsVip=price;
+  const ex=map[k].prices.find(x=>x.prov===sh.name);
+  if(!ex) map[k].prices.push({prov:sh.name,price,color,isWS:sh.isWS,wsType:sh.wsType||null});
+  else if(price<ex.price){ex.price=price;if(color)ex.color=color;}
+}
+
+// ── PARSERS ESPECÍFICOS ────────────────────────────────
+
+// WS-COSTOS: "SAMSUNG GALAXY A07 128GB 22,00 118.00" (todo en col A entre quotes)
+// ultimos 2 tokens = stock(coma decimal) precio(punto decimal)
+function parseSheetWSCostos(lines,sh,map){
+  lines.forEach(raw=>{
+    const line=raw.replace(/^"+|"+$/g,'').replace(/\r/g,'').trim();
+    if(!line||/^(producto|disponible|valor)/i.test(line)) return;
+    if(/^::/.test(line)) return; // subtítulos
+    const tokens=line.split(/\s+/);
+    if(tokens.length<3) return;
+    const priceTok=tokens[tokens.length-1];
+    const stockTok=tokens[tokens.length-2];
+    const price=parseFloat(priceTok.replace(',','.'));
+    const stock=Math.round(parseFloat(stockTok.replace(',','.')));
+    if(isNaN(price)||price<=0||isNaN(stock)) return;
+    // nombre: todos menos los ultimos 2 tokens, limpiando " - IMPORTADO" etc
+    let name=tokens.slice(0,tokens.length-2).join(' ')
+      .replace(/\s*-\s*(IMPORTADO|NACIONAL|S\/CARG|C\/CARG|SLIM)\s*$/i,'').trim();
+    addProduct(map,sheetRaw,sh,name,price,stock,'');
+  });
+}
+
+// WS-VIP: "📲 Motorola G05 *4G* 128GB / 4GB RAM – $117 (Green)"
+// separador puede ser – o — seguido de $precio (color)
+function parseSheetWSVip(lines,sh,map){
+  lines.forEach(raw=>{
+    const line=strip(raw);
+    if(!line) return;
+    // buscar – $precio o — $precio
+    const m=line.match(/^(.+?)\s+[–—]\s+\$\s*([\d,]+)\s*(?:\(([^)]+)\))?/);
+    if(!m) return;
+    const price=parseFloat(m[2].replace(',','.'));
+    if(!price||price<=0) return;
+    let name=m[1].replace(/\*[^*]*\*/g,'').replace(/\s+/g,' ').trim();
+    const color=m[3]||'';
+    addProduct(map,sheetRaw,sh,name,price,0,color);
+  });
+}
+
+// GUILLE GAMES: "▪️ IPHONE 16 128 GB SIM/ESIM - $ 745" + "TEAL - WHITE" en fila siguiente
+function parseSheetGuilleGames(lines,sh,map){
+  let i=0;
+  while(i<lines.length){
+    const line=strip(lines[i]);
+    // producto: contiene " - $ " seguido de número
+    const m=line.match(/^(.+?)\s+-\s+\$\s*([\d,]+)\s*$/);
+    if(m){
+      const price=parseFloat(m[2].replace(',','.'));
+      if(price>0){
+        let color='';
+        // siguiente línea no vacía puede ser el color
+        let j=i+1;
+        while(j<lines.length&&!lines[j].trim()) j++;
+        if(j<lines.length){
+          const nextLine=strip(lines[j]);
+          // es color si no tiene precio ni es header
+          if(nextLine&&!/\$/.test(nextLine)&&!/^[*▪►]/.test(lines[j])&&nextLine.length<40&&!/^\d/.test(nextLine)){
+            color=nextLine;
+            i=j; // consumir la fila de color
+          }
+        }
+        addProduct(map,sheetRaw,sh,m[1].trim(),price,0,color);
+      }
+    }
+    i++;
+  }
+}
+
+// URQUIZA: "⚡POWER ADAPTER 20W -" fila 1, "19 USD" fila 2 / "SAM A07 4/64GB -" + "98 USD"
+// también: "IPHONE 17E 512GB - 810 USD" en una sola línea
+function parseSheetUrquiza(lines,sh,map){
+  let pendingName='';
+  let pendingColor='';
+  lines.forEach(raw=>{
+    const line=strip(raw);
+    if(!line||/^(lista|aceptamos|usdt)/i.test(line)||/^(accesorios)/i.test(line)) return;
+    if(/^[-—=]{3,}$/.test(line)) return;
+
+    // una sola línea: "nombre - precio USD"
+    const mOne=line.match(/^(.+?)\s+-\s+([\d,]+)\s+USD\s*$/i);
+    if(mOne){
+      const price=parseFloat(mOne[2].replace(',','.'));
+      if(price>0) addProduct(map,sheetRaw,sh,mOne[1].trim(),price,0,'');
+      pendingName='';pendingColor='';
+      return;
+    }
+
+    // precio en línea sola: "810 USD" o "$810"
+    const mPrice=line.match(/^([\d,]+)\s+USD\s*$/i)||line.match(/^\$([\d,]+)\s*$/);
+    if(mPrice&&pendingName){
+      const price=parseFloat(mPrice[1].replace(',','.'));
+      if(price>0) addProduct(map,sheetRaw,sh,pendingName,price,0,pendingColor);
+      pendingName='';pendingColor='';
+      return;
+    }
+
+    // nombre terminado en " -" o nombre solo
+    const mName=line.match(/^(.+?)\s*-\s*$/);
+    if(mName){pendingName=mName[1].trim();pendingColor='';return;}
+
+    // color entre nombre y precio
+    if(pendingName&&!/^\d/.test(line)&&line.length<40&&!/USD/i.test(line)){
+      pendingColor=line;return;
+    }
+
+    // nombre sin guion final seguido de precio en siguiente linea
+    if(!/USD/i.test(line)&&!/\$/.test(line)&&line.length>4&&!/^[-*►]/.test(line)){
+      pendingName=line;pendingColor='';
+    }
+  });
+}
+
+// TRONADOR: "SAMSUNG A37 5G 6/128GB LAVANDER $299"
+function parseSheetTronador(lines,sh,map){
+  lines.forEach(raw=>{
+    const line=strip(raw);
+    if(!line) return;
+    const m=line.match(/^(.+?)\s+\$\s*(\d+)\s*$/);
+    if(!m) return;
+    const price=parseFloat(m[2]);
+    if(price>0) addProduct(map,sheetRaw,sh,m[1].trim(),price,0,'');
+  });
+}
+
+// LALO: "📲SAMSUNG A06 4/64GB - u$100 black/lightblue"
+function parseSheetLalo(lines,sh,map){
+  lines.forEach(raw=>{
+    const line=strip(raw);
+    if(!line) return;
+    const m=line.match(/^(.+?)\s+-\s+u\$\s*([\d.]+)\s*(.*)?$/i);
+    if(!m) return;
+    const price=parseFloat(m[2]);
+    if(!price||price<=0) return;
+    // limpiar emojis del color
+    const color=(m[3]||'').replace(/[^\w\s\/\-]/g,'').trim();
+    addProduct(map,sheetRaw,sh,m[1].trim(),price,0,color);
+  });
+}
+
+// MATIAS BELGRANO y SEBASTIAN BELGRANO: CSV "nombre,$precio"
+function parseSheetCSV2Col(lines,sh,map){
+  lines.forEach(raw=>{
+    const cols=splitCSV(raw.replace(/\r/g,''));
+    if(cols.length<2) return;
+    const name=cols[0].trim();
+    if(!name||name.length<3) return;
+    const price=parseFloat((cols[1]||'').replace(/[$\s,]/g,''));
+    if(!price||price<=0) return;
+    addProduct(map,sheetRaw,sh,name,price,0,'');
+  });
+}
+
+// GASTON TOMY: multi-fila — nombre, [color], precio en filas separadas
+// [0] "IPHONE 15 128 GB PINK"
+// [1] "$700"
+// o: [0] "IPHONE 16 PRO MAX 256 GB" [1] "WHITE - NATURAL" [2] "$1,170"
+function parseSheetGastonTomy(lines,sh,map){
+  let i=0;
+  while(i<lines.length){
+    const line=strip(lines[i]);
+    if(!line){i++;continue;}
+    // es precio?
+    const isPrice=(s)=>/^\$[\d,]+$/.test(s.replace(/\s/g,''));
+    if(isPrice(line)){i++;continue;}
+    // ¿es un nombre? (no empieza con $, no es solo números)
+    if(!/^\$/.test(line)&&line.length>3){
+      const name=line;
+      let color='';
+      let price=0;
+      let j=i+1;
+      // buscar precio en las próximas 3 filas
+      while(j<lines.length&&j<i+4){
+        const next=strip(lines[j]);
+        if(!next){j++;continue;}
+        if(isPrice(next)){
+          price=parseFloat(next.replace(/[$,\s]/g,''));
+          break;
+        }
+        // si no es precio y no lo tenemos aún, es color
+        if(!color&&!/^\$/.test(next)&&next.length<40) color=next;
+        j++;
+      }
+      if(price>0){
+        addProduct(map,sheetRaw,sh,name,price,0,color);
+        i=j+1;continue;
+      }
+    }
+    i++;
+  }
+}
+
+// ALEJO: "🔥15 Plus 128 Esim $660 Black/Green" con header de marca
+// "💥🍎IPHONE 🆕" → currentBrand = iPhone
+function parseSheetAlejo(lines,sh,map){
+  const BRANDS={IPHONE:'iPhone',XIAOMI:'Xiaomi',MOTOROLA:'Motorola',SAMSUNG:'Samsung',PIXEL:'Pixel'};
+  let brand='';
+  lines.forEach(raw=>{
+    const line=strip(raw);
+    if(!line) return;
+    // header de marca
+    const up=line.toUpperCase().replace(/[^A-Z]/g,'');
+    for(const[k,v] of Object.entries(BRANDS)){
+      if(up.startsWith(k)){brand=v;return;}
+    }
+    // producto: "nombre $precio color"
+    const m=line.match(/^(.+?)\s+\$(\d+(?:,\d+)?)\s*(.*)?$/);
+    if(!m) return;
+    const price=parseFloat(m[2].replace(',','.'));
+    if(!price||price<=0) return;
+    let name=m[1].trim();
+    const color=(m[3]||'').replace(/[^\w\s\/\-]/g,'').trim();
+    // agregar marca si falta
+    if(brand){
+      const bn=brand.toUpperCase();
+      if(!name.toUpperCase().startsWith(bn)) name=brand+' '+name;
+    }
+    addProduct(map,sheetRaw,sh,name,price,0,color);
+  });
+}
+
+// LUCHO PILAR: "50x A06 4/64  $98" con header de marca "*Samsung* 🔆"
+function parseSheetLuchoPilar(lines,sh,map){
+  const BRANDS={SAMSUNG:'Samsung',MOTOROLA:'Motorola',XIAOMI:'Xiaomi',IPHONE:'iPhone'};
+  let brand='';
+  lines.forEach(raw=>{
+    const line=(raw||'').replace(/\r/g,'').trim();
+    if(!line||/^[-]{3,}/.test(line)) return;
+    const stripped=strip(line);
+    // header de marca
+    const up=stripped.toUpperCase().replace(/[^A-Z]/g,'');
+    for(const[k,v] of Object.entries(BRANDS)){
+      if(up===k||up.startsWith(k+'S')){brand=v;return;}
+    }
+    if(/^\*stock/i.test(stripped)) return;
+    // producto: "NNx nombre $precio"
+    const m=line.match(/^(\d+)x\s+(.+?)\s+\$(\d+(?:\.\d+)?)\s*$/i);
+    if(!m) return;
+    const stock=parseInt(m[1]);
+    const price=parseFloat(m[3]);
+    if(!price||price<=0) return;
+    let name=m[2].trim();
+    if(brand&&!name.toUpperCase().startsWith(brand.toUpperCase())) name=brand+' '+name;
+    addProduct(map,sheetRaw,sh,name,price,stock,'');
+  });
+}
+
+// SERVICELL: "📲 MOTOROLA G05 4GB/128GB — USD 105 (VERDE)"
+// separador — seguido de USD precio (color)
+function parseSheetServicell(lines,sh,map){
+  lines.forEach(raw=>{
+    const line=strip(raw);
+    if(!line||/^(servicell|precios|■|\*)/i.test(line)) return;
+    // formato: nombre — USD precio (color)
+    const m=line.match(/^(.+?)\s+[—–-]+\s+USD\s+([\d,]+)\s*(?:\(([^)]+)\))?/i);
+    if(m){
+      const price=parseFloat(m[2].replace(',','.'));
+      if(price>0){
+        const name=m[1].replace(/\*[^*]*\*/g,'').replace(/\s+/g,' ').trim();
+        const color=m[3]||'';
+        addProduct(map,sheetRaw,sh,name,price,0,color);
+      }
+    }
+  });
+}
+
+// MAZZEO: "Motorola - G06 4/64GB C/CARG - $94"
+function parseSheetMazzeo(lines,sh,map){
+  lines.forEach(raw=>{
+    const line=strip(raw);
+    if(!line) return;
+    const m=line.match(/^(.+?)\s+-\s+(.+?)\s+-\s+\$(\d+(?:\.\d+)?)\s*$/);
+    if(!m) return;
+    const price=parseFloat(m[3]);
+    if(!price||price<=0) return;
+    const name=(m[1].trim()+' '+m[2].trim()).replace(/\s+/g,' ').trim();
+    addProduct(map,sheetRaw,sh,name,price,0,'');
+  });
+}
+
+// ── CARGA PRINCIPAL ────────────────────────────────────
+async function loadAll(){
+  document.getElementById('loadDiv').style.display='block';
+  document.getElementById('appDiv').style.display='none';
+  document.getElementById('errDiv').style.display='none';
+  document.getElementById('statusTxt').textContent='Actualizando...';
+  const map={};
+  Object.keys(sheetRaw).forEach(k=>delete sheetRaw[k]);
+  loadedCount=0;
+
+  await Promise.all(SHEETS.map(async sh=>{
+    try{
+      const r=await fetch(BASE.replace('output=csv',`output=csv&gid=${sh.gid}`));
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const text=await r.text();
+      const lines=text.split('\n');
+      loadedCount++;
+      sheetRaw[sh.name]=[];
+      switch(sh.name){
+        case 'WS-COSTOS':         parseSheetWSCostos(lines,sh,map); break;
+        case 'WS-VIP':            parseSheetWSVip(lines,sh,map); break;
+        case 'GUILLE GAMES':      parseSheetGuilleGames(lines,sh,map); break;
+        case 'URQUIZA':           parseSheetUrquiza(lines,sh,map); break;
+        case 'TRONADOR':          parseSheetTronador(lines,sh,map); break;
+        case 'LALO':              parseSheetLalo(lines,sh,map); break;
+        case 'MATIAS BELGRANO':   parseSheetCSV2Col(lines,sh,map); break;
+        case 'SEBASTIAN BELGRANO':parseSheetCSV2Col(lines,sh,map); break;
+        case 'GASTON TOMY':       parseSheetGastonTomy(lines,sh,map); break;
+        case 'ALEJO':             parseSheetAlejo(lines,sh,map); break;
+        case 'LUCHO PILAR':       parseSheetLuchoPilar(lines,sh,map); break;
+        case 'SERVICELL':         parseSheetServicell(lines,sh,map); break;
+        case 'MAZZEO':            parseSheetMazzeo(lines,sh,map); break;
+      }
+    }catch(e){console.warn(sh.name,e.message);}
+  }));
+
+  allProducts=Object.values(map).filter(p=>p.prices.length>0)
+    .sort((a,b)=>a.brand.localeCompare(b.brand)||a.name.localeCompare(b.name));
+
+  if(!allProducts.length){
+    document.getElementById('loadDiv').style.display='none';
+    document.getElementById('errDiv').style.display='block';
+    document.getElementById('errDiv').innerHTML=`<div class="err-box"><strong>No se encontraron productos.</strong><br>Hojas cargadas: ${loadedCount}/${SHEETS.length}</div>`;
+    return;
+  }
+  buildTabs();populateFilters();updateStats();setTab('comparativa');
+  const now=new Date();
+  lastStatus=`${allProducts.length} prod · ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('statusTxt').textContent=lastStatus;
+  document.getElementById('loadDiv').style.display='none';
+  document.getElementById('appDiv').style.display='block';
+}
+
+// ── UI ─────────────────────────────────────────────────
+function setMod(mod){
+  activeMod=mod;
+  document.querySelectorAll('.mod-btn').forEach(b=>b.classList.toggle('active',b.id==='mod-'+mod));
+  document.getElementById('modPrecios').style.display=mod==='precios'?'block':'none';
+  document.getElementById('modCuentas').style.display=mod==='cuentas'?'block':'none';
+  if(mod==='cuentas'){document.getElementById('statusTxt').textContent='Cuentas corrientes';loadCC();}
+  else document.getElementById('statusTxt').textContent=lastStatus||'Listo';
+}
+function onRefresh(){if(activeMod==='precios') loadAll();else loadCC();}
+
+function buildTabs(){
+  const hdr=document.getElementById('tabsHdr');hdr.innerHTML='';
+  const mk=(label,tab,count,cls='')=>{
+    const b=document.createElement('button');
+    b.className='tab '+cls;b.dataset.tab=tab;
+    b.innerHTML=label+(count!==undefined?` <span class="tab-n">${count}</span>`:'');
+    b.onclick=()=>setTab(tab);hdr.appendChild(b);
+  };
+  const lowCount=allProducts.filter(p=>p.wsStock>0&&p.wsStock<STOCK_ALERT).length;
+  mk('Comparativa','comparativa',allProducts.length);
+  if(lowCount>0) mk('⚠ Stock bajo','stockbajo',lowCount,'t-alert');
+  SHEETS.forEach(sh=>{if(sheetRaw[sh.name]&&sheetRaw[sh.name].length>0) mk(sh.name,sh.name,sheetRaw[sh.name].length);});
+}
+
+function setTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('#tabsHdr .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.getElementById('sf').style.display=tab==='comparativa'?'':'none';
+  document.getElementById('wf').style.display=tab==='comparativa'?'':'none';
+  document.getElementById('ctrlRow').style.display=tab==='stockbajo'?'none':'flex';
+  render();
+}
+
+function setMargin(pct){
+  activeMargin=pct;
+  ['mb0','mb3','mb4','mb5','mb7','mb10'].forEach(id=>{
+    const b=document.getElementById(id);if(!b) return;
+    b.classList.remove('active','margin-off');
+    if(pct===0) b.classList.add('margin-off');
+  });
+  const ids={0:'mb0',3:'mb3',4:'mb4',5:'mb5',7:'mb7',10:'mb10'};
+  const btn=document.getElementById(ids[pct]);if(btn) btn.classList.add('active');
+  render();
+}
+
+function populateFilters(){
+  const brands=[...new Set(allProducts.map(p=>p.brand))].sort();
+  const bf=document.getElementById('bf');
+  bf.innerHTML='<option value="">Todas las marcas</option>';
+  brands.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;bf.appendChild(o);});
+}
+
+function updateStats(){
+  const wsBest=allProducts.filter(p=>{
+    if(!p.wsCost) return false;
+    return p.wsCost<=Math.min(...p.prices.map(x=>x.price))+0.05;
+  });
+  const totalUnits=allProducts.filter(p=>p.wsStock>0).reduce((a,p)=>a+p.wsStock,0);
+  document.getElementById('sTotal').textContent=allProducts.length;
+  document.getElementById('sBest').textContent=wsBest.length;
+  document.getElementById('sProvs').textContent=loadedCount;
+  document.getElementById('sStock').textContent=totalUnits.toLocaleString('es-AR');
+}
+
+function getFiltered(){
+  const q=document.getElementById('q').value.toLowerCase().trim();
+  const brand=document.getElementById('bf').value;
+  if(activeTab==='stockbajo') return allProducts.filter(p=>p.wsStock>0&&p.wsStock<STOCK_ALERT);
+  if(activeTab!=='comparativa'){
+    return(sheetRaw[activeTab]||[]).filter(p=>{
+      if(q){const words=q.split(/\s+/).filter(w=>w.length>0);if(!words.every(w=>p.name.toLowerCase().includes(w))) return false;}
+      if(brand&&p.brand!==brand) return false;
+      return true;
+    });
+  }
+  const sf=document.getElementById('sf').value,wf=document.getElementById('wf').value;
+  return allProducts.filter(p=>{
+    if(q){const words=q.split(/\s+/).filter(w=>w.length>0);if(!words.every(w=>p.name.toLowerCase().includes(w))) return false;}
+    if(brand&&p.brand!==brand) return false;
+    if(sf==='yes'&&p.wsStock<=0) return false;
+    if(sf==='no'&&p.wsStock>0) return false;
+    if(wf==='win'){if(!p.wsCost) return false;if(p.wsCost>Math.min(...p.prices.map(x=>x.price))+0.05) return false;}
+    if(wf==='lose'){if(!p.wsCost) return true;if(p.wsCost<=Math.min(...p.prices.map(x=>x.price))+0.05) return false;}
+    return true;
+  });
+}
+
+function render(){
+  const filtered=getFiltered();
+  document.getElementById('rc').textContent=`${filtered.length} productos`;
+  const body=document.getElementById('tabBody');
+  if(!filtered.length){body.innerHTML='<div class="empty">Sin resultados</div>';return;}
+  if(activeTab==='comparativa') renderComparativa(filtered,body);
+  else if(activeTab==='stockbajo') renderStockBajo(filtered,body);
+  else renderProveedor(filtered,body);
+}
+
+function renderComparativa(items,body){
+  const withS=items.filter(p=>p.wsStock>0),noS=items.filter(p=>p.wsStock<=0);
+  let h='';
+  if(withS.length&&noS.length) h+='<div class="sec-lbl">Con stock Work Shop</div>';
+  withS.forEach(p=>{h+=buildCard(p);});
+  if(noS.length&&withS.length) h+='<div class="sec-lbl">Sin stock Work Shop</div>';
+  noS.forEach(p=>{h+=buildCard(p);});
+  body.innerHTML=h;
+}
+
+function buildCard(p){
+  const sorted=[...p.prices].sort((a,b)=>a.price-b.price);
+  const winner=sorted[0];
+  const wsWin=p.wsCost&&Math.abs(p.wsCost-winner.price)<=0.05;
+  const wsDiff=p.wsCost&&!wsWin?p.wsCost-winner.price:0;
+  const isLow=p.wsStock>0&&p.wsStock<STOCK_ALERT;
+  let cls='card';
+  if(isLow) cls+=' c-low';
+  else if(p.wsCost&&p.prices.length>1) cls+=wsWin?' ws-win':' ws-lose';
+  let b='';
+  if(isLow) b+=`<span class="bdg bo">⚠ ${p.wsStock} u.</span>`;
+  else if(p.wsStock>0) b+=`<span class="bdg bb">${p.wsStock} u.</span>`;
+  else if(p.wsCost) b+=`<span class="bdg bn">sin stock</span>`;
+  if(p.wsCost&&p.prices.length>1) b+=wsWin?`<span class="bdg bg">✓ mejor</span>`:`<span class="bdg br">+u$${wsDiff.toFixed(0)}</span>`;
+  if(p.wsVip) b+=`<span class="bdg ba">VIP u$${p.wsVip.toFixed(0)}</span>`;
+  const rows=sorted.map(e=>{
+    const isWin=e.price===winner.price;
+    const lbl=e.wsType==='costo'?'WS Costo':e.wsType==='vip'?'WS VIP':e.prov;
+    const winTag=isWin&&sorted.length>1?'<span class="best-tag">mejor</span>':'';
+    const col=e.color?`<span style="font-size:12px;color:var(--hint)">${e.color}</span>`:'';
+    const sellTag=activeMargin>0?`<span class="sell-price">Venta u$${Math.round(e.price*(1+activeMargin/100))}</span>`:'';
+    const cls2=isWin?'is-win':e.isWS?'is-ws':'';
+    return `<tr class="${cls2}"><td class="pt-prov">${lbl}${winTag}</td><td class="pt-price">u$${e.price.toFixed(0)}${sellTag}</td><td class="pt-note">${col}</td></tr>`;
+  }).join('');
+  const sellSuffix=activeMargin>0?` | Venta u$${Math.round(winner.price*(1+activeMargin/100))} (+${activeMargin}%)`:'';
+  const wl=winner.wsType==='costo'?'WS Costo':winner.wsType==='vip'?'WS VIP':winner.prov;
+  const copyText=`${p.name} | ${wl} u$${winner.price.toFixed(0)}${p.wsStock>0?' | Stock: '+p.wsStock+' u.':''}${sellSuffix}`;
+  const cardId='c'+Math.random().toString(36).slice(2,8);
+  return `<div class="${cls}" id="${cardId}"><div class="card-top"><div class="prod-name">${p.name}</div><div class="badges">${b}</div></div><table class="pt">${rows}</table><button class="copy-btn" onclick="copyCard('${cardId}','${copyText.replace(/'/g,"\\'")}')">📋 Copiar</button></div>`;
+}
+
+function renderStockBajo(items,body){
+  const sorted=[...items].sort((a,b)=>a.wsStock-b.wsStock);
+  let h=`<div style="font-size:13px;color:var(--orange);padding:6px 4px 10px;font-weight:500">⚠ ${sorted.length} producto${sorted.length>1?'s':''} con menos de ${STOCK_ALERT} unidades</div>`;
+  sorted.forEach(p=>{
+    const ext=[...p.prices].filter(e=>!e.isWS||e.wsType==='vip').sort((a,b)=>a.price-b.price);
+    const minExt=ext.length?ext[0].price:null;
+    let rep='';
+    if(ext.length>0){
+      const chips=ext.map(e=>{
+        const isWin=e.price===minExt;
+        const col=e.color?` <span style="font-size:11px;color:var(--hint)">${e.color}</span>`:'';
+        return `<div class="rchip${isWin?' r-win':''}"><span class="rcp">${e.prov}</span><span class="rcv">u$${e.price.toFixed(0)}</span>${col}</div>`;
+      }).join('');
+      rep=`<div class="reponer"><div class="reponer-title">Reponer en</div><div class="reponer-chips">${chips}</div></div>`;
+    }else{
+      rep=`<div class="reponer"><div style="font-size:13px;color:var(--hint)">Ningún proveedor tiene este artículo</div></div>`;
+    }
+    h+=`<div class="low-card"><div class="low-top"><div><div class="low-name">${p.name}</div><div class="low-brand">${p.brand}${p.wsCost?` · Costo u$${p.wsCost.toFixed(0)}`:''}${p.wsVip?` · VIP u$${p.wsVip.toFixed(0)}`:''}</div></div><div class="low-right"><div class="stock-num">${p.wsStock}</div><div class="stock-lbl">unidades</div></div></div>${rep}</div>`;
+  });
+  body.innerHTML=h;
+}
+
+function renderProveedor(items,body){
+  const byBrand={};
+  items.forEach(p=>{if(!byBrand[p.brand])byBrand[p.brand]=[];byBrand[p.brand].push(p);});
+  let h='';
+  Object.keys(byBrand).sort().forEach(brand=>{
+    const list=byBrand[brand];
+    const id='acc-'+brand.replace(/\W/g,'-');
+    h+=`<div class="prov-section" id="${id}"><div class="prov-header" onclick="toggleAcc('${id}')"><div><div class="prov-title">${brand}</div><div class="prov-meta">${list.length} producto${list.length>1?'s':''}</div></div><span class="chevron">▾</span></div><div class="prov-body">`;
+    list.forEach(p=>{
+      const isLow=p.stock>0&&p.stock<STOCK_ALERT;
+      const stockBdg=p.stock>0?(isLow?`<span class="bdg bo">⚠ ${p.stock}u</span>`:`<span class="bdg bb">${p.stock}u</span>`):'';
+      const colorStr=p.color?`<div class="pi-note">${p.color}</div>`:'';
+      h+=`<div class="prov-item${isLow?' item-low':''}"><div><div class="pi-name">${p.name}</div>${colorStr}</div><div class="pi-right">${stockBdg}<div class="pi-price">u$${p.price.toFixed(0)}</div></div></div>`;
+    });
+    h+=`</div></div>`;
+  });
+  body.innerHTML=h;
+}
+
+function toggleAcc(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
+
+function copyCard(id,text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.querySelector('#'+id+' .copy-btn');
+    if(btn){btn.classList.add('copied');btn.textContent='✅ Copiado';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='📋 Copiar';},2000);}
+  }).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    const btn=document.querySelector('#'+id+' .copy-btn');
+    if(btn){btn.classList.add('copied');btn.textContent='✅ Copiado';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='📋 Copiar';},2000);}
+  });
+}
+
+function setDebtMin(val,el){debtMin=val;document.querySelectorAll('.debt-chip').forEach(c=>c.classList.remove('active'));if(el)el.classList.add('active');renderCC();}
+
+// ── CUENTAS CORRIENTES ─────────────────────────────────
+let ccData=[];
+async function loadCC(){
+  document.getElementById('ccLoadDiv').style.display='block';
+  document.getElementById('ccContent').style.display='none';
+  document.getElementById('ccErr').style.display='none';
+  try{
+    const r=await fetch(BASE.replace('output=csv',`output=csv&gid=${GID_CC}`));
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    parseCC(await r.text());
+  }catch(e){
+    document.getElementById('ccLoadDiv').style.display='none';
+    document.getElementById('ccErr').style.display='block';
+    document.getElementById('ccErr').textContent='Error al cargar cuentas corrientes.';
+  }
+}
+
+function parseCC(text){
+  const lines=text.split('\n').map(l=>l.replace(/^"+|"+$/g,'').replace(/\r/g,'').trim()).filter(l=>l);
+  ccData=[];
+  const SKIP=['cliente','clientes','nombre','deuda','saldo','balance'];
+  lines.forEach(line=>{
+    const cols=splitCSV(line);
+    const colA=(cols[0]||'').trim();
+    const colB=(cols[1]||'').trim();
+    const colC=(cols[2]||'').trim();
+    if(!colA||colA.length<2) return;
+    if(SKIP.includes(colA.toLowerCase())) return;
+    const saldo=parseFloat(colB.replace(/[u\$\s]/gi,'').replace(',','.'));
+    if(isNaN(saldo)) return;
+    const obs=colC.replace(/[▾▼]/g,'').trim();
+    ccData.push({nombre:colA,saldo,obs});
+  });
+  if(!ccData.length){
+    document.getElementById('ccLoadDiv').style.display='none';
+    document.getElementById('ccErr').style.display='block';
+    document.getElementById('ccErr').textContent='No se encontraron clientes.';
+    return;
+  }
+  renderCCStats();setCCTab('todos');
+  document.getElementById('ccLoadDiv').style.display='none';
+  document.getElementById('ccContent').style.display='block';
+  document.getElementById('statusTxt').textContent=`${ccData.length} clientes`;
+}
+
+function renderCCStats(){
+  const deben=ccData.filter(c=>c.saldo>0);
+  const favor=ccData.filter(c=>c.saldo<0);
+  const totalDebe=deben.reduce((a,c)=>a+c.saldo,0);
+  const totalFavor=Math.abs(favor.reduce((a,c)=>a+c.saldo,0));
+  document.getElementById('ccTotalDebe').textContent='u$'+Math.round(totalDebe).toLocaleString('es-AR');
+  document.getElementById('ccTotalCli').textContent=ccData.length;
+  document.getElementById('ccTotalFavor').textContent=totalFavor>0?'u$'+Math.round(totalFavor).toLocaleString('es-AR'):'u$0';
+  document.getElementById('ccN0').textContent=ccData.length;
+  document.getElementById('ccN1').textContent=deben.length;
+  document.getElementById('ccN2').textContent=ccData.filter(c=>c.obs.toLowerCase().includes('hablarle')).length;
+  document.getElementById('ccN3').textContent=ccData.filter(c=>c.obs.toLowerCase().includes('comunicado')).length;
+  document.getElementById('ccN4').textContent=favor.length;
+}
+
+function setCCTab(tab){
+  ccTab=tab;
+  ['todos','deben','hablarle','comunicado','favor'].forEach(t=>{document.getElementById('cct-'+t).classList.toggle('active',t===tab);});
+  renderCC();
+}
+
+function renderCC(){
+  const q=(document.getElementById('ccQ').value||'').toLowerCase().trim();
+  const sort=document.getElementById('ccSort').value;
+  let items=[...ccData];
+  if(ccTab==='deben') items=items.filter(c=>c.saldo>0);
+  else if(ccTab==='favor') items=items.filter(c=>c.saldo<0);
+  else if(ccTab==='hablarle') items=items.filter(c=>c.obs.toLowerCase().includes('hablarle'));
+  else if(ccTab==='comunicado') items=items.filter(c=>c.obs.toLowerCase().includes('comunicado'));
+  if(debtMin>0) items=items.filter(c=>Math.abs(c.saldo)>=debtMin);
+  if(q) items=items.filter(c=>c.nombre.toLowerCase().includes(q));
+  if(sort==='desc') items.sort((a,b)=>b.saldo-a.saldo);
+  else if(sort==='asc') items.sort((a,b)=>a.saldo-b.saldo);
+  else items.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  document.getElementById('ccRc').textContent=`${items.length} clientes`;
+  const body=document.getElementById('ccBody');
+  if(!items.length){body.innerHTML='<div class="empty">Sin resultados</div>';return;}
+  let h='';
+  items.forEach(c=>{
+    const debe=c.saldo>0;
+    let obsBadge='';
+    if(c.obs){
+      const obsL=c.obs.toLowerCase();
+      const obsCls=obsL.includes('hablarle')?'obs-hablarle':obsL.includes('comunicado')?'obs-comunicado':'obs-default';
+      obsBadge=`<span class="cc-obs ${obsCls}">${c.obs}</span>`;
+    }
+    h+=`<div class="cc-card ${debe?'c-debe':'c-favor'}"><div class="cc-left"><div class="cc-name">${c.nombre}</div>${obsBadge}</div><div class="cc-right"><div class="cc-amount ${debe?'a-debe':'a-favor'}">u$${Math.abs(c.saldo).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div><div class="cc-label">${debe?'nos debe':'a favor'}</div></div></div>`;
+  });
+  body.innerHTML=h;
+}
+
+loadAll();
+</script>
+
+
+</body></html>
