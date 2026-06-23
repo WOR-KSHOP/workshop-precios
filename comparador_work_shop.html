@@ -1,7 +1,8 @@
-<!DOCTYPE html>
-<!-- saved from url=(0067)file:///Users/matiasfrancois/Downloads/comparador_work_shop_22.html -->
-<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Work Shop · Operaciones</title>
 <style>
@@ -97,6 +98,11 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
 .rchip.r-win .rcp,.rchip.r-win .rcv{color:var(--green-dark)}
 .rchip.r-win .rcv{font-weight:700}
 .rcp{font-size:11px;color:var(--muted)}
+.reponer-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.rep-copy{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:20px;border:1px solid var(--orange-border);background:var(--surface);font-size:12px;color:var(--orange);cursor:pointer}
+.rep-copy.copied{background:var(--green-bg);border-color:#5DCAA5;color:var(--green-dark)}
+.rep-link{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:12px;color:var(--blue);text-decoration:none}
+.rep-link:hover{background:var(--blue-bg)}
 .rcv{font-weight:600;color:var(--text)}
 .prov-section{border:1px solid var(--border);border-radius:10px;margin-bottom:6px;overflow:hidden}
 .prov-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:var(--surface);user-select:none;-webkit-user-select:none}
@@ -160,18 +166,18 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
 <header class="hdr">
   <div class="hdr-inner">
     <div class="logo">Work <span>Shop</span></div>
-    <div class="status" id="statusTxt">Actualizando...</div>
+    <div class="status" id="statusTxt">Cargando...</div>
     <button class="btn-refresh" onclick="onRefresh()">↻ Actualizar</button>
   </div>
 </header>
 <main class="main">
   <div class="mod-nav">
-    <button class="mod-btn active" id="mod-precios" onclick="setMod(&#39;precios&#39;)">💰 Precios</button>
-    <button class="mod-btn" id="mod-cuentas" onclick="setMod(&#39;cuentas&#39;)">📋 Cuentas corrientes</button>
+    <button class="mod-btn active" id="mod-precios" onclick="setMod('precios')">💰 Precios</button>
+    <button class="mod-btn" id="mod-cuentas" onclick="setMod('cuentas')">📋 Cuentas corrientes</button>
   </div>
   <div id="modPrecios">
-    <div id="loadDiv" class="loading-wrap" style="display: none;"><div class="spinner"></div><p style="font-size:14px">Cargando precios...</p></div>
-    <div id="errDiv" style="display: block;"><div class="err-box"><strong>No se encontraron productos.</strong><br>Hojas cargadas: 0/13</div></div>
+    <div id="loadDiv" class="loading-wrap"><div class="spinner"></div><p style="font-size:14px">Cargando precios...</p></div>
+    <div id="errDiv" style="display:none"></div>
     <div id="appDiv" style="display:none">
       <div class="stats">
         <div class="stat"><div class="stat-label">Productos</div><div class="stat-value" id="sTotal">—</div><div class="stat-sub">comparados</div></div>
@@ -191,7 +197,7 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
       <div class="tabs-wrap">
         <div class="tabs-hdr" id="tabsHdr"></div>
         <div class="controls" id="ctrlRow">
-          <div class="sw"><span class="sw-icon">🔍</span><input type="text" id="q" placeholder="Buscar producto..." oninput="render()" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+          <div class="sw"><span class="sw-icon">🔍</span><input type="text" id="q" placeholder="Buscar producto..." oninput="render()" autocomplete="off" autocorrect="off" spellcheck="false"/></div>
           <select id="bf" onchange="render()"><option value="">Todas las marcas</option></select>
           <select id="sf" onchange="render()"><option value="all">Con y sin stock</option><option value="yes">Con stock WS</option><option value="no">Sin stock WS</option></select>
           <select id="wf" onchange="render()"><option value="all">Todos</option><option value="win">WS mejor precio</option><option value="lose">WS no es mejor</option></select>
@@ -221,14 +227,14 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
       </div>
       <div class="tabs-wrap">
         <div class="tabs-hdr">
-          <button class="tab active" id="cct-todos" onclick="setCCTab(&#39;todos&#39;)">Todos <span class="tab-n" id="ccN0"></span></button>
-          <button class="tab t-red" id="cct-deben" onclick="setCCTab(&#39;deben&#39;)">🔴 Deben <span class="tab-n" id="ccN1"></span></button>
-          <button class="tab" id="cct-hablarle" onclick="setCCTab(&#39;hablarle&#39;)">📞 Hablarle <span class="tab-n" id="ccN2"></span></button>
-          <button class="tab" id="cct-comunicado" onclick="setCCTab(&#39;comunicado&#39;)">✉ Comunicado <span class="tab-n" id="ccN3"></span></button>
-          <button class="tab" id="cct-favor" onclick="setCCTab(&#39;favor&#39;)">✅ A favor <span class="tab-n" id="ccN4"></span></button>
+          <button class="tab active" id="cct-todos" onclick="setCCTab('todos')">Todos <span class="tab-n" id="ccN0"></span></button>
+          <button class="tab t-red" id="cct-deben" onclick="setCCTab('deben')">🔴 Deben <span class="tab-n" id="ccN1"></span></button>
+          <button class="tab" id="cct-hablarle" onclick="setCCTab('hablarle')">📞 Hablarle <span class="tab-n" id="ccN2"></span></button>
+          <button class="tab" id="cct-comunicado" onclick="setCCTab('comunicado')">✉ Comunicado <span class="tab-n" id="ccN3"></span></button>
+          <button class="tab" id="cct-favor" onclick="setCCTab('favor')">✅ A favor <span class="tab-n" id="ccN4"></span></button>
         </div>
         <div class="controls">
-          <div class="sw"><span class="sw-icon">🔍</span><input type="text" id="ccQ" placeholder="Buscar cliente..." oninput="renderCC()" autocomplete="off"></div>
+          <div class="sw"><span class="sw-icon">🔍</span><input type="text" id="ccQ" placeholder="Buscar cliente..." oninput="renderCC()" autocomplete="off"/></div>
           <select id="ccSort" onchange="renderCC()">
             <option value="desc">Mayor deuda primero</option>
             <option value="asc">Menor deuda primero</option>
@@ -247,6 +253,22 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
 const BASE='https://docs.google.com/spreadsheets/d/e/2PACX-1vRUE7lN4X9Y9TOU_5vKD8dBy5LYhPedJYvN_dLZ-RCMB0PXPROLJqcxuHO-Yb4CApk23NFD77Jf_8u8/pub?output=csv';
 const GID_CC='1313251460';
 const STOCK_ALERT=10;
+const SHEET_LINKS={
+  'WS-COSTOS':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=1169477995',
+  'WS-VIP':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=2103310165',
+  'GUILLE GAMES':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=221847934',
+  'URQUIZA':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=1411427043',
+  'TRONADOR':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=1291580792',
+  'LALO':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=376933543',
+  'MATIAS BELGRANO':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=457070983',
+  'GASTON TOMY':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=1697227894',
+  'ALEJO':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=1580662582',
+  'LUCHO PILAR':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=1980722139',
+  'SERVICELL':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=125678359',
+  'MAZZEO':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=803403481',
+  'SEBASTIAN BELGRANO':'https://docs.google.com/spreadsheets/d/1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g/edit#gid=1798307347',
+};
+
 const SHEETS=[
   {name:'WS-COSTOS',          gid:'1169477995',isWS:true,wsType:'costo'},
   {name:'WS-VIP',             gid:'2103310165',isWS:true,wsType:'vip'},
@@ -815,7 +837,21 @@ function renderStockBajo(items,body){
         const col=e.color?` <span style="font-size:11px;color:var(--hint)">${e.color}</span>`:'';
         return `<div class="rchip${isWin?' r-win':''}"><span class="rcp">${e.prov}</span><span class="rcv">u$${e.price.toFixed(0)}</span>${col}</div>`;
       }).join('');
-      rep=`<div class="reponer"><div class="reponer-title">Reponer en</div><div class="reponer-chips">${chips}</div></div>`;
+      // botones de acción: copiar y links a cada proveedor
+      const copyRepText=`${p.name} | Reponer en: ${ext.map(e=>e.prov+' u$'+e.price.toFixed(0)+(e.color?' '+e.color:'')).join(', ')}`;
+      const repId='rep-'+Math.random().toString(36).slice(2,7);
+      const provLinks=ext.map(e=>{
+        const link=SHEET_LINKS[e.prov]||'';
+        return link?`<a class="rep-link" href="${link}" target="_blank">📋 Ver ${e.prov}</a>`:'';
+      }).filter(x=>x).join('');
+      rep=`<div class="reponer">
+        <div class="reponer-title">Reponer en</div>
+        <div class="reponer-chips">${chips}</div>
+        <div class="reponer-actions">
+          <button class="rep-copy" id="${repId}" onclick="copyReponer('${repId}','${copyRepText.replace(/'/g,"\'")}')">📋 Copiar</button>
+          ${provLinks}
+        </div>
+      </div>`;
     }else{
       rep=`<div class="reponer"><div style="font-size:13px;color:var(--hint)">Ningún proveedor tiene este artículo</div></div>`;
     }
@@ -954,8 +990,19 @@ function renderCC(){
   body.innerHTML=h;
 }
 
+function copyReponer(id,text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.getElementById(id);
+    if(btn){btn.classList.add('copied');btn.textContent='✅ Copiado';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='📋 Copiar';},2000);}
+  }).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    const btn=document.getElementById(id);
+    if(btn){btn.classList.add('copied');btn.textContent='✅ Copiado';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='📋 Copiar';},2000);}
+  });
+}
+
 loadAll();
 </script>
-
-
-</body></html>
+</body>
+</html>
+  
