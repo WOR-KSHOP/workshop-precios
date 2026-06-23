@@ -449,7 +449,12 @@ function parseSheetUrquiza(lines,sh,map){
   function isPriceLine(s){
     return /^U?\$?\s*[\d,.]+\s*(USD)?$/i.test(s.trim())||/^[\d,.]+\s+USD$/i.test(s.trim());
   }
-  function isModelCode(s){return /^[A-Z0-9]{5,}[\/\-]/.test(s.trim());}
+  function isModelCode(s){
+    // Código de modelo: empieza con 5+ chars alfanuméricos seguidos de / o -
+    // PERO solo si no tiene espacios antes del separador (evita falsos positivos)
+    const t=s.trim();
+    return /^[A-Z0-9]{5,}[\/\-][A-Z0-9]/.test(t)&&!/^[A-Z]+ /.test(t);
+  }
   function hasPriceInline(s){return /U\$\s*[\d,]+/i.test(s)||/[\d,.]+\s+USD/i.test(s);}
   function isColorLine(s){
     // línea que es solo color/info: "white", "black", "blue/orange", "(e-sim)", "silver"
@@ -458,7 +463,7 @@ function parseSheetUrquiza(lines,sh,map){
   function isHeader(s){
     return !s||s.length<3||
       /^(lista|aceptamos|usdt|accesorios|ingresando)/i.test(s)||
-      /^\*?(SAMSUNG|APPLE|XIAOMI|MOTOROLA|RAYBAN)\*?\s*$/i.test(s)||
+      /^\*?(SAMSUNG|APPLE|XIAOMI|MOTOROLA)\*?\s*$/i.test(s)||
       /^[-—=✨💫⚡►]{2,}/.test(s);
   }
   function cleanName(s){
