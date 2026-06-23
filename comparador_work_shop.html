@@ -371,6 +371,9 @@ function addProduct(map,sheetRaw,sh,name,price,stock,color){
 
 // WS-COSTOS: "SAMSUNG GALAXY A07 128GB 22,00 118.00" (todo en col A entre quotes)
 // ultimos 2 tokens = stock(coma decimal) precio(punto decimal)
+const COLOR_WORDS=new Set(['BLACK','WHITE','BLUE','GREEN','GRAY','GREY','SILVER','GOLD','PURPLE','PINK','RED','ORANGE','YELLOW','BROWN','LAVENDER','NAVY','TEAL','VIOLET','GRAPHITE','CHARCOAL','ARCTIC','MIDNIGHT','NATURAL','ULTRAMARINE','JADE','MOCHA','SHADOW','CELESTIAL','ALASKAN','EVENING','ICYBLUE','DORADO','NEGRO','BLANCO','AZUL','VERDE','GRIS','PLATA','MORADO','ROSA','ROJO','SKYBLUE','KHAKI','OLIVE','CREAM','BRONZE','COPPER','ROSE','CORAL','CYAN','LIME','MINT','TITANIUM','SAGE','LIGHTGREY','LIGHTBLUE','GREENGRAY']);
+function stripColors(name){const parts=name.toUpperCase().split(/\s+/);while(parts.length>1&&COLOR_WORDS.has(parts[parts.length-1]))parts.pop();return name.split(/\s+/).slice(0,parts.length).join(' ').trim();}
+
 function parseSheetWSCostos(lines,sh,map){
   lines.forEach(raw=>{
     const line=raw.replace(/^"+|"+$/g,'').replace(/\r/g,'').trim();
@@ -386,6 +389,7 @@ function parseSheetWSCostos(lines,sh,map){
     // nombre: todos menos los ultimos 2 tokens, limpiando " - IMPORTADO" etc
     let name=tokens.slice(0,tokens.length-2).join(' ')
       .replace(/\s*-\s*(IMPORTADO|NACIONAL|S\/CARG|C\/CARG|SLIM)\s*$/i,'').trim();
+    name=stripColors(name);
     addProduct(map,sheetRaw,sh,name,price,stock,'');
   });
 }
@@ -401,7 +405,7 @@ function parseSheetWSVip(lines,sh,map){
     if(!m) return;
     const price=parseFloat(m[2].replace(',','.'));
     if(!price||price<=0) return;
-    let name=m[1].replace(/\*[^*]*\*/g,'').replace(/\s+/g,' ').trim();
+    let name=stripColors(m[1].replace(/\*[^*]*\*/g,'').replace(/\s+/g,' ').trim());
     const color=m[3]||'';
     addProduct(map,sheetRaw,sh,name,price,0,color);
   });
@@ -512,7 +516,9 @@ function parseSheetCSV2Col(lines,sh,map){
   lines.forEach(raw=>{
     const cols=splitCSV(raw.replace(/\r/g,''));
     if(cols.length<2) return;
-    const name=cols[0].trim();
+    const rawName=cols[0].trim();
+    if(!rawName||rawName.length<3) return;
+    const name=stripColors(rawName);
     if(!name||name.length<3) return;
     const price=parseFloat((cols[1]||'').replace(/[$\s,]/g,''));
     if(!price||price<=0) return;
@@ -1020,3 +1026,4 @@ loadAll();
 </script>
 </body>
 </html>
+
