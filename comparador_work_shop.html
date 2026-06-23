@@ -303,28 +303,43 @@ function splitCSV(line){
 }
 function nkey(n){
   let s=(n||'').toUpperCase().replace(/\r/g,'');
-  // quitar contenido entre asteriscos y paréntesis
+  // quitar asteriscos y paréntesis
   s=s.replace(/\*[^*]*\*/g,' ').replace(/\([^)]*\)/g,' ');
-  // quitar palabras de ruido, colores, variantes
-  s=s.replace(/\b(C\/CARGADOR|S\/CARGADOR|C\/CARG|S\/CARG|CON CARGADOR|SIN CARGADOR|SIN CARG|CON CARG|SCARG|IMPORTADO|NACIONAL|GLOBAL|SLIM|GARANTIA|OFICIAL|GTIA|ESIM|E-SIM|DUAL SIM|4G|5G|3G|LTE|DS|SS|US|BR|EU|BLACK|WHITE|BLUE|GREEN|GRAY|GREY|SILVER|GOLD|PURPLE|PINK|RED|ORANGE|YELLOW|BROWN|LAVENDER|NAVY|TEAL|VIOLET|GRAPHITE|CHARCOAL|CELESTIAL|ARCTIC|MIDNIGHT|NATURAL|ULTRAMARINE|JADE|MOTO|GALAXY|REDMI|POCO|EDGE|NOTE|SMART)\b/g,' ');
-  // quitar unidades antes de separar numeros
-  s=s.replace(/(\d+)\s*GB/g,'$1').replace(/(\d+)\s*TB/g,(m,p1)=>String(parseInt(p1)*1024));
-  s=s.replace(/\bMB\b|\bRAM\b/g,' ');
+  // quitar ruido textual (NO quitar nombres de modelo)
+  s=s.replace(/\b(C\/CARGADOR|S\/CARGADOR|CON CARGADOR|SIN CARGADOR|SIN CARG|CON CARG|SCARG|IMPORTADO|NACIONAL|GLOBAL|SLIM|GARANTIA|GTIA|OFICIAL|ESIM|E-SIM|DS|SS|US|BR|EU|NFC|WIFI|DUAL SIM|POWER ADAPTER)\b/g,' ');
+  s=s.replace(/\b(BLACK|WHITE|BLUE|GREEN|GRAY|GREY|SILVER|GOLD|PURPLE|PINK|RED|ORANGE|YELLOW|BROWN|LAVENDER|NAVY|TEAL|VIOLET|GRAPHITE|CHARCOAL|ARCTIC|MIDNIGHT|NATURAL|ULTRAMARINE|JADE|DORADO|NEGRO|BLANCO|AZUL|VERDE|GRIS|PLATA|MORADO|ROSA|ROJO|SHADOW|LILY|PAD|CELESTIAL)\b/g,' ');
+  s=s.replace(/\b(4G|5G|3G|LTE|SG)\b/g,' ');
+  s=s.replace(/\bRAM\b/g,' ');
+  // quitar precio si está en el nombre (formato Guille/Urquiza: "- $ 170" o "USD 303")
+  s=s.replace(/[-–—]\s*\$\s*\d+.*$/,'');
+  s=s.replace(/\$\s*\d+.*$/,'');
+  s=s.replace(/\bUSD\s*\d+.*$/,'');
+  // normalizar GB/TB → numero solo
+  s=s.replace(/(\d+)\s*TB/g,(m,p)=>String(parseInt(p)*1024));
+  s=s.replace(/(\d+)\s*GB/g,'$1');
+  s=s.replace(/\bMB\b/g,' ');
   // separar combinaciones RAM/Storage: 4/128, 4+4/64, 4+128
   s=s.replace(/(\d+)[+](\d+)[\/](\d+)/g,'$1 $2 $3');
   s=s.replace(/(\d+)[\/](\d+)/g,'$1 $2');
   s=s.replace(/(\d+)[+](\d+)/g,'$1 $2');
+  // quitar separadores
   s=s.replace(/\s+[-–—]\s+/g,' ');
   s=s.replace(/[^A-Z0-9\s]/g,' ');
-  // identificar storage (potencias de 2 >= 32)
+  // identificar storage principal
   const STORAGE=new Set([32,64,128,256,512,1024,2048]);
   const nums=(s.match(/\d+/g)||[]).map(Number);
-  const mainStorage=Math.max(0,...nums.filter(x=>STORAGE.has(x)));
-  // quitar todos los numeros del texto
-  s=s.replace(/\b\d+\b/g,' ').replace(/\s+/g,' ').trim();
-  // reconstruir: texto + storage principal
+  const storageNums=nums.filter(x=>STORAGE.has(x));
+  const mainStorage=storageNums.length>0?Math.max(...storageNums):0;
+  // quitar numeros de RAM solos (<=16, no pegados a letra como A16, G06)
+  s=s.replace(/(?<![A-Z0-9])\b([2346]|8|12|16)\b(?![A-Z0-9])/g,' ');
+  // quitar storage (agregamos normalizado)
+  STORAGE.forEach(n=>{ s=s.replace(new RegExp('(?<![A-Z0-9])\\b'+n+'\\b(?![A-Z0-9])','g'),' '); });
+  // GALAXY y MOTO son redundantes con SAMSUNG/MOTOROLA → quitar para mejor match
+  s=s.replace(/\bGALAXY\b/g,' ').replace(/\bMOTO\b/g,' ');
+  s=s.replace(/\s+/g,' ').trim();
   return (s+(mainStorage>0?' '+mainStorage:'')).replace(/\s+/g,' ').trim();
 }
+
 function detectBrand(n){
   const u=(n||'').toUpperCase();
   if(u.includes('SAMSUNG')||u.includes('GALAXY'))return 'Samsung';
@@ -1005,4 +1020,3 @@ loadAll();
 </script>
 </body>
 </html>
-  
