@@ -154,6 +154,31 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
 .debt-chip{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:13px;font-weight:500;color:var(--muted);cursor:pointer}
 .debt-chip.active{background:var(--red);color:#fff;border-color:var(--red)}
 .empty{text-align:center;padding:32px;color:var(--muted);font-size:14px}
+.oport-card{background:var(--surface);border:1px solid #F0997B;border-left:3px solid var(--red);border-radius:10px;padding:13px 14px;margin-bottom:7px}
+.oport-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+.oport-name{font-size:15px;font-weight:500;line-height:1.3;flex:1}
+.oport-badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--red-bg);color:var(--red-dark);white-space:nowrap}
+.oport-table{width:100%;border-collapse:collapse;font-size:14px}
+.oport-table tr{border-top:1px solid var(--border)}
+.oport-table tr:first-child{border-top:none}
+.oport-table td{padding:6px 4px;vertical-align:middle}
+.oport-prov{color:var(--muted);min-width:130px}
+.oport-price{font-weight:600;white-space:nowrap}
+.oport-price.cheaper{color:var(--red-dark)}
+.oport-price.ws{color:var(--blue)}
+.oport-diff{font-size:12px;color:var(--red-dark);font-weight:600;background:var(--red-bg);padding:2px 7px;border-radius:10px;margin-left:6px}
+.vip-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 14px;margin-bottom:7px}
+.vip-name{font-size:15px;font-weight:500;margin-bottom:8px}
+.vip-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--border);font-size:14px}
+.vip-row:first-of-type{border-top:none}
+.vip-prov{color:var(--muted)}
+.vip-price{font-weight:600}
+.vip-price.vip-win{color:var(--green-dark)}
+.vip-price.vip-lose{color:var(--red-dark)}
+.vip-price.vip-same{color:var(--muted)}
+.vip-tag{font-size:11px;padding:2px 7px;border-radius:10px;margin-left:5px;font-weight:600}
+.vip-tag.cheaper{background:var(--red-bg);color:var(--red-dark)}
+.vip-tag.pricier{background:var(--green-bg);color:var(--green-dark)}
 .footer{text-align:center;padding:14px;font-size:11px;color:var(--hint)}
 @media(max-width:480px){
   .stats{grid-template-columns:repeat(2,1fr)}
@@ -731,15 +756,25 @@ function buildTabs(){
   const lowCount=allProducts.filter(p=>p.wsStock>0&&p.wsStock<STOCK_ALERT).length;
   mk('Comparativa','comparativa',allProducts.length);
   if(lowCount>0) mk('⚠ Stock bajo','stockbajo',lowCount,'t-alert');
+  // Contar oportunidades: proveedores más baratos que WS-COSTOS
+  const oportunidades=allProducts.filter(p=>{
+    if(!p.wsCost) return false;
+    return p.prices.some(e=>!e.isWS&&e.price<p.wsCost-0.5);
+  });
+  if(oportunidades.length>0) mk('🔴 Oportunidad','oportunidad',oportunidades.length,'t-red');
+  // Solapa VIP: todos los productos del VIP con comparativa de precios
+  const vipProds=allProducts.filter(p=>p.wsVip);
+  if(vipProds.length>0) mk('💛 VIP vs Mercado','vip',vipProds.length);
   SHEETS.forEach(sh=>{if(sheetRaw[sh.name]&&sheetRaw[sh.name].length>0) mk(sh.name,sh.name,sheetRaw[sh.name].length);});
 }
 
 function setTab(tab){
   activeTab=tab;
   document.querySelectorAll('#tabsHdr .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  const hideControls=['stockbajo','oportunidad','vip'];
   document.getElementById('sf').style.display=tab==='comparativa'?'':'none';
   document.getElementById('wf').style.display=tab==='comparativa'?'':'none';
-  document.getElementById('ctrlRow').style.display=tab==='stockbajo'?'none':'flex';
+  document.getElementById('ctrlRow').style.display=hideControls.includes(tab)?'none':'flex';
   render();
 }
 
@@ -804,6 +839,8 @@ function render(){
   if(!filtered.length){body.innerHTML='<div class="empty">Sin resultados</div>';return;}
   if(activeTab==='comparativa') renderComparativa(filtered,body);
   else if(activeTab==='stockbajo') renderStockBajo(filtered,body);
+  else if(activeTab==='oportunidad') renderOportunidad(body);
+  else if(activeTab==='vip') renderVIP(body);
   else renderProveedor(filtered,body);
 }
 
@@ -899,6 +936,81 @@ function renderProveedor(items,body){
       h+=`<div class="prov-item${isLow?' item-low':''}"><div><div class="pi-name">${p.name}</div>${colorStr}</div><div class="pi-right">${stockBdg}<div class="pi-price">u$${p.price.toFixed(0)}</div></div></div>`;
     });
     h+=`</div></div>`;
+  });
+  body.innerHTML=h;
+}
+
+function renderOportunidad(body){
+  // Productos donde algún proveedor externo es más barato que WS-COSTOS
+  const items=allProducts.filter(p=>{
+    if(!p.wsCost) return false;
+    return p.prices.some(e=>!e.isWS&&e.price<p.wsCost-0.5);
+  }).sort((a,b)=>{
+    const diffA=Math.min(...a.prices.filter(e=>!e.isWS).map(e=>e.price))-a.wsCost;
+    const diffB=Math.min(...b.prices.filter(e=>!e.isWS).map(e=>e.price))-b.wsCost;
+    return diffA-diffB; // mayor diferencia primero (más negativo = más barato)
+  });
+  if(!items.length){body.innerHTML='<div class="empty">No hay proveedores más baratos que tu costo actual</div>';return;}
+  let h=`<div style="font-size:13px;color:var(--red-dark);padding:6px 4px 10px;font-weight:500">🔴 ${items.length} producto${items.length>1?'s donde':' donde'} hay proveedor más barato que tu costo WS</div>`;
+  items.forEach(p=>{
+    const externos=[...p.prices].filter(e=>!e.isWS).sort((a,b)=>a.price-b.price);
+    const minExt=externos.length?externos[0].price:null;
+    const diff=minExt?minExt-p.wsCost:0; // negativo = proveedor más barato
+    const rows=externos.map(e=>{
+      const isCheaper=e.price<p.wsCost-0.5;
+      const diffVal=e.price-p.wsCost;
+      const diffTag=isCheaper?`<span class="oport-diff">${diffVal.toFixed(0)}</span>`:'';
+      const priceClass=isCheaper?'cheaper':'';
+      return `<tr>
+        <td class="oport-prov">${e.prov}</td>
+        <td class="oport-price ${priceClass}">u$${e.price.toFixed(0)}${diffTag}</td>
+        <td style="font-size:12px;color:var(--hint)">${e.color||''}</td>
+      </tr>`;
+    }).join('');
+    const wsCostRow=`<tr><td class="oport-prov" style="color:var(--blue);font-weight:500">WS Costo</td><td class="oport-price ws">u$${p.wsCost.toFixed(0)}</td><td></td></tr>`;
+    const sellTag=activeMargin>0?` · Venta u$${Math.round(p.wsCost*(1+activeMargin/100))} (+${activeMargin}%)`:'';
+    h+=`<div class="oport-card">
+      <div class="oport-header">
+        <div class="oport-name">${p.name}</div>
+        <span class="oport-badge">${diff.toFixed(0)} u$</span>
+      </div>
+      <table class="oport-table">${wsCostRow}${rows}</table>
+    </div>`;
+  });
+  body.innerHTML=h;
+}
+
+function renderVIP(body){
+  // Productos del listado VIP con comparativa contra todos los proveedores
+  const items=allProducts.filter(p=>p.wsVip)
+    .sort((a,b)=>a.brand.localeCompare(b.brand)||a.name.localeCompare(b.name));
+  if(!items.length){body.innerHTML='<div class="empty">No hay productos en el listado VIP</div>';return;}
+  let h=`<div style="font-size:13px;color:var(--muted);padding:6px 4px 10px">💛 Listado VIP vs todos los proveedores — verde = VIP más caro que competencia, rojo = competencia más barata</div>`;
+  items.forEach(p=>{
+    const externos=[...p.prices].filter(e=>!e.isWS).sort((a,b)=>a.price-b.price);
+    const minExt=externos.length?externos[0].price:Infinity;
+    const vipIsWin=p.wsVip<=minExt+0.5;
+    const rows=externos.map(e=>{
+      const isCheaper=e.price<p.wsVip-0.5;
+      const priceClass=isCheaper?'vip-lose':'vip-win';
+      const tag=isCheaper
+        ?`<span class="vip-tag cheaper">-u$${(p.wsVip-e.price).toFixed(0)}</span>`
+        :`<span class="vip-tag pricier">+u$${(e.price-p.wsVip).toFixed(0)}</span>`;
+      return `<div class="vip-row">
+        <span class="vip-prov">${e.prov}${e.color?' · '+e.color:''}</span>
+        <span class="vip-price ${priceClass}">u$${e.price.toFixed(0)}${tag}</span>
+      </div>`;
+    }).join('');
+    const costRow=p.wsCost?`<div class="vip-row"><span class="vip-prov" style="color:var(--blue)">WS Costo</span><span class="vip-price vip-same">u$${p.wsCost.toFixed(0)}</span></div>`:'';
+    const borderColor=vipIsWin?'var(--green)':'var(--red)';
+    h+=`<div class="vip-card" style="border-left:3px solid ${borderColor}">
+      <div class="vip-name">${p.name}
+        <span style="font-size:13px;font-weight:700;color:var(--amber-dark);margin-left:8px">VIP u$${p.wsVip.toFixed(0)}</span>
+        ${activeMargin>0?`<span style="font-size:11px;color:var(--blue);background:var(--blue-bg);padding:2px 6px;border-radius:8px;margin-left:4px">Venta u$${Math.round(p.wsVip*(1+activeMargin/100))}</span>`:''}
+      </div>
+      ${costRow}
+      ${rows}
+    </div>`;
   });
   body.innerHTML=h;
 }
