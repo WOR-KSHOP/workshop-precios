@@ -833,14 +833,15 @@ function getFiltered(){
 }
 
 function render(){
+  const body=document.getElementById('tabBody');
+  // solapas especiales: no usan getFiltered()
+  if(activeTab==='oportunidad'){document.getElementById('rc').textContent='';renderOportunidad(body);return;}
+  if(activeTab==='vip'){document.getElementById('rc').textContent='';renderVIP(body);return;}
+  if(activeTab==='stockbajo'){document.getElementById('rc').textContent='';renderStockBajo(body);return;}
   const filtered=getFiltered();
   document.getElementById('rc').textContent=`${filtered.length} productos`;
-  const body=document.getElementById('tabBody');
   if(!filtered.length){body.innerHTML='<div class="empty">Sin resultados</div>';return;}
   if(activeTab==='comparativa') renderComparativa(filtered,body);
-  else if(activeTab==='stockbajo') renderStockBajo(filtered,body);
-  else if(activeTab==='oportunidad') renderOportunidad(body);
-  else if(activeTab==='vip') renderVIP(body);
   else renderProveedor(filtered,body);
 }
 
@@ -885,7 +886,8 @@ function buildCard(p){
   return `<div class="${cls}" id="${cardId}"><div class="card-top"><div class="prod-name">${p.name}</div><div class="badges">${b}</div></div><table class="pt">${rows}</table><button class="copy-btn" onclick="copyCard('${cardId}','${copyText.replace(/'/g,"\\'")}')">📋 Copiar</button></div>`;
 }
 
-function renderStockBajo(items,body){
+function renderStockBajo(body){
+  const items=allProducts.filter(p=>p.wsStock>0&&p.wsStock<STOCK_ALERT);
   const sorted=[...items].sort((a,b)=>a.wsStock-b.wsStock);
   let h=`<div style="font-size:13px;color:var(--orange);padding:6px 4px 10px;font-weight:500">⚠ ${sorted.length} producto${sorted.length>1?'s':''} con menos de ${STOCK_ALERT} unidades</div>`;
   sorted.forEach(p=>{
