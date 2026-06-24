@@ -143,6 +143,7 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
 .obs-hablarle{background:#DCFCE7;color:#166534}
 .obs-comunicado{background:var(--amber-bg);color:var(--amber-dark)}
 .obs-default{background:var(--bg);color:var(--hint);border:1px solid var(--border)}
+.obs-solucionado{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}
 .cc-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
 .cc-amount{font-size:17px;font-weight:700;white-space:nowrap}
 .cc-amount.a-debe{color:var(--red-dark)}
@@ -1052,17 +1053,35 @@ async function loadCC(){
 function parseCC(text){
   const lines=text.split('\n').map(l=>l.replace(/^"+|"+$/g,'').replace(/\r/g,'').trim()).filter(l=>l);
   ccData=[];
-  const SKIP=['cliente','clientes','nombre','deuda','saldo','balance'];
+  // Palabras a ignorar en col A (headers y separadores)
+  const SKIP_WORDS=['cliente','clientes','nombre','deuda','saldo','balance','observaciones','proveedores','proveedor'];
+  // Ignorar filas donde col A es un número solo o muy corta
   lines.forEach(line=>{
     const cols=splitCSV(line);
     const colA=(cols[0]||'').trim();
     const colB=(cols[1]||'').trim();
     const colC=(cols[2]||'').trim();
     if(!colA||colA.length<2) return;
-    if(SKIP.includes(colA.toLowerCase())) return;
-    const saldo=parseFloat(colB.replace(/[u\$\s]/gi,'').replace(',','.'));
+    // saltar si col A es solo número (residuo de numeración)
+    if(/^\d+$/.test(colA)) return;
+    // saltar headers conocidos
+    if(SKIP_WORDS.includes(colA.toLowerCase())) return;
+    // saltar si col B no tiene número (es header o vacío)
+    if(!colB||!/\d/.test(colB)) return;
+    // parsear monto: soporta $197.00, $1,898.00, u$197, 197.00
+    // formato: puede tener $ o u$ al inicio, comas de miles, punto decimal
+    let rawMonto=colB.replace(/[u\$\s]/gi,'').trim();
+    // si tiene coma Y punto: coma = miles, punto = decimal → quitar coma
+    // si tiene solo coma: puede ser decimal estilo AR → reemplazar por punto
+    if(rawMonto.includes(',')&&rawMonto.includes('.')){
+      rawMonto=rawMonto.replace(/,/g,''); // quitar coma de miles
+    } else if(rawMonto.includes(',')&&!rawMonto.includes('.')){
+      rawMonto=rawMonto.replace(',','.'); // coma como decimal
+    }
+    const saldo=parseFloat(rawMonto);
     if(isNaN(saldo)) return;
-    const obs=colC.replace(/[▾▼]/g,'').trim();
+    // limpiar observación: quitar caracteres de dropdown de Sheets
+    const obs=colC.replace(/[▾▼►◄]/g,'').trim();
     ccData.push({nombre:colA,saldo,obs});
   });
   if(!ccData.length){
@@ -1087,8 +1106,8 @@ function renderCCStats(){
   document.getElementById('ccTotalFavor').textContent=totalFavor>0?'u$'+Math.round(totalFavor).toLocaleString('es-AR'):'u$0';
   document.getElementById('ccN0').textContent=ccData.length;
   document.getElementById('ccN1').textContent=deben.length;
-  document.getElementById('ccN2').textContent=ccData.filter(c=>c.obs.toLowerCase().includes('hablarle')).length;
-  document.getElementById('ccN3').textContent=ccData.filter(c=>c.obs.toLowerCase().includes('comunicado')).length;
+  document.getElementById('ccN2').textContent=ccData.filter(c=>/hablarle|sin respu/i.test(c.obs)).length;
+  document.getElementById('ccN3').textContent=ccData.filter(c=>/comunicado/i.test(c.obs)).length;
   document.getElementById('ccN4').textContent=favor.length;
 }
 
@@ -1104,8 +1123,8 @@ function renderCC(){
   let items=[...ccData];
   if(ccTab==='deben') items=items.filter(c=>c.saldo>0);
   else if(ccTab==='favor') items=items.filter(c=>c.saldo<0);
-  else if(ccTab==='hablarle') items=items.filter(c=>c.obs.toLowerCase().includes('hablarle'));
-  else if(ccTab==='comunicado') items=items.filter(c=>c.obs.toLowerCase().includes('comunicado'));
+  else if(ccTab==='hablarle') items=items.filter(c=>/hablarle|sin respu/i.test(c.obs));
+  else if(ccTab==='comunicado') items=items.filter(c=>/comunicado/i.test(c.obs));
   if(debtMin>0) items=items.filter(c=>Math.abs(c.saldo)>=debtMin);
   if(q) items=items.filter(c=>c.nombre.toLowerCase().includes(q));
   if(sort==='desc') items.sort((a,b)=>b.saldo-a.saldo);
@@ -1120,7 +1139,9 @@ function renderCC(){
     let obsBadge='';
     if(c.obs){
       const obsL=c.obs.toLowerCase();
-      const obsCls=obsL.includes('hablarle')?'obs-hablarle':obsL.includes('comunicado')?'obs-comunicado':'obs-default';
+      const obsCls=obsL.includes('hablarle')||obsL.includes('sin respu')?'obs-hablarle':
+                   obsL.includes('comunicado')?'obs-comunicado':
+                   obsL.includes('solucion')?'obs-solucionado':'obs-default';
       obsBadge=`<span class="cc-obs ${obsCls}">${c.obs}</span>`;
     }
     h+=`<div class="cc-card ${debe?'c-debe':'c-favor'}"><div class="cc-left"><div class="cc-name">${c.nombre}</div>${obsBadge}</div><div class="cc-right"><div class="cc-amount ${debe?'a-debe':'a-favor'}">u$${Math.abs(c.saldo).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div><div class="cc-label">${debe?'nos debe':'a favor'}</div></div></div>`;
