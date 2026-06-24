@@ -411,24 +411,28 @@ const COLOR_WORDS=new Set(['BLACK','WHITE','BLUE','GREEN','GRAY','GREY','SILVER'
 function stripColors(name){const parts=name.toUpperCase().split(/\s+/);while(parts.length>1&&COLOR_WORDS.has(parts[parts.length-1]))parts.pop();return name.split(/\s+/).slice(0,parts.length).join(' ').trim();}
 
 function parseSheetWSCostos(lines,sh,map){
-  lines.forEach(raw=>{
-    const line=raw.replace(/^"+|"+$/g,'').replace(/\r/g,'').trim();
-    if(!line||/^(producto|disponible|valor)/i.test(line)) return;
-    // quitar '::' del inicio en vez de saltarlo
-    line=line.replace(/^::+\s*/,'');
-    if(!line) return;
-    const tokens=line.split(/\s+/);
-    if(tokens.length<3) return;
-    const priceTok=tokens[tokens.length-1];
-    const stockTok=tokens[tokens.length-2];
-    const price=parseFloat(priceTok.replace(',','.'));
-    const stock=Math.round(parseFloat(stockTok.replace(',','.')));
-    if(isNaN(price)||price<=0||isNaN(stock)) return;
-    // nombre: todos menos los ultimos 2 tokens, limpiando " - IMPORTADO" etc
-    let name=tokens.slice(0,tokens.length-2).join(' ')
-      .replace(/\s*-\s*(IMPORTADO|NACIONAL|S\/CARG|C\/CARG|SLIM)\s*$/i,'').trim();
+  // WS-COSTOS tiene 3 columnas: A=Producto, B=Disponible, C=Valor
+  lines.forEach(function(raw){
+    if(!raw||!raw.trim()) return;
+    var cols=splitCSV(raw.replace(/\r/g,''));
+    var colA=(cols[0]||'').replace(/^"+|"+$/g,'').trim();
+    var colB=(cols[1]||'').replace(/^"+|"+$/g,'').trim();
+    var colC=(cols[2]||'').replace(/^"+|"+$/g,'').trim();
+    if(!colA||colA.length<3) return;
+    if(/^(producto|disponible|valor)/i.test(colA)) return;
+    // quitar '::' del inicio
+    var name=colA.replace(/^::+\s*/,'').trim();
+    if(!name||name.length<3) return;
+    // precio en col C, stock en col B
+    var price=parseFloat((colC||'').replace(',','.'));
+    var stock=Math.round(parseFloat((colB||'0').replace(',','.')));
+    if(isNaN(price)||price<=0) return;
+    if(isNaN(stock)) stock=0;
+    // limpiar nombre
+    name=name.replace(/\s*-\s*(IMPORTADO|NACIONAL|S\/CARG|C\/CARG|SLIM|CAJA SLIM)\s*$/i,'').trim();
     name=stripColors(name);
-    addProduct(map,sheetRaw,sh,name,price,stock,'');
+    if(!name||name.length<3) return;
+    addProduct(map,sheetRaw,sh,name,price,stock>0?stock:0,'');
   });
 }
 
