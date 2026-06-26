@@ -343,37 +343,59 @@ var STORAGE_SET=[32,64,128,256,512,1024,2048];
 var RAM_SET=[2,3,4,6,8,12,16,24];
 function nkey(n){
   var s=(n||'').toUpperCase().replace(/\r/g,'');
-  // quitar ruido
+  // quitar ruido textual
   s=s.replace(/\b(SIN CARGADOR|CON CARGADOR|S\/CARGADOR|C\/CARGADOR|SCARG|CCARG|SIN CARG|CON CARG|C CARG|S CARG|IMPORTADO|NACIONAL|SLIM|GARANTIA|GTIA|ESIM|E-SIM|NFC|WIFI|DUAL SIM)\b/g,' ');
-  s=s.replace(/\b(BLACK|WHITE|BLUE|GREEN|GRAY|GREY|SILVER|GOLD|PURPLE|PINK|RED|ORANGE|YELLOW|BROWN|LAVENDER|NAVY|TEAL|VIOLET|GRAPHITE|CHARCOAL|ARCTIC|MIDNIGHT|NATURAL|JADE|MOCHA|SHADOW|CELESTIAL|ALASKAN|EVENING|DORADO|NEGRO|BLANCO|AZUL|VERDE|GRIS|PLATA|MORADO|ROSA|ROJO|SKYBLUE|KHAKI|OLIVE|TITANIUM|SAGE|SPELLBOUND|COSMIC|ESMERALDA|CEREZO|CELESTE|LILA|GRIS|LIMA)\b/g,' ');
+  s=s.replace(/\b(BLACK|WHITE|BLUE|GREEN|GRAY|GREY|SILVER|GOLD|PURPLE|PINK|RED|ORANGE|YELLOW|BROWN|LAVENDER|NAVY|TEAL|VIOLET|GRAPHITE|CHARCOAL|ARCTIC|MIDNIGHT|NATURAL|JADE|MOCHA|SHADOW|CELESTIAL|ALASKAN|EVENING|DORADO|NEGRO|BLANCO|AZUL|VERDE|GRIS|PLATA|MORADO|ROSA|ROJO|SKYBLUE|KHAKI|OLIVE|TITANIUM|SAGE|SPELLBOUND|COSMIC|ESMERALDA|CEREZO|CELESTE|LILA|LIMA)\b/g,' ');
   s=s.replace(/\b(4G|5G|3G|LTE|SG|GLOBAL|US|BR|EU|DS|SS)\b/g,' ');
   s=s.replace(/\bRAM\b|\bCON SIM\b|\bSIM CARD\b/g,' ');
   // quitar precio si aparece en el nombre
   s=s.replace(/[-\u2013\u2014]\s*[\d,\.]+\s*USD.*/gi,'');
   s=s.replace(/\bUSD\s*[\d,\.]+.*/gi,'');
-  // normalizar GB/TB
+  // normalizar TB a GB
   s=s.replace(/(\d+)\s*TB/g,function(m,p){return String(parseInt(p)*1024);});
   s=s.replace(/(\d+)\s*GB/g,'$1');
   s=s.replace(/\bMB\b/g,' ');
-  // separar RAM/Storage
+  // separar RAM/Storage combinados: 4/128, 8/256, 4+128, etc
   s=s.replace(/(\d+)[+](\d+)[\/](\d+)/g,function(m,a,b,c){return b+' '+c;});
   s=s.replace(/(\d+)[\/](\d+)/g,function(m,a,b){return a+' '+b;});
   s=s.replace(/(\d+)[+](\d+)/g,function(m,a,b){return a+' '+b;});
   s=s.replace(/[^A-Z0-9\s]/g,' ');
-  // extraer RAM y Storage
-  var nums=(s.match(/\d+/g)||[]).map(Number);
-  var storageNums=nums.filter(function(x){for(var i=0;i<STORAGE_SET.length;i++)if(STORAGE_SET[i]===x)return true;return false;});
-  var ramNums=nums.filter(function(x){
-    var inSt=false;for(var i=0;i<STORAGE_SET.length;i++)if(STORAGE_SET[i]===x){inSt=true;break;}
-    if(inSt)return false;
-    for(var j=0;j<RAM_SET.length;j++)if(RAM_SET[j]===x)return true;
-    return false;
+  // Extraer storage y RAM
+  // IMPORTANTE: un numero solo <=24 es RAM SOLO SI viene despues de un storage
+  // Los numeros de modelo (13, 14, 15, 17, etc.) van PEGADOS a palabras (Note 13, Redmi 15)
+  // Estrategia: separar tokens, identificar cuales son numeros "solos" vs parte del modelo
+  var tokens=s.split(/\s+/).filter(function(t){return t&&t.length>0;});
+  var STORAGE_SET_L=[32,64,128,256,512,1024,2048];
+  var RAM_SET_L=[2,3,4,6,8,12,16,24];
+  var mainStorage=0,mainRam=0;
+  var cleanTokens=[];
+  var storageFound=false;
+  tokens.forEach(function(t,i){
+    var num=parseInt(t);
+    if(!/^\d+$/.test(t)){cleanTokens.push(t);return;}
+    // es un numero puro
+    // es storage?
+    var isSt=false;for(var x=0;x<STORAGE_SET_L.length;x++)if(STORAGE_SET_L[x]===num){isSt=true;break;}
+    if(isSt){if(num>mainStorage)mainStorage=num;return;} // quitar del nombre
+    // es RAM solo si hay un storage ya encontrado o si el siguiente token es storage
+    var isRam=false;
+    for(var y=0;y<RAM_SET_L.length;y++)if(RAM_SET_L[y]===num){isRam=true;break;}
+    if(isRam){
+      // solo considerarlo RAM si hay storage antes o despues
+      var hasStorageBefore=mainStorage>0;
+      var hasStorageAfter=false;
+      for(var z=i+1;z<tokens.length;z++){
+        var n2=parseInt(tokens[z]);
+        if(/^\d+$/.test(tokens[z])){for(var w=0;w<STORAGE_SET_L.length;w++)if(STORAGE_SET_L[w]===n2){hasStorageAfter=true;break;}}
+        if(hasStorageAfter)break;
+      }
+      if(hasStorageBefore||hasStorageAfter){if(num>mainRam)mainRam=num;return;}
+      // si no hay storage, es numero de modelo → preservar
+    }
+    // numero de modelo o desconocido → preservar en el nombre
+    cleanTokens.push(t);
   });
-  var mainStorage=storageNums.length>0?Math.max.apply(null,storageNums):0;
-  var mainRam=ramNums.length>0?Math.max.apply(null,ramNums):0;
-  // quitar todos los numeros del texto
-  var tokens=s.split(/\s+/).filter(function(t){return t&&!/^\d+$/.test(t);});
-  s=tokens.join(' ');
+  s=cleanTokens.join(' ');
   s=s.replace(/\bGALAXY\b/g,' ').replace(/\bMOTO\b/g,' ');
   s=s.replace(/\s+/g,' ').trim();
   var suf='';
@@ -381,6 +403,7 @@ function nkey(n){
   if(mainStorage>0)suf+=' '+mainStorage;
   return(s+suf).replace(/\s+/g,' ').trim();
 }
+
 
 function addProduct(map,sh,name,price,stock,color){
   if(!name||name.length<2||!price||price<=0)return;
