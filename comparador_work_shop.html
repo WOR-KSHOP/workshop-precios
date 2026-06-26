@@ -157,6 +157,12 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
 .cc-stat.s-red{border-color:#F0997B;background:var(--red-bg)}
 .cc-stat.s-red .cc-stat-value{color:var(--red-dark)}
 .cc-stat.s-green{border-color:#5DCAA5;background:var(--green-bg)}
+.cc-stat.s-amber{border-color:#E8B84B;background:var(--amber-bg)}
+.cc-stat.s-amber .cc-stat-value{color:var(--amber-dark)}
+.ped-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:10px;padding:12px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ped-name{font-size:14px;font-weight:500}
+.ped-amount{font-size:17px;font-weight:700;color:var(--amber-dark);white-space:nowrap}
+.ped-label{font-size:11px;color:var(--hint)}
 .cc-stat.s-green .cc-stat-value{color:var(--green-dark)}
 .cc-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .cc-card.c-debe{border-left:3px solid var(--red)}
@@ -195,6 +201,7 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
   <div class="mod-nav">
     <button class="mod-btn active" id="mod-precios" onclick="setMod('precios')">&#x1F4B0; Precios</button>
     <button class="mod-btn" id="mod-cuentas" onclick="setMod('cuentas')">&#x1F4CB; Cuentas corrientes</button>
+    <button class="mod-btn" id="mod-pedidos" onclick="setMod('pedidos')">&#x1F4E6; Pedidos por salir</button>
   </div>
   <div id="modPrecios">
     <div id="loadDiv" class="loading-wrap"><div class="spinner"></div><p style="font-size:14px">Cargando precios...</p></div>
@@ -228,6 +235,30 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
       </div>
     </div>
   </div>
+  <div id="modPedidos" style="display:none">
+    <div id="pedLoadDiv" class="loading-wrap" style="display:none"><div class="spinner"></div><p style="font-size:14px">Cargando pedidos...</p></div>
+    <div id="pedContent" style="display:none">
+      <div class="cc-stats">
+        <div class="cc-stat s-amber"><div class="cc-stat-label">Total por retirar</div><div class="cc-stat-value" id="pedTotal">&#x2014;</div></div>
+        <div class="cc-stat"><div class="cc-stat-label">Pedidos</div><div class="cc-stat-value" id="pedCount">&#x2014;</div></div>
+        <div class="cc-stat"><div class="cc-stat-label">Promedio</div><div class="cc-stat-value" id="pedProm">&#x2014;</div></div>
+      </div>
+      <div class="tabs-wrap">
+        <div class="controls">
+          <div class="sw"><span class="sw-icon">&#x1F50D;</span><input type="text" id="pedQ" placeholder="Buscar cliente..." oninput="renderPed()" autocomplete="off"/></div>
+          <select id="pedSort" onchange="renderPed()">
+            <option value="desc">Mayor monto primero</option>
+            <option value="asc">Menor monto primero</option>
+            <option value="alpha">A-Z</option>
+          </select>
+          <div class="rcount" id="pedRc"></div>
+        </div>
+        <div class="tab-body" id="pedBody"></div>
+      </div>
+    </div>
+    <div id="pedErr" class="err-box" style="display:none"></div>
+  </div>
+
   <div id="modCuentas" style="display:none">
     <div id="ccLoadDiv" class="loading-wrap" style="display:none"><div class="spinner"></div><p style="font-size:14px">Cargando cuentas...</p></div>
     <div id="ccContent" style="display:none">
@@ -273,6 +304,8 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
 <script>
 var BASE='https://docs.google.com/spreadsheets/d/e/2PACX-1vRUE7lN4X9Y9TOU_5vKD8dBy5LYhPedJYvN_dLZ-RCMB0PXPROLJqcxuHO-Yb4CApk23NFD77Jf_8u8/pub?output=csv';
 var GID_CC='1313251460';
+var GID_PED='890878891'; // Reemplazar con el GID real de la hoja Pedidos
+var pedData=[];
 var STOCK_ALERT=10;
 
 // Sheets: WS-COSTOS y WS-VIP tienen su propio parser (3 col CSV)
@@ -584,10 +617,92 @@ function setMod(mod){
   document.querySelectorAll('.mod-btn').forEach(function(b){b.classList.toggle('active',b.id==='mod-'+mod);});
   document.getElementById('modPrecios').style.display=mod==='precios'?'block':'none';
   document.getElementById('modCuentas').style.display=mod==='cuentas'?'block':'none';
+  document.getElementById('modPedidos').style.display=mod==='pedidos'?'block':'none';
   if(mod==='cuentas'){document.getElementById('statusTxt').textContent='Cuentas corrientes';loadCC();}
+  else if(mod==='pedidos'){document.getElementById('statusTxt').textContent='Pedidos por salir';loadPed();}
   else document.getElementById('statusTxt').textContent=lastStatus||'Listo';
 }
-function onRefresh(){if(activeMod==='precios')loadAll();else loadCC();}
+function onRefresh(){if(activeMod==='precios')// ── PEDIDOS POR SALIR ──────────────────────────────────────
+function loadPed(){
+  document.getElementById('pedLoadDiv').style.display='block';
+  document.getElementById('pedContent').style.display='none';
+  document.getElementById('pedErr').style.display='none';
+  if(GID_PED==='PEDIDOS_GID'){
+    // Si no hay hoja configurada, mostrar mensaje
+    document.getElementById('pedLoadDiv').style.display='none';
+    document.getElementById('pedErr').style.display='block';
+    document.getElementById('pedErr').textContent='Hoja de pedidos no configurada. Creá una hoja llamada PEDIDOS en tu planilla con columnas: A=Cliente, B=Monto, C=Observaciones.';
+    return;
+  }
+  fetch(BASE.replace('output=csv','output=csv&gid='+GID_PED))
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
+    .then(function(text){parsePed(text);})
+    .catch(function(){
+      document.getElementById('pedLoadDiv').style.display='none';
+      document.getElementById('pedErr').style.display='block';
+      document.getElementById('pedErr').textContent='Error al cargar pedidos.';
+    });
+}
+
+function parsePed(text){
+  var lines=text.split('\n').map(function(l){return l.replace(/^"+|"+$/g,'').replace(/\r/g,'').trim();}).filter(function(l){return l;});
+  pedData=[];
+  var SKIP=['cliente','nombre','monto','total','pedido','observaciones'];
+  lines.forEach(function(line){
+    var cols=splitCSV(line);
+    var colA=(cols[0]||'').trim();
+    var colB=(cols[1]||'').trim();
+    var colC=(cols[2]||'').trim();
+    if(!colA||colA.length<2)return;
+    if(/^\d+$/.test(colA))return;
+    if(SKIP.indexOf(colA.toLowerCase())>=0)return;
+    if(!colB||!/\d/.test(colB))return;
+    var raw=colB.replace(/[u$\s]/gi,'').trim();
+    if(raw.indexOf(',')>=0&&raw.indexOf('.')>=0)raw=raw.replace(/,/g,'');
+    else if(raw.indexOf(',')>=0)raw=raw.replace(',','.');
+    var monto=parseFloat(raw);
+    if(isNaN(monto)||monto<=0)return;
+    var obs=colC.replace(/[\u25BE\u25BC]/g,'').trim();
+    pedData.push({nombre:colA,monto:monto,obs:obs});
+  });
+  if(!pedData.length){
+    document.getElementById('pedLoadDiv').style.display='none';
+    document.getElementById('pedErr').style.display='block';
+    document.getElementById('pedErr').textContent='No se encontraron pedidos pendientes.';
+    return;
+  }
+  // stats
+  var total=pedData.reduce(function(a,p){return a+p.monto;},0);
+  var prom=total/pedData.length;
+  document.getElementById('pedTotal').textContent='u$'+Math.round(total).toLocaleString('es-AR');
+  document.getElementById('pedCount').textContent=pedData.length;
+  document.getElementById('pedProm').textContent='u$'+Math.round(prom).toLocaleString('es-AR');
+  document.getElementById('pedLoadDiv').style.display='none';
+  document.getElementById('pedContent').style.display='block';
+  document.getElementById('statusTxt').textContent=pedData.length+' pedidos';
+  renderPed();
+}
+
+function renderPed(){
+  var q=(document.getElementById('pedQ').value||'').toLowerCase().trim();
+  var sort=document.getElementById('pedSort').value;
+  var items=[].concat(pedData);
+  if(q)items=items.filter(function(p){return p.nombre.toLowerCase().indexOf(q)>=0;});
+  if(sort==='desc')items.sort(function(a,b){return b.monto-a.monto;});
+  else if(sort==='asc')items.sort(function(a,b){return a.monto-b.monto;});
+  else items.sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
+  document.getElementById('pedRc').textContent=items.length+' pedidos';
+  var body=document.getElementById('pedBody');
+  if(!items.length){body.innerHTML='<div class="empty">Sin resultados</div>';return;}
+  var h='';
+  items.forEach(function(p){
+    var obs=p.obs?'<span class="cc-obs obs-default">'+p.obs+'</span>':'';
+    h+='<div class="ped-card"><div><div class="ped-name">'+p.nombre+'</div>'+obs+'</div><div style="text-align:right"><div class="ped-amount">u$'+p.monto.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})+'</div><div class="ped-label">por retirar</div></div></div>';
+  });
+  body.innerHTML=h;
+}
+
+loadAll();else loadCC();}
 
 function buildTabs(){
   var hdr=document.getElementById('tabsHdr');hdr.innerHTML='';
