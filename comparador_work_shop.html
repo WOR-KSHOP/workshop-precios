@@ -278,7 +278,7 @@ var STOCK_ALERT=10;
 // Sheets: WS-COSTOS y WS-VIP tienen su propio parser (3 col CSV)
 // Todos los demas usan el parser universal con formato estandarizado
 var SHEETS=[
-  {name:'WS-COSTOS',          gid:'1169477995', isWS:true,  wsType:'costo', parser:'wscostos'},
+  {name:'WS-COSTOS',          gid:'1169477995', isWS:true,  wsType:'costo', parser:'universal'},
   {name:'WS-VIP',             gid:'2103310165', isWS:true,  wsType:'vip',   parser:'wsvip'},
   {name:'GUILLE GAMES',       gid:'221847934',  isWS:false, parser:'universal'},
   {name:'URQUIZA',            gid:'1411427043', isWS:false, parser:'urquiza'},
@@ -525,9 +525,7 @@ function loadAll(){
         loadedCount++;
         sheetRaw[sh.name]=[];
         var lines=text.split('\n');
-        if(sh.parser==='wscostos'){parseWSCostos(lines,sh,map);}
-        else if(sh.parser==='wsvip'){parseWSVip(lines,sh,map);}
-        else if(sh.parser==='urquiza'){parseUrquiza(lines,sh,map);}
+        if(sh.parser==='urquiza'){parseUrquiza(lines,sh,map);}
         else{
           // parser universal para todos los demas
           lines.forEach(function(raw){
