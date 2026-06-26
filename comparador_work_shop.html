@@ -622,7 +622,13 @@ function setMod(mod){
   else if(mod==='pedidos'){document.getElementById('statusTxt').textContent='Pedidos por salir';loadPed();}
   else document.getElementById('statusTxt').textContent=lastStatus||'Listo';
 }
-function onRefresh(){if(activeMod==='precios')// ── PEDIDOS POR SALIR ──────────────────────────────────────
+function onRefresh(){
+  if(activeMod==='precios')loadAll();
+  else if(activeMod==='cuentas')loadCC();
+  else if(activeMod==='pedidos')loadPed();
+}
+
+// ── PEDIDOS POR SALIR ──────────────────────────────────────
 function loadPed(){
   document.getElementById('pedLoadDiv').style.display='block';
   document.getElementById('pedContent').style.display='none';
@@ -701,8 +707,6 @@ function renderPed(){
   });
   body.innerHTML=h;
 }
-
-loadAll();else loadCC();}
 
 function buildTabs(){
   var hdr=document.getElementById('tabsHdr');hdr.innerHTML='';
