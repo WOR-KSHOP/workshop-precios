@@ -190,6 +190,7 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
 .footer{text-align:center;padding:14px;font-size:11px;color:var(--hint)}
 @media(max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}.status{max-width:80px}.pt-note{display:none}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <header class="hdr">
@@ -232,6 +233,7 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
           <select id="sf" onchange="render()"><option value="all">Con y sin stock</option><option value="yes">Con stock WS</option><option value="no">Sin stock WS</option></select>
           <select id="wf" onchange="render()"><option value="all">Todos</option><option value="win">WS mejor precio</option><option value="lose">WS no es mejor</option></select>
           <div class="rcount" id="rc"></div>
+          <button id="btnExcel" onclick="exportExcel()" style="flex-shrink:0;padding:8px 13px;border-radius:8px;border:1px solid #5DCAA5;background:var(--green-bg);font-size:13px;font-weight:500;color:var(--green-dark);cursor:pointer;white-space:nowrap">&#x1F4CA; Exportar Excel</button>
         </div>
         <div class="tab-body" id="tabBody"></div>
       </div>
@@ -628,6 +630,113 @@ function onRefresh(){
   if(activeMod==='precios')loadAll();
   else if(activeMod==='cuentas')loadCC();
   else if(activeMod==='pedidos')loadPed();
+}
+
+// ── EXPORTAR EXCEL ──────────────────────────────────────
+function exportExcel(){
+  var btn=document.getElementById('btnExcel');
+  var orig=btn.innerHTML;
+  btn.innerHTML='&#x23F3; Generando...';btn.disabled=true;
+
+  // Colores por proveedor (índice)
+  var PROV_COLORS={
+    'WS Costo':'D6E4F0','WS VIP':'FFF9E6',
+    'GUILLE GAMES':'E8F5E9','URQUIZA':'FCE4EC',
+    'TRONADOR':'F3E5F5','LALO':'E3F2FD',
+    'MATIAS BELGRANO':'FFF3E0','GASTON TOMY':'E0F7FA',
+    'ALEJO':'F1F8E9','LUCHO PILAR':'FBE9E7',
+    'SERVICELL':'EDE7F6','MAZZEO':'E8EAF6',
+    'SEBASTIAN BELGRANO':'E0F2F1'
+  };
+
+  // Obtener productos filtrados según filtros actuales
+  var filtered=getFiltered();
+
+  // Construir filas del Excel
+  var rows=[];
+  var wsWins=0, wsLoses=0;
+
+  filtered.forEach(function(p){
+    var sorted=[].concat(p.prices).sort(function(a,b){return a.price-b.price;});
+    var minP=sorted[0].price;
+    var wsWin=p.wsCost&&Math.abs(p.wsCost-minP)<=0.05;
+    if(p.wsCost){wsWin?wsWins++:wsLoses++;}
+
+    // Una fila por proveedor de cada producto
+    sorted.forEach(function(e,i){
+      var prov=e.wsType==='costo'?'WS Costo':e.wsType==='vip'?'WS VIP':e.prov;
+      var esMejor=e.price===minP&&sorted.length>1;
+      var esWS=e.isWS&&e.wsType==='costo';
+      rows.push({
+        Producto: i===0?p.name:'',
+        Marca: i===0?p.brand:'',
+        'Stock WS': i===0?(p.wsStock>0?p.wsStock:'Sin stock'):'',
+        'Costo WS': i===0?(p.wsCost?'u$'+p.wsCost.toFixed(0):''):'',
+        'Precio VIP': i===0?(p.wsVip?'u$'+p.wsVip.toFixed(0):''):'',
+        Proveedor: prov,
+        'Precio USD': e.price,
+        Color: e.color||'',
+        Estado: esMejor?'MEJOR PRECIO':esWS?'WS':'',
+        _rowMeta:{
+          isFirst: i===0,
+          isWin: wsWin&&i===0,
+          isLose: !wsWin&&p.wsCost&&i===0,
+          isBest: esMejor,
+          isWS: esWS,
+          provColor: PROV_COLORS[prov]||'FFFFFF',
+          hasStock: p.wsStock>0,
+          productCount: sorted.length
+        }
+      });
+    });
+    // Separador entre productos
+    rows.push({Producto:'',Marca:'',_rowMeta:{isSep:true}});
+  });
+
+  // Crear workbook
+  var wb=XLSX.utils.book_new();
+
+  // Hoja 1: Comparativa completa
+  var wsData=[['Producto','Marca','Stock WS','Costo WS','Precio VIP','Proveedor','Precio USD','Color','Estado']];
+  rows.forEach(function(r){
+    if(r._rowMeta&&r._rowMeta.isSep){wsData.push(['','','','','','','','','']);return;}
+    wsData.push([r.Producto,r.Marca,r['Stock WS'],r['Costo WS'],r['Precio VIP'],r.Proveedor,r['Precio USD'],r.Color,r.Estado]);
+  });
+
+  var ws=XLSX.utils.aoa_to_sheet(wsData);
+
+  // Anchos de columna
+  ws['!cols']=[{wch:40},{wch:12},{wch:10},{wch:12},{wch:12},{wch:20},{wch:12},{wch:20},{wch:15}];
+
+  // Hoja 2: Resumen WS
+  var wsResumenData=[
+    ['RESUMEN WORK SHOP',''],
+    ['Total productos comparados', filtered.length],
+    ['WS mejor precio', wsWins],
+    ['WS no es mejor', wsLoses],
+    ['Stock WS (unidades)', filtered.reduce(function(a,p){return a+p.wsStock;},0)],
+    ['',''],
+    ['Fecha exportación', new Date().toLocaleDateString('es-AR')]
+  ];
+  var wsResumen=XLSX.utils.aoa_to_sheet(wsResumenData);
+  wsResumen['!cols']=[{wch:30},{wch:20}];
+
+  XLSX.utils.book_append_sheet(wb,ws,'Comparativa');
+  XLSX.utils.book_append_sheet(wb,wsResumen,'Resumen');
+
+  // Nombre del archivo con fecha
+  var hoy=new Date();
+  var fecha=hoy.getDate()+'.'+(hoy.getMonth()+1)+'.'+hoy.getFullYear();
+  var sf=document.getElementById('sf').value;
+  var sfLabel=sf==='yes'?'_con-stock':sf==='no'?'_sin-stock':'';
+  var brand=document.getElementById('bf').value;
+  var brandLabel=brand?'_'+brand.replace(/\s/g,'-'):'';
+  var filename='WorkShop_Comparativa'+brandLabel+sfLabel+'_'+fecha+'.xlsx';
+
+  XLSX.writeFile(wb,filename);
+
+  btn.innerHTML='&#x2705; Descargado!';
+  setTimeout(function(){btn.innerHTML=orig;btn.disabled=false;},2000);
 }
 
 // ── PEDIDOS POR SALIR ──────────────────────────────────────
