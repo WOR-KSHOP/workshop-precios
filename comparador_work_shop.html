@@ -163,6 +163,8 @@ select{padding:9px 26px 9px 10px;border:1px solid var(--border-strong);border-ra
 .ped-name{font-size:14px;font-weight:500}
 .ped-amount{font-size:17px;font-weight:700;color:var(--amber-dark);white-space:nowrap}
 .ped-label{font-size:11px;color:var(--hint)}
+.comp-btn{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:5px 11px;border-radius:20px;border:1px solid #B0CCE8;background:var(--blue-bg);font-size:12px;font-weight:500;color:var(--blue);text-decoration:none}
+.comp-btn:hover{background:var(--blue);color:#fff}
 .cc-stat.s-green .cc-stat-value{color:var(--green-dark)}
 .cc-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .cc-card.c-debe{border-left:3px solid var(--red)}
@@ -668,8 +670,11 @@ function parsePed(text){
     else if(raw.indexOf(',')>=0)raw=raw.replace(',','.');
     var monto=parseFloat(raw);
     if(isNaN(monto)||monto<=0)return;
-    var obs=colC.replace(/[\u25BE\u25BC]/g,'').trim();
-    pedData.push({nombre:colA,monto:monto,obs:obs});
+    // Columna C puede ser un link o una observacion
+    var link='';var obs='';
+    if(/^https?:\/\//i.test(colC)){link=colC.trim();}
+    else{obs=colC.replace(/[\u25BE\u25BC]/g,'').trim();}
+    pedData.push({nombre:colA,monto:monto,obs:obs,link:link});
   });
   if(!pedData.length){
     document.getElementById('pedLoadDiv').style.display='none';
@@ -703,7 +708,8 @@ function renderPed(){
   var h='';
   items.forEach(function(p){
     var obs=p.obs?'<span class="cc-obs obs-default">'+p.obs+'</span>':'';
-    h+='<div class="ped-card"><div><div class="ped-name">'+p.nombre+'</div>'+obs+'</div><div style="text-align:right"><div class="ped-amount">u$'+p.monto.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})+'</div><div class="ped-label">por retirar</div></div></div>';
+    var linkBtn=p.link?'<a class="comp-btn" href="'+p.link+'" target="_blank">&#x1F9FE; Ver comprobante</a>':'';
+    h+='<div class="ped-card"><div style="flex:1;min-width:0"><div class="ped-name">'+p.nombre+'</div>'+obs+linkBtn+'</div><div style="text-align:right;flex-shrink:0;margin-left:10px"><div class="ped-amount">u$'+p.monto.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0})+'</div><div class="ped-label">por retirar</div></div></div>';
   });
   body.innerHTML=h;
 }
