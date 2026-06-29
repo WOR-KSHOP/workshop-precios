@@ -110,8 +110,8 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 const SID="1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g";
 // parser: vertical=nombre/color/precio_colC | ws_costos=nombre/STOCK:X/precio_colC | inline=linea_unica_con_USD
 const SH=[
-  {n:"WORK SHOP",         g:"1169477995",ws:true, co:true, p:"ws_costos"},
-  {n:"WORK SHOP VIP",     g:"2103310165",ws:true, co:false,p:"vertical" },
+  {n:"COSTOS",            g:"1169477995",ws:true, co:true, p:"ws_costos"},
+  {n:"VIP",               g:"2103310165",ws:true, co:false,p:"vertical" },
   {n:"LALO",              g:"376933543", ws:false,co:false,p:"vertical" },
   {n:"GUILLE GAMES",      g:"221847934", ws:false,co:false,p:"vertical" },
   {n:"MATIAS BELGRANO",   g:"457070983", ws:false,co:false,p:"vertical" },
@@ -157,7 +157,15 @@ function findPrice(row){
   return null;
 }
 function isSt(s){return/^STOCK\s*[:\/]/i.test(s)||/^STOCK\s*\d/i.test(s)}
-function isHd(s){return/^(SAMSUNG|MOTOROLA|XIAOMI|IPHONE|INFINIX|NOKIA|PLAYSTATION|OTROS|TABLETS|CONSOLAS|RAM BOOST)$/i.test(s.trim())}
+function isHd(s){
+  if(!s)return false;
+  // Headers de marca
+  if(/^(SAMSUNG|MOTOROLA|XIAOMI|IPHONE|INFINIX|NOKIA|PLAYSTATION|OTROS|TABLETS|CONSOLAS|RAM BOOST|APPLE)$/i.test(s.trim()))return true;
+  // Frases descriptivas que no son nombres de producto
+  if(/^(SIN CARGADOR|CON CARGADOR|NACIONAL|IMPORTADO|SIN GARANTIA|CON GARANTIA)$/i.test(s.trim()))return true;
+  if(/^NACIONAL\s*[-–]/i.test(s.trim()))return true;
+  return false;
+}
 function exSt(s){const m=s.match(/\d+/);return m?parseInt(m[0]):null}
 function nn(s){return s.toUpperCase().trim().replace(/\s+/g," ").replace(/[""\'']/g,"")}
 // Un nombre válido: tiene letras, longitud razonable, no es solo número
@@ -229,8 +237,9 @@ async function fetchS(s){
     if(!r.ok)throw new Error("HTTP "+r.status);
     const t=await r.text();
     let pr=[];
-    if(s.p==="inline")pr=pInline(t);
-    else pr=pUniversal(t,true);
+    if(s.p==="inline")       pr=pInline(t);
+    else if(s.p==="ws_costos")pr=pWsCostos(t);
+    else                      pr=pVertical(t);
     return{s,pr,ok:true}
   }catch(e){return{s,pr:[],ok:false,err:e.message}}
 }
@@ -245,7 +254,7 @@ async function loadAll(){
   const provR=res.filter(r=>!r.s.ws);
   res.forEach(r=>{if(!r.ok)ERR.push(r.s.n+": "+r.err)});
   const map={};
-  wsP.forEach(p=>{if(!map[p.name])map[p.name]={name:p.name,color:p.color,prices:{},stocks:{}};map[p.name].prices["WORK SHOP"]=p.price;if(p.stock!==null)map[p.name].stocks["WORK SHOP"]=p.stock});
+  wsP.forEach(p=>{if(!map[p.name])map[p.name]={name:p.name,color:p.color,prices:{},stocks:{}};map[p.name].prices["COSTOS"]=p.price;if(p.stock!==null)map[p.name].stocks["COSTOS"]=p.stock});
   provR.forEach(r=>{r.pr.forEach(p=>{if(!map[p.name])map[p.name]={name:p.name,color:p.color,prices:{},stocks:{}};const ex=map[p.name].prices[r.s.n];if(ex===undefined||p.price<ex)map[p.name].prices[r.s.n]=p.price;if(p.stock!==null)map[p.name].stocks[r.s.n]=p.stock;if(!map[p.name].color&&p.color)map[p.name].color=p.color})});
   ALL=Object.values(map);
   updStats();buildTabs(res);render();
@@ -254,12 +263,12 @@ async function loadAll(){
   if(ERR.length){document.getElementById("eb").style.display="block";document.getElementById("eb").innerHTML="⚠️ No se pudieron leer: "+ERR.map(e=>e.split(":")[0]).join(", ")}
 }
 
-function best(p){const e=Object.entries(p.prices);if(!e.length)return{pr:"—",price:null,isWS:false,all:[]};let m=Infinity;e.forEach(([,v])=>{if(v<m)m=v});const w=e.filter(([,v])=>v===m).map(([k])=>k);return{price:m,pr:w.join(" / "),isWS:w.includes("WORK SHOP"),all:w}}
+function best(p){const e=Object.entries(p.prices);if(!e.length)return{pr:"—",price:null,isWS:false,all:[]};let m=Infinity;e.forEach(([,v])=>{if(v<m)m=v});const w=e.filter(([,v])=>v===m).map(([k])=>k);return{price:m,pr:w.join(" / "),isWS:w.includes("COSTOS"),all:w}}
 function fmt(p){return"u$"+(p*(1+MAR)).toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
 
 function updStats(){
   let ww=0;const pv=new Set();let ts=0;
-  ALL.forEach(p=>{Object.keys(p.prices).forEach(k=>{if(k!=="WORK SHOP")pv.add(k)});if(best(p).isWS)ww++;if(p.stocks["WORK SHOP"])ts+=p.stocks["WORK SHOP"]});
+  ALL.forEach(p=>{Object.keys(p.prices).forEach(k=>{if(k!=="COSTOS")pv.add(k)});if(best(p).isWS)ww++;if(p.stocks["COSTOS"])ts+=p.stocks["COSTOS"]});
   document.getElementById("sT").textContent=ALL.length;
   document.getElementById("sW").textContent=ww;
   document.getElementById("sPr").textContent=pv.size;
@@ -283,7 +292,7 @@ function render(){
   let f=ALL.filter(p=>{
     if(sr){const words=sr.split(/\s+/).filter(Boolean);if(!words.every(w=>p.name.toLowerCase().includes(w)))return false;}
     if(br&&!p.name.includes(br))return false;
-    const hw="WORK SHOP"in p.prices;
+    const hw="COSTOS"in p.prices;
     if(st==="yes"&&!hw)return false;if(st==="no"&&hw)return false;
     const b=best(p);
     if(wn==="ws"&&!b.isWS)return false;if(wn==="other"&&b.isWS)return false;
@@ -295,10 +304,10 @@ function render(){
   if(!f.length){document.getElementById("pList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';return}
   document.getElementById("pList").innerHTML=f.map(p=>{
     const b=best(p);
-    const lbl=b.isWS?"&#129001; WORK SHOP":"&#128308; "+b.pr;
-    const wsSt=p.stocks&&p.stocks["WORK SHOP"]?"STOCK: "+p.stocks["WORK SHOP"]:"";
+    const lbl=b.isWS?"&#129001; COSTOS":"&#128308; "+b.pr;
+    const wsSt=p.stocks&&p.stocks["COSTOS"]?"STOCK: "+p.stocks["COSTOS"]:"";
     const chips=Object.entries(p.prices).sort(([,a],[,b])=>a-b).map(([pv,pr])=>{
-      const iw=b.all.includes(pv);const iws=pv==="WORK SHOP";
+      const iw=b.all.includes(pv);const iws=pv==="COSTOS";
       const cls=iw?"ch win":(iws?"ch wsc":"ch");
       const stk=(iws&&wsSt)?'<span style="opacity:.6;font-size:10px;margin-left:3px">'+wsSt+"</span>":"";
       return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmt(pr)+"</span>"+stk+"</span>"
@@ -319,7 +328,7 @@ function cp(btn,txt){navigator.clipboard.writeText(txt).then(()=>{btn.classList.
 function exportXls(){
   const ps=SH.filter(s=>!s.ws);
   const rows=[["Producto","Color","Stock WS","Mejor Precio","Mejor Proveedor","Precio WS",...ps.map(s=>s.n)]];
-  ALL.forEach(p=>{const b=best(p);const st=p.stocks["WORK SHOP"]||"";rows.push([p.name,p.color,st,b.price||"",b.pr,p.prices["WORK SHOP"]||"",...ps.map(s=>p.prices[s.n]||"")])});
+  ALL.forEach(p=>{const b=best(p);const st=p.stocks["COSTOS"]||"";rows.push([p.name,p.color,st,b.price||"",b.pr,p.prices["COSTOS"]||"",...ps.map(s=>p.prices[s.n]||"")])});
   const csv=rows.map(r=>r.map(c=>'"'+c+'"').join(",")).join("\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}));a.download="comparador_"+new Date().toISOString().slice(0,10)+".csv";a.click()
 }
