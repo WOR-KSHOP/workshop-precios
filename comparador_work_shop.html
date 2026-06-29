@@ -129,56 +129,81 @@ let ALL=[],MAR=0,PRV="ALL",ERR=[];
 
 function csvR(l){const r=[];let c="",q=false;for(let i=0;i<l.length;i++){if(l[i]==='"'){q=!q}else if(l[i]===","&&!q){r.push(c);c=""}else c+=l[i]}r.push(c);return r}
 function cl(s){return(s||"").replace(/^["'\s]+|["'\s]+$/g,"").trim()}
-function toN(s){if(!s)return null;let c=s.replace(/[^0-9.,]/g,"");if(!c)return null;if(c.includes(",")&&c.includes(".")){c=c.lastIndexOf(",")>c.lastIndexOf(".")?c.replace(/\./g,"").replace(",","."):c.replace(/,/g,"")}else if(c.includes(",")){c=c.split(",").pop().length<=2?c.replace(",","."):c.replace(/,/g,"")}else if(c.includes(".")){if(c.split(".").pop().length>2)c=c.replace(/\./g,"")}const n=parseFloat(c);return isNaN(n)?null:n}
-function isP(s){if(!s)return false;const n=toN(s);return n!==null&&n>0&&/\d/.test(s)&&!/[a-zA-Z]{3,}/.test(s)}
+function toN(s){
+  if(!s)return null;
+  let c=s.replace(/[^0-9.,]/g,"");
+  if(!c)return null;
+  if(c.includes(",")&&c.includes(".")){c=c.lastIndexOf(",")>c.lastIndexOf(".")?c.replace(/\./g,"").replace(",","."):c.replace(/,/g,"")}
+  else if(c.includes(",")){c=c.split(",").pop().length<=2?c.replace(",","."):c.replace(/,/g,"")}
+  else if(c.includes(".")){if(c.split(".").pop().length>2)c=c.replace(/\./g,"")}
+  const n=parseFloat(c);return isNaN(n)?null:n
+}
+// Detecta si una celda contiene SOLO un precio (número con o sin $ al inicio)
+function isP(s){
+  if(!s)return false;
+  // Eliminar $ o u$ al inicio y espacios
+  const stripped=s.replace(/^[\$u\s]+/,"").trim();
+  if(!stripped)return false;
+  const n=toN(stripped);
+  // Debe ser número válido, positivo, sin letras largas
+  return n!==null&&n>0&&/^\$?[\d.,]+$/.test(s.trim().replace(/^u/,""));
+}
+// Busca precio en cualquier columna de la fila (A, B, C, D...)
+function findPrice(row){
+  for(let i=0;i<row.length;i++){
+    const v=cl(row[i]);
+    if(isP(v))return toN(v);
+  }
+  return null;
+}
 function isSt(s){return/^STOCK\s*[:\/]/i.test(s)||/^STOCK\s*\d/i.test(s)}
 function isHd(s){return/^(SAMSUNG|MOTOROLA|XIAOMI|IPHONE|INFINIX|NOKIA|PLAYSTATION|OTROS|TABLETS|CONSOLAS|RAM BOOST)$/i.test(s.trim())}
 function exSt(s){const m=s.match(/\d+/);return m?parseInt(m[0]):null}
 function nn(s){return s.toUpperCase().trim().replace(/\s+/g," ").replace(/[""\'']/g,"")}
+// Un nombre válido: tiene letras, longitud razonable, no es solo número
+function isNombre(s){return s&&s.length>3&&/[a-zA-Z]/.test(s)&&!isP(s)&&!isSt(s)&&!isHd(s)}
 
-// PARSER 1: formato vertical (nombre / color / precio en col C)
-function pVertical(csv){
-  const rows=csv.split("\n").map(r=>csvR(r));const out=[];let i=0;
+// PARSER UNIVERSAL: sirve para WS-COSTOS, WS-VIP y LUCHO PILAR
+// Busca el precio en CUALQUIER columna de cada fila
+// Acepta hasta 5 filas de texto (color, notas, etc.) antes del precio
+function pUniversal(csv, conStock){
+  const rows=csv.split("\n").map(r=>csvR(r));
+  const out=[];let i=0;
   while(i<rows.length){
     const a=cl(rows[i][0]);
+    // Saltar filas vacías, precios sueltos, STOCK lines, headers de sección
     if(!a||isP(a)||isSt(a)||isHd(a)){i++;continue}
-    const name=a;let color="",price=null,j=i+1;
-    while(j<rows.length&&j<i+7){
-      const rA=cl(rows[j][0]);const rC=cl(rows[j][2]||rows[j][1]||rows[j][0]||"");
-      if(isP(rA)){price=toN(rA);j++;break}
-      if(isP(rC)){price=toN(rC);if(!color&&rA&&!isP(rA)&&!isSt(rA))color=rA;j++;break}
-      if(!rA){j++;break}
-      if(isSt(rA)||isHd(rA)){break}
-      if(!color)color=rA;
+    // Si no parece nombre de producto, saltar
+    if(!isNombre(a)){i++;continue}
+    const name=a;
+    let stock=null,color="",price=null,j=i+1;
+    // Buscar dentro de las próximas 8 filas
+    while(j<rows.length&&j<i+8){
+      const rA=cl(rows[j][0]);
+      // ¿Fila vacía? terminar bloque
+      if(!rA&&!findPrice(rows[j])){j++;break}
+      // ¿STOCK line?
+      if(isSt(rA)){stock=exSt(rA);j++;continue}
+      // ¿Header de sección? terminar bloque
+      if(isHd(rA)){break}
+      // ¿Precio en alguna columna?
+      const p=findPrice(rows[j]);
+      if(p!==null){price=p;j++;break}
+      // Texto extra (color, nota) — guardar como color si no tenemos
+      if(rA&&!color)color=rA;
       j++
     }
-    if(price&&price>0)out.push({name:nn(name),color,price,stock:null});
+    if(price&&price>0)out.push({name:nn(name),color,price,stock});
     i=j
   }
   return out
 }
 
-// PARSER 2: WS Costos (nombre / STOCK:X / precio en col C)
-function pWsCostos(csv){
-  const rows=csv.split("\n").map(r=>csvR(r));const out=[];let i=0;
-  while(i<rows.length){
-    const a=cl(rows[i][0]);
-    if(!a||isP(a)||isHd(a)||isSt(a)){i++;continue}
-    const name=a;let stock=null,price=null,j=i+1;
-    while(j<rows.length&&j<i+7){
-      const rA=cl(rows[j][0]);const rC=cl(rows[j][2]||rows[j][1]||rows[j][0]||"");
-      if(isSt(rA)){stock=exSt(rA);j++;continue}
-      if(isP(rA)){price=toN(rA);j++;break}
-      if(isP(rC)){price=toN(rC);j++;break}
-      if(!rA){j++;break}
-      if(isHd(rA)){break}
-      j++
-    }
-    if(price&&price>0)out.push({name:nn(name),color:"",price,stock});
-    i=j
-  }
-  return out
-}
+// PARSER VERTICAL: para proveedores externos (mismo lógica, sin stock)
+function pVertical(csv){return pUniversal(csv,false)}
+
+// PARSER WS COSTOS: igual pero extrae stock
+function pWsCostos(csv){return pUniversal(csv,true)}
 
 // PARSER 3: Inline "Nombre – 103 USD – Stock: 30 – Color: Verde"
 function pInline(csv){
@@ -186,12 +211,12 @@ function pInline(csv){
   for(const row of rows){
     const line=row.map(c=>cl(c)).filter(Boolean).join(" ");
     if(!line)continue;
-    const pm=line.match(/[-–]\s*(\d[\d.,]*)\s*USD/i)||line.match(/(\d[\d.,]*)\s*USD/i);
+    const pm=line.match(/[-\u2013]\s*(\d[\d.,]*)\s*USD/i)||line.match(/(\d[\d.,]*)\s*USD/i);
     if(!pm)continue;
     const price=toN(pm[1]);if(!price||price<=0)continue;
-    let name=line.split(/\s*[-–]\s*/)[0].trim();if(!name)continue;
+    let name=line.split(/\s*[-\u2013]\s*/)[0].trim();if(!name)continue;
     const sm=line.match(/Stock[:\s]+(\d+)/i);const stock=sm?parseInt(sm[1]):null;
-    const cm=line.match(/Color[:\s]+([^-–]+)/i);const color=cm?cm[1].trim():"";
+    const cm=line.match(/Color[:\s]+([^\-\u2013]+)/i);const color=cm?cm[1].trim():"";
     out.push({name:nn(name),color,price,stock})
   }
   return out
@@ -205,8 +230,7 @@ async function fetchS(s){
     const t=await r.text();
     let pr=[];
     if(s.p==="inline")pr=pInline(t);
-    else if(s.p==="ws_costos")pr=pWsCostos(t);
-    else pr=pVertical(t);
+    else pr=pUniversal(t,true);
     return{s,pr,ok:true}
   }catch(e){return{s,pr:[],ok:false,err:e.message}}
 }
