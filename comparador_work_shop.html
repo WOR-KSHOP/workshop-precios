@@ -1,413 +1,310 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Work Shop — Comparador de Precios</title>
+<title>Work Shop - Comparador de Precios</title>
 <style>
-  :root {
-    --bg: #f7f8fa;
-    --surface: #ffffff;
-    --border: #e4e7ec;
-    --text: #111827;
-    --text-muted: #6b7280;
-    --green: #16a34a;
-    --green-light: #dcfce7;
-    --blue: #2563eb;
-    --blue-light: #dbeafe;
-    --orange: #ea580c;
-    --orange-light: #fff7ed;
-    --red: #dc2626;
-    --yellow: #ca8a04;
-    --yellow-light: #fefce8;
-    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-    --radius: 10px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
-  .header-logo { font-size: 18px; font-weight: 700; color: var(--text); }
-  .header-logo span { color: var(--green); }
-  .header-meta { font-size: 12px; color: var(--text-muted); text-align: right; }
-  .btn-refresh { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; color: var(--text); transition: all 0.15s; white-space: nowrap; }
-  .btn-refresh:hover { background: var(--bg); }
-  .btn-refresh.loading { opacity: 0.6; pointer-events: none; }
-  .tabs { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; gap: 4px; overflow-x: auto; }
-  .tab { padding: 11px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.15s; }
-  .tab:hover { color: var(--text); }
-  .tab.active { color: var(--text); border-bottom-color: var(--text); }
-  .main { padding: 20px; max-width: 900px; margin: 0 auto; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
-  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px; }
-  .stat-value { font-size: 26px; font-weight: 700; color: var(--text); }
-  .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .margin-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; box-shadow: var(--shadow); }
-  .margin-label { font-size: 13px; color: var(--text-muted); }
-  .margin-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); transition: all 0.15s; }
-  .margin-badge.active { background: var(--text); color: #fff; border-color: var(--text); }
-  .controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-  .search-wrap { position: relative; flex: 1; min-width: 200px; }
-  .search-wrap input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); color: var(--text); outline: none; transition: border 0.15s; }
-  .search-wrap input:focus { border-color: var(--blue); }
-  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
-  select { padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); color: var(--text); cursor: pointer; outline: none; }
-  .count-badge { font-size: 12px; color: var(--text-muted); white-space: nowrap; margin-left: auto; }
-  .btn-export { padding: 9px 14px; background: var(--blue-light); color: var(--blue); border: 1px solid #bfdbfe; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
-  .btn-export:hover { background: #bfdbfe; }
-  .provider-tabs { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 2px; }
-  .ptab { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); white-space: nowrap; transition: all 0.15s; }
-  .ptab:hover { color: var(--text); }
-  .ptab.active { background: var(--text); color: #fff; border-color: var(--text); }
-  .ptab .cnt { opacity: 0.7; }
-  .product-list { display: flex; flex-direction: column; gap: 10px; }
-  .product-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); transition: box-shadow 0.15s; }
-  .product-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-  .product-name { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
-  .product-color { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .best-badge { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
-  .best-provider { font-size: 12px; font-weight: 700; color: var(--green); text-align: right; }
-  .best-price { font-size: 18px; font-weight: 800; color: var(--text); }
-  .ws-win { color: var(--green) !important; }
-  .compare-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .compare-chip { display: flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 6px; font-size: 11px; border: 1px solid var(--border); background: var(--bg); }
-  .compare-chip .pname { font-weight: 600; color: var(--text-muted); }
-  .compare-chip .pprice { font-weight: 700; color: var(--text); }
-  .compare-chip.winner { background: var(--green-light); border-color: #86efac; }
-  .compare-chip.winner .pname { color: var(--green); }
-  .compare-chip.ws-chip { background: var(--blue-light); border-color: #93c5fd; }
-  .compare-chip.ws-chip .pname { color: var(--blue); }
-  .btn-copy { margin-top: 8px; padding: 5px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; cursor: pointer; color: var(--text-muted); transition: all 0.15s; }
-  .btn-copy:hover { background: var(--surface); color: var(--text); }
-  .btn-copy.copied { color: var(--green); border-color: #86efac; background: var(--green-light); }
-  .loading-screen, .empty-screen { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 14px; margin-bottom: 6px; }
-  .loading-sub { font-size: 12px; }
-  .error-banner { background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; font-size: 13px; color: var(--red); }
-  .sell-tag { display: inline-block; background: var(--orange-light); color: var(--orange); border: 1px solid #fed7aa; border-radius: 5px; font-size: 11px; font-weight: 700; padding: 2px 7px; margin-left: 6px; }
-  @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } .header-meta { display: none; } .controls { flex-direction: column; } .search-wrap { min-width: 100%; } }
+:root{--bg:#f7f8fa;--surface:#fff;--border:#e4e7ec;--text:#111827;--muted:#6b7280;--green:#16a34a;--gl:#dcfce7;--blue:#2563eb;--bl:#dbeafe;--orange:#ea580c;--ol:#fff7ed;--red:#dc2626;--shadow:0 1px 3px rgba(0,0,0,.08);--r:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.logo{font-size:18px;font-weight:700}.logo span{color:var(--green)}
+.meta{font-size:12px;color:var(--muted)}
+.btnR{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--text);transition:.15s}
+.btnR:hover{background:var(--bg)}.btnR.loading{opacity:.6;pointer-events:none}
+.tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:4px;overflow-x:auto}
+.tab{padding:11px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--text);border-bottom-color:var(--text)}
+.main{padding:20px;max-width:960px;margin:0 auto}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.sl{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
+.sv{font-size:26px;font-weight:700}.ss{font-size:11px;color:var(--muted);margin-top:2px}
+.mbar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.ml{font-size:13px;color:var(--muted)}
+.mb{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);transition:.15s}
+.mb.active{background:var(--text);color:#fff;border-color:var(--text)}
+.ctrl{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.sw{position:relative;flex:1;min-width:200px}
+.sw input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);outline:none}
+.sw input:focus{border-color:var(--blue)}
+.si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px}
+select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);cursor:pointer;outline:none}
+.cb{font-size:12px;color:var(--muted);white-space:nowrap;margin-left:auto}
+.bex{padding:9px 14px;background:var(--bl);color:var(--blue);border:1px solid #bfdbfe;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.bex:hover{background:#bfdbfe}
+.ptabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+.pt{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);white-space:nowrap;transition:.15s}
+.pt:hover{color:var(--text)}.pt.active{background:var(--text);color:#fff;border-color:var(--text)}
+.pl{display:flex;flex-direction:column;gap:10px}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);transition:.15s}
+.pc:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.ct{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+.pn{font-size:14px;font-weight:600;line-height:1.3}
+.pm{font-size:11px;color:var(--muted);margin-top:3px}
+.bb{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.bp{font-size:12px;font-weight:700;text-align:right}.bpr{font-size:18px;font-weight:800}
+.wsw{color:var(--green)!important}
+.cr{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ch{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:6px;font-size:11px;border:1px solid var(--border);background:var(--bg)}
+.ch .cn{font-weight:600;color:var(--muted)}.ch .cp{font-weight:700;color:var(--text)}
+.ch.win{background:var(--gl);border-color:#86efac}.ch.win .cn{color:var(--green)}
+.ch.wsc{background:var(--bl);border-color:#93c5fd}.ch.wsc .cn{color:var(--blue)}
+.bcp{margin-top:8px;padding:5px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;color:var(--muted);transition:.15s}
+.bcp:hover{background:var(--surface);color:var(--text)}.bcp.ok{color:var(--green);border-color:#86efac;background:var(--gl)}
+.ls,.es{text-align:center;padding:60px 20px;color:var(--muted)}
+.sp{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lt{font-size:14px;margin-bottom:6px}.lsub{font-size:12px}
+.eb{background:#fef2f2;border:1px solid #fecaca;border-radius:var(--r);padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--red)}
+.stag{display:inline-block;background:var(--ol);color:var(--orange);border:1px solid #fed7aa;border-radius:5px;font-size:11px;font-weight:700;padding:2px 7px;margin-left:6px}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}.meta{display:none}.ctrl{flex-direction:column}}
 </style>
 </head>
 <body>
-<div class="header">
-  <div class="header-logo">Work <span>Shop</span></div>
-  <div class="header-meta" id="headerMeta">Cargando...</div>
-  <button class="btn-refresh" id="btnRefresh" onclick="loadAll()">↺ Actualizar</button>
+<div class="hdr">
+  <div class="logo">Work <span>Shop</span></div>
+  <div class="meta" id="hMeta">Cargando...</div>
+  <button class="btnR" id="btnR" onclick="loadAll()">&#8635; Actualizar</button>
 </div>
 <div class="tabs">
-  <div class="tab active" onclick="switchSection('precios',this)">💰 Precios</div>
-  <div class="tab" onclick="switchSection('cuentas',this)">📋 Cuentas corrientes</div>
-  <div class="tab" onclick="switchSection('pedidos',this)">📦 Pedidos por salir</div>
+  <div class="tab active" onclick="sec('precios',this)">&#128176; Precios</div>
+  <div class="tab" onclick="sec('cuentas',this)">&#128203; Cuentas corrientes</div>
+  <div class="tab" onclick="sec('pedidos',this)">&#128230; Pedidos por salir</div>
 </div>
 <div class="main">
-  <div id="secPrecios">
+  <div id="sP">
     <div class="stats">
-      <div class="stat"><div class="stat-label">Productos</div><div class="stat-value" id="statTotal">—</div><div class="stat-sub">comparados</div></div>
-      <div class="stat"><div class="stat-label">WS Mejor Precio</div><div class="stat-value" id="statWS" style="color:var(--green)">—</div><div class="stat-sub">ganamos</div></div>
-      <div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value" id="statProviders">—</div><div class="stat-sub">activos</div></div>
-      <div class="stat"><div class="stat-label">Stock WS</div><div class="stat-value" id="statStock">—</div><div class="stat-sub">unidades</div></div>
+      <div class="stat"><div class="sl">Productos</div><div class="sv" id="sT">-</div><div class="ss">comparados</div></div>
+      <div class="stat"><div class="sl">WS Mejor Precio</div><div class="sv" id="sW" style="color:var(--green)">-</div><div class="ss">ganamos</div></div>
+      <div class="stat"><div class="sl">Proveedores</div><div class="sv" id="sPr">-</div><div class="ss">activos</div></div>
+      <div class="stat"><div class="sl">Stock WS</div><div class="sv" id="sSt">-</div><div class="ss">unidades</div></div>
     </div>
-    <div class="margin-bar">
-      <span class="margin-label">✅ Precio de venta:</span>
-      <span class="margin-badge active" onclick="setMargin(0,this)">Sin margen</span>
-      <span class="margin-badge" onclick="setMargin(0.03,this)">+3%</span>
-      <span class="margin-badge" onclick="setMargin(0.04,this)">+4%</span>
-      <span class="margin-badge" onclick="setMargin(0.05,this)">+5%</span>
-      <span class="margin-badge" onclick="setMargin(0.07,this)">+7%</span>
-      <span class="margin-badge" onclick="setMargin(0.10,this)">+10%</span>
+    <div class="mbar">
+      <span class="ml">&#9989; Precio de venta:</span>
+      <span class="mb active" onclick="setM(0,this)">Sin margen</span>
+      <span class="mb" onclick="setM(.03,this)">+3%</span>
+      <span class="mb" onclick="setM(.04,this)">+4%</span>
+      <span class="mb" onclick="setM(.05,this)">+5%</span>
+      <span class="mb" onclick="setM(.07,this)">+7%</span>
+      <span class="mb" onclick="setM(.10,this)">+10%</span>
     </div>
-    <div id="errorBanner" style="display:none" class="error-banner"></div>
-    <div class="controls">
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="renderCards()">
-      </div>
-      <select id="brandFilter" onchange="renderCards()">
-        <option value="">Todas las marcas</option>
-        <option value="SAMSUNG">Samsung</option>
-        <option value="MOTOROLA">Motorola</option>
-        <option value="XIAOMI">Xiaomi</option>
-        <option value="IPHONE">iPhone</option>
-        <option value="INFINIX">Infinix</option>
-        <option value="NOKIA">Nokia</option>
-      </select>
-      <select id="stockFilter" onchange="renderCards()">
-        <option value="all">Con y sin stock</option>
-        <option value="yes">Solo con stock WS</option>
-        <option value="no">Sin stock WS</option>
-      </select>
-      <select id="winnerFilter" onchange="renderCards()">
-        <option value="all">Todos</option>
-        <option value="ws">WS mejor precio</option>
-        <option value="other">Otros ganan</option>
-      </select>
-      <span class="count-badge" id="countBadge">—</span>
-      <button class="btn-export" onclick="exportExcel()">📊 Exportar Excel</button>
+    <div id="eb" style="display:none" class="eb"></div>
+    <div class="ctrl">
+      <div class="sw"><span class="si">&#128269;</span><input type="text" id="srch" placeholder="Buscar producto..." oninput="render()"></div>
+      <select id="bF" onchange="render()"><option value="">Todas las marcas</option><option value="SAMSUNG">Samsung</option><option value="MOTOROLA">Motorola</option><option value="XIAOMI">Xiaomi</option><option value="IPHONE">iPhone</option><option value="INFINIX">Infinix</option><option value="NOKIA">Nokia</option></select>
+      <select id="stF" onchange="render()"><option value="all">Con y sin stock</option><option value="yes">Solo con stock WS</option><option value="no">Sin stock WS</option></select>
+      <select id="wF" onchange="render()"><option value="all">Todos</option><option value="ws">WS mejor precio</option><option value="other">Otros ganan</option></select>
+      <span class="cb" id="cnt">-</span>
+      <button class="bex" onclick="exportXls()">&#128202; Exportar Excel</button>
     </div>
-    <div class="provider-tabs" id="providerTabs"></div>
-    <div id="productList" class="product-list">
-      <div class="loading-screen">
-        <div class="spinner"></div>
-        <div class="loading-text">Cargando datos...</div>
-        <div class="loading-sub">Leyendo todas las hojas del comparador</div>
-      </div>
-    </div>
+    <div class="ptabs" id="pTabs"></div>
+    <div id="pList" class="pl"><div class="ls"><div class="sp"></div><div class="lt">Cargando...</div></div></div>
   </div>
-  <div id="secCuentas" style="display:none"><div class="empty-screen"><div style="font-size:40px;margin-bottom:12px">📋</div><div>Cuentas corrientes — próximamente</div></div></div>
-  <div id="secPedidos" style="display:none"><div class="empty-screen"><div style="font-size:40px;margin-bottom:12px">📦</div><div>Pedidos por salir — próximamente</div></div></div>
+  <div id="sC" style="display:none"><div class="es"><div style="font-size:40px;margin-bottom:12px">&#128203;</div>Cuentas corrientes - proximamente</div></div>
+  <div id="sPed" style="display:none"><div class="es"><div style="font-size:40px;margin-bottom:12px">&#128230;</div>Pedidos por salir - proximamente</div></div>
 </div>
 <script>
-const SPREADSHEET_ID = '1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g';
-const SHEETS = [
-  { name: 'WORK SHOP',          gid: '1169477995', isWorkShop: true,  isCosto: true  },
-  { name: 'WORK SHOP VIP',      gid: '2103310165', isWorkShop: true,  isCosto: false },
-  { name: 'LALO',               gid: '376933543',  isWorkShop: false, isCosto: false },
-  { name: 'GUILLE GAMES',       gid: '221847934',  isWorkShop: false, isCosto: false },
-  { name: 'MATIAS BELGRANO',    gid: '457070983',  isWorkShop: false, isCosto: false },
-  { name: 'GASTON TOMY',        gid: '1697227894', isWorkShop: false, isCosto: false },
-  { name: 'ALEJO',              gid: '1580662582', isWorkShop: false, isCosto: false },
-  { name: 'LUCHO PILAR',        gid: '1980722139', isWorkShop: false, isCosto: false },
-  { name: 'SERVICELL',          gid: '125678359',  isWorkShop: false, isCosto: false },
-  { name: 'MAZZEO',             gid: '803403481',  isWorkShop: false, isCosto: false },
-  { name: 'URQUIZA',            gid: '1411427043', isWorkShop: false, isCosto: false },
-  { name: 'TRONADOR',           gid: '1291580792', isWorkShop: false, isCosto: false },
-  { name: 'TURCO',              gid: '12113330',   isWorkShop: false, isCosto: false },
-  { name: 'SEBASTIAN BELGRANO', gid: '1798307347', isWorkShop: false, isCosto: false },
+const SID="1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g";
+// parser: vertical=nombre/color/precio_colC | ws_costos=nombre/STOCK:X/precio_colC | inline=linea_unica_con_USD
+const SH=[
+  {n:"WORK SHOP",         g:"1169477995",ws:true, co:true, p:"ws_costos"},
+  {n:"WORK SHOP VIP",     g:"2103310165",ws:true, co:false,p:"vertical" },
+  {n:"LALO",              g:"376933543", ws:false,co:false,p:"vertical" },
+  {n:"GUILLE GAMES",      g:"221847934", ws:false,co:false,p:"vertical" },
+  {n:"MATIAS BELGRANO",   g:"457070983", ws:false,co:false,p:"vertical" },
+  {n:"GASTON TOMY",       g:"1697227894",ws:false,co:false,p:"vertical" },
+  {n:"ALEJO",             g:"1580662582",ws:false,co:false,p:"vertical" },
+  {n:"LUCHO PILAR",       g:"1980722139",ws:false,co:false,p:"vertical" },
+  {n:"SERVICELL",         g:"125678359", ws:false,co:false,p:"inline"   },
+  {n:"MAZZEO",            g:"803403481", ws:false,co:false,p:"inline"   },
+  {n:"URQUIZA",           g:"1411427043",ws:false,co:false,p:"vertical" },
+  {n:"TRONADOR",          g:"1291580792",ws:false,co:false,p:"vertical" },
+  {n:"TURCO",             g:"12113330",  ws:false,co:false,p:"vertical" },
+  {n:"SEBASTIAN BELGRANO",g:"1798307347",ws:false,co:false,p:"vertical" },
 ];
+let ALL=[],MAR=0,PRV="ALL",ERR=[];
 
-let allProducts = [], currentMargin = 0, currentProvider = 'ALL', loadErrors = [];
+function csvR(l){const r=[];let c="",q=false;for(let i=0;i<l.length;i++){if(l[i]==='"'){q=!q}else if(l[i]===","&&!q){r.push(c);c=""}else c+=l[i]}r.push(c);return r}
+function cl(s){return(s||"").replace(/^["'\s]+|["'\s]+$/g,"").trim()}
+function toN(s){if(!s)return null;let c=s.replace(/[^0-9.,]/g,"");if(!c)return null;if(c.includes(",")&&c.includes(".")){c=c.lastIndexOf(",")>c.lastIndexOf(".")?c.replace(/\./g,"").replace(",","."):c.replace(/,/g,"")}else if(c.includes(",")){c=c.split(",").pop().length<=2?c.replace(",","."):c.replace(/,/g,"")}else if(c.includes(".")){if(c.split(".").pop().length>2)c=c.replace(/\./g,"")}const n=parseFloat(c);return isNaN(n)?null:n}
+function isP(s){if(!s)return false;const n=toN(s);return n!==null&&n>0&&/\d/.test(s)&&!/[a-zA-Z]{3,}/.test(s)}
+function isSt(s){return/^STOCK\s*[:\/]/i.test(s)||/^STOCK\s*\d/i.test(s)}
+function isHd(s){return/^(SAMSUNG|MOTOROLA|XIAOMI|IPHONE|INFINIX|NOKIA|PLAYSTATION|OTROS|TABLETS|CONSOLAS|RAM BOOST)$/i.test(s.trim())}
+function exSt(s){const m=s.match(/\d+/);return m?parseInt(m[0]):null}
+function nn(s){return s.toUpperCase().trim().replace(/\s+/g," ").replace(/[""\'']/g,"")}
 
-function parseSheet(csvText) {
-  const rows = csvText.split('\n').map(r => r.split(','));
-  const products = [];
-  let i = 0;
-  while (i < rows.length) {
-    const cellA = (rows[i][0] || '').trim();
-    if (!cellA || isPrice(cellA)) { i++; continue; }
-    const name = cellA;
-    let color = '', price = null, j = i + 1;
-    while (j < rows.length && j < i + 6) {
-      const rA = (rows[j][0] || '').trim();
-      const rC = (rows[j][2] || rows[j][1] || rows[j][0] || '').trim();
-      if (isPrice(rA)) { price = parsePrice(rA); j++; break; }
-      if (isPrice(rC)) { price = parsePrice(rC); if (!color && rA && !isPrice(rA)) color = rA; j++; break; }
-      if (rA && !color) { color = rA; j++; continue; }
-      if (!rA) { j++; break; }
-      j++;
+// PARSER 1: formato vertical (nombre / color / precio en col C)
+function pVertical(csv){
+  const rows=csv.split("\n").map(r=>csvR(r));const out=[];let i=0;
+  while(i<rows.length){
+    const a=cl(rows[i][0]);
+    if(!a||isP(a)||isSt(a)||isHd(a)){i++;continue}
+    const name=a;let color="",price=null,j=i+1;
+    while(j<rows.length&&j<i+7){
+      const rA=cl(rows[j][0]);const rC=cl(rows[j][2]||rows[j][1]||rows[j][0]||"");
+      if(isP(rA)){price=toN(rA);j++;break}
+      if(isP(rC)){price=toN(rC);if(!color&&rA&&!isP(rA)&&!isSt(rA))color=rA;j++;break}
+      if(!rA){j++;break}
+      if(isSt(rA)||isHd(rA)){break}
+      if(!color)color=rA;
+      j++
     }
-    if (price !== null && price > 0) products.push({ name: normName(name), color, price });
-    i = j;
+    if(price&&price>0)out.push({name:nn(name),color,price,stock:null});
+    i=j
   }
-  return products;
+  return out
 }
 
-function isPrice(s) {
-  if (!s) return false;
-  const n = parsePrice(s);
-  return n !== null && n > 0 && /\d/.test(s);
-}
-
-function parsePrice(s) {
-  if (!s) return null;
-  let c = s.replace(/[^0-9.,]/g, '');
-  if (!c) return null;
-  if (c.includes(',') && c.includes('.')) {
-    c = c.lastIndexOf(',') > c.lastIndexOf('.') ? c.replace(/\./g,'').replace(',','.') : c.replace(/,/g,'');
-  } else if (c.includes(',')) {
-    c = c.split(',').pop().length <= 2 ? c.replace(',','.') : c.replace(/,/g,'');
-  } else if (c.includes('.')) {
-    if (c.split('.').pop().length > 2) c = c.replace(/\./g,'');
+// PARSER 2: WS Costos (nombre / STOCK:X / precio en col C)
+function pWsCostos(csv){
+  const rows=csv.split("\n").map(r=>csvR(r));const out=[];let i=0;
+  while(i<rows.length){
+    const a=cl(rows[i][0]);
+    if(!a||isP(a)||isHd(a)||isSt(a)){i++;continue}
+    const name=a;let stock=null,price=null,j=i+1;
+    while(j<rows.length&&j<i+7){
+      const rA=cl(rows[j][0]);const rC=cl(rows[j][2]||rows[j][1]||rows[j][0]||"");
+      if(isSt(rA)){stock=exSt(rA);j++;continue}
+      if(isP(rA)){price=toN(rA);j++;break}
+      if(isP(rC)){price=toN(rC);j++;break}
+      if(!rA){j++;break}
+      if(isHd(rA)){break}
+      j++
+    }
+    if(price&&price>0)out.push({name:nn(name),color:"",price,stock});
+    i=j
   }
-  const n = parseFloat(c);
-  return isNaN(n) ? null : n;
+  return out
 }
 
-function normName(s) {
-  return s.toUpperCase().trim().replace(/\s+/g,' ').replace(/[""'']/g,'');
-}
-
-async function fetchSheet(sheet) {
-  const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${sheet.gid}`;
-  try {
-    const res = await fetch(url, { cache: 'no-cache' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    return { sheet, products: parseSheet(text), ok: true };
-  } catch(e) {
-    return { sheet, products: [], ok: false, error: e.message };
+// PARSER 3: Inline "Nombre – 103 USD – Stock: 30 – Color: Verde"
+function pInline(csv){
+  const rows=csv.split("\n").map(r=>csvR(r));const out=[];
+  for(const row of rows){
+    const line=row.map(c=>cl(c)).filter(Boolean).join(" ");
+    if(!line)continue;
+    const pm=line.match(/[-–]\s*(\d[\d.,]*)\s*USD/i)||line.match(/(\d[\d.,]*)\s*USD/i);
+    if(!pm)continue;
+    const price=toN(pm[1]);if(!price||price<=0)continue;
+    let name=line.split(/\s*[-–]\s*/)[0].trim();if(!name)continue;
+    const sm=line.match(/Stock[:\s]+(\d+)/i);const stock=sm?parseInt(sm[1]):null;
+    const cm=line.match(/Color[:\s]+([^-–]+)/i);const color=cm?cm[1].trim():"";
+    out.push({name:nn(name),color,price,stock})
   }
+  return out
 }
 
-async function loadAll() {
-  const btn = document.getElementById('btnRefresh');
-  btn.classList.add('loading'); btn.textContent = '↺ Cargando...';
-  document.getElementById('errorBanner').style.display = 'none';
-  loadErrors = [];
-  document.getElementById('productList').innerHTML = '<div class="loading-screen"><div class="spinner"></div><div class="loading-text">Leyendo ' + SHEETS.length + ' hojas...</div><div class="loading-sub">Esto tarda unos segundos</div></div>';
+async function fetchS(s){
+  const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${s.g}`;
+  try{
+    const r=await fetch(url,{cache:"no-cache"});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const t=await r.text();
+    let pr=[];
+    if(s.p==="inline")pr=pInline(t);
+    else if(s.p==="ws_costos")pr=pWsCostos(t);
+    else pr=pVertical(t);
+    return{s,pr,ok:true}
+  }catch(e){return{s,pr:[],ok:false,err:e.message}}
+}
 
-  const results = await Promise.all(SHEETS.map(fetchSheet));
-  const wsResult = results.find(r => r.sheet.isCosto);
-  const wsProducts = wsResult ? wsResult.products : [];
-  const provResults = results.filter(r => !r.sheet.isWorkShop);
+async function loadAll(){
+  const btn=document.getElementById("btnR");
+  btn.classList.add("loading");btn.textContent="↺ Cargando...";
+  document.getElementById("eb").style.display="none";ERR=[];
+  document.getElementById("pList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Leyendo '+SH.length+' hojas...</div><div class="lsub">Un momento...</div></div>';
+  const res=await Promise.all(SH.map(fetchS));
+  const wsR=res.find(r=>r.s.co);const wsP=wsR?wsR.pr:[];
+  const provR=res.filter(r=>!r.s.ws);
+  res.forEach(r=>{if(!r.ok)ERR.push(r.s.n+": "+r.err)});
+  const map={};
+  wsP.forEach(p=>{if(!map[p.name])map[p.name]={name:p.name,color:p.color,prices:{},stocks:{}};map[p.name].prices["WORK SHOP"]=p.price;if(p.stock!==null)map[p.name].stocks["WORK SHOP"]=p.stock});
+  provR.forEach(r=>{r.pr.forEach(p=>{if(!map[p.name])map[p.name]={name:p.name,color:p.color,prices:{},stocks:{}};const ex=map[p.name].prices[r.s.n];if(ex===undefined||p.price<ex)map[p.name].prices[r.s.n]=p.price;if(p.stock!==null)map[p.name].stocks[r.s.n]=p.stock;if(!map[p.name].color&&p.color)map[p.name].color=p.color})});
+  ALL=Object.values(map);
+  updStats();buildTabs(res);render();
+  const now=new Date();document.getElementById("hMeta").textContent=ALL.length+" prod · "+now.getHours()+":"+String(now.getMinutes()).padStart(2,"0");
+  btn.classList.remove("loading");btn.textContent="↺ Actualizar";
+  if(ERR.length){document.getElementById("eb").style.display="block";document.getElementById("eb").innerHTML="⚠️ No se pudieron leer: "+ERR.map(e=>e.split(":")[0]).join(", ")}
+}
 
-  results.forEach(r => { if (!r.ok) loadErrors.push(r.sheet.name + ': ' + r.error); });
+function best(p){const e=Object.entries(p.prices);if(!e.length)return{pr:"—",price:null,isWS:false,all:[]};let m=Infinity;e.forEach(([,v])=>{if(v<m)m=v});const w=e.filter(([,v])=>v===m).map(([k])=>k);return{price:m,pr:w.join(" / "),isWS:w.includes("WORK SHOP"),all:w}}
+function fmt(p){return"u$"+(p*(1+MAR)).toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
 
-  const productMap = {};
-  wsProducts.forEach(p => {
-    if (!productMap[p.name]) productMap[p.name] = { name: p.name, color: p.color, prices: {} };
-    productMap[p.name].prices['WORK SHOP'] = p.price;
+function updStats(){
+  let ww=0;const pv=new Set();let ts=0;
+  ALL.forEach(p=>{Object.keys(p.prices).forEach(k=>{if(k!=="WORK SHOP")pv.add(k)});if(best(p).isWS)ww++;if(p.stocks["WORK SHOP"])ts+=p.stocks["WORK SHOP"]});
+  document.getElementById("sT").textContent=ALL.length;
+  document.getElementById("sW").textContent=ww;
+  document.getElementById("sPr").textContent=pv.size;
+  document.getElementById("sSt").textContent=ts>0?ts:"—"
+}
+
+function buildTabs(res){
+  const ok=res.filter(r=>r.ok&&!r.s.ws);
+  let h='<span class="pt active" onclick="fp(\'ALL\',this)">Comparativa <span>'+ALL.length+'</span></span>';
+  ok.forEach(r=>{if(r.pr.length>0)h+='<span class="pt" onclick="fp(\''+r.s.n+'\',this)">'+r.s.n+' <span>'+r.pr.length+'</span></span>'});
+  document.getElementById("pTabs").innerHTML=h
+}
+function fp(n,el){PRV=n;document.querySelectorAll(".pt").forEach(t=>t.classList.remove("active"));el.classList.add("active");render()}
+function setM(v,el){MAR=v;document.querySelectorAll(".mb").forEach(b=>b.classList.remove("active"));el.classList.add("active");render()}
+
+function render(){
+  const sr=document.getElementById("srch").value.toLowerCase().trim();
+  const br=document.getElementById("bF").value.toUpperCase();
+  const st=document.getElementById("stF").value;
+  const wn=document.getElementById("wF").value;
+  let f=ALL.filter(p=>{
+    if(sr&&!p.name.toLowerCase().includes(sr))return false;
+    if(br&&!p.name.includes(br))return false;
+    const hw="WORK SHOP"in p.prices;
+    if(st==="yes"&&!hw)return false;if(st==="no"&&hw)return false;
+    const b=best(p);
+    if(wn==="ws"&&!b.isWS)return false;if(wn==="other"&&b.isWS)return false;
+    if(PRV!=="ALL"&&!(PRV in p.prices))return false;
+    return true
   });
-  provResults.forEach(r => {
-    r.products.forEach(p => {
-      if (!productMap[p.name]) productMap[p.name] = { name: p.name, color: p.color, prices: {} };
-      const ex = productMap[p.name].prices[r.sheet.name];
-      if (ex === undefined || p.price < ex) productMap[p.name].prices[r.sheet.name] = p.price;
-      if (!productMap[p.name].color && p.color) productMap[p.name].color = p.color;
-    });
-  });
-
-  allProducts = Object.values(productMap);
-  updateStats();
-  buildProviderTabs(results);
-  renderCards();
-
-  const now = new Date();
-  document.getElementById('headerMeta').textContent = allProducts.length + ' prod · ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
-  btn.classList.remove('loading'); btn.textContent = '↺ Actualizar';
-
-  if (loadErrors.length > 0) {
-    document.getElementById('errorBanner').style.display = 'block';
-    document.getElementById('errorBanner').innerHTML = '⚠️ No se pudieron leer: ' + loadErrors.map(e => e.split(':')[0]).join(', ');
-  }
+  f.sort((a,b)=>{const bA=best(a),bB=best(b);if(bA.isWS&&!bB.isWS)return -1;if(!bA.isWS&&bB.isWS)return 1;return a.name.localeCompare(b.name)});
+  document.getElementById("cnt").textContent=f.length+" productos";
+  if(!f.length){document.getElementById("pList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';return}
+  document.getElementById("pList").innerHTML=f.map(p=>{
+    const b=best(p);
+    const lbl=b.isWS?"&#129001; WORK SHOP":"&#128308; "+b.pr;
+    const wsSt=p.stocks&&p.stocks["WORK SHOP"]?"STOCK: "+p.stocks["WORK SHOP"]:"";
+    const chips=Object.entries(p.prices).sort(([,a],[,b])=>a-b).map(([pv,pr])=>{
+      const iw=b.all.includes(pv);const iws=pv==="WORK SHOP";
+      const cls=iw?"ch win":(iws?"ch wsc":"ch");
+      const stk=(iws&&wsSt)?'<span style="opacity:.6;font-size:10px;margin-left:3px">'+wsSt+"</span>":"";
+      return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmt(pr)+"</span>"+stk+"</span>"
+    }).join("");
+    const stag=MAR>0?'<span class="stag">Venta: '+fmt(b.price)+"</span>":"";
+    const meta=[p.color,wsSt].filter(Boolean).join(" · ");
+    const ct=p.name+(p.color?" - "+p.color:"")+" -> "+b.pr+": "+fmt(b.price);
+    return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+" "+stag+"</div>"+(meta?'<div class="pm">'+meta+"</div>":"")+"</div>"
+      +'<div class="bb"><div class="bp'+( b.isWS?" wsw":"")+'">'+ lbl+"</div>"
+      +'<div class="bpr">'+fmt(b.price)+"</div></div></div>"
+      +'<div class="cr">'+chips+"</div>"
+      +'<button class="bcp" onclick="cp(this,\''+ct.replace(/'/g,"&#39;")+'\')">&#128203; Copiar</button></div>'
+  }).join("")
 }
 
-function getBestPrice(p) {
-  const entries = Object.entries(p.prices);
-  if (!entries.length) return { provider: '—', price: null, isWS: false, allWinners: [] };
-  let min = Infinity;
-  entries.forEach(([,v]) => { if (v < min) min = v; });
-  const winners = entries.filter(([,v]) => v === min).map(([k]) => k);
-  const isWS = winners.includes('WORK SHOP');
-  return { price: min, provider: winners.join(' / '), isWS, isTied: isWS && winners.length > 1, allWinners: winners };
+function cp(btn,txt){navigator.clipboard.writeText(txt).then(()=>{btn.classList.add("ok");btn.textContent="✅ Copiado";setTimeout(()=>{btn.classList.remove("ok");btn.textContent="📋 Copiar"},1800)})}
+
+function exportXls(){
+  const ps=SH.filter(s=>!s.ws);
+  const rows=[["Producto","Color","Stock WS","Mejor Precio","Mejor Proveedor","Precio WS",...ps.map(s=>s.n)]];
+  ALL.forEach(p=>{const b=best(p);const st=p.stocks["WORK SHOP"]||"";rows.push([p.name,p.color,st,b.price||"",b.pr,p.prices["WORK SHOP"]||"",...ps.map(s=>p.prices[s.n]||"")])});
+  const csv=rows.map(r=>r.map(c=>'"'+c+'"').join(",")).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}));a.download="comparador_"+new Date().toISOString().slice(0,10)+".csv";a.click()
 }
 
-function updateStats() {
-  let wsWin = 0; const prov = new Set();
-  allProducts.forEach(p => {
-    Object.keys(p.prices).forEach(k => { if (k !== 'WORK SHOP') prov.add(k); });
-    if (getBestPrice(p).isWS) wsWin++;
-  });
-  document.getElementById('statTotal').textContent = allProducts.length;
-  document.getElementById('statWS').textContent = wsWin;
-  document.getElementById('statProviders').textContent = prov.size;
-  document.getElementById('statStock').textContent = '—';
-}
-
-function buildProviderTabs(results) {
-  const ok = results.filter(r => r.ok && !r.sheet.isWorkShop);
-  let html = '<span class="ptab active" onclick="filterProvider(\'ALL\',this)">Comparativa <span class="cnt">' + allProducts.length + '</span></span>';
-  ok.forEach(r => {
-    if (r.products.length > 0)
-      html += '<span class="ptab" onclick="filterProvider(\'' + r.sheet.name + '\',this)">' + r.sheet.name + ' <span class="cnt">' + r.products.length + '</span></span>';
-  });
-  document.getElementById('providerTabs').innerHTML = html;
-}
-
-function filterProvider(name, el) {
-  currentProvider = name;
-  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  renderCards();
-}
-
-function setMargin(val, el) {
-  currentMargin = val;
-  document.querySelectorAll('.margin-badge').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  renderCards();
-}
-
-function fmt(p) {
-  return 'u$' + (p * (1 + currentMargin)).toFixed(2).replace(/\.00$/,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
-}
-
-function renderCards() {
-  const search = document.getElementById('searchInput').value.toLowerCase().trim();
-  const brand  = document.getElementById('brandFilter').value.toUpperCase();
-  const stock  = document.getElementById('stockFilter').value;
-  const winner = document.getElementById('winnerFilter').value;
-
-  let filtered = allProducts.filter(p => {
-    if (search && !p.name.toLowerCase().includes(search)) return false;
-    if (brand && !p.name.includes(brand)) return false;
-    const hasWS = 'WORK SHOP' in p.prices;
-    if (stock === 'yes' && !hasWS) return false;
-    if (stock === 'no'  &&  hasWS) return false;
-    const best = getBestPrice(p);
-    if (winner === 'ws'    && !best.isWS) return false;
-    if (winner === 'other' &&  best.isWS) return false;
-    if (currentProvider !== 'ALL' && !(currentProvider in p.prices)) return false;
-    return true;
-  });
-
-  filtered.sort((a,b) => {
-    const bA = getBestPrice(a), bB = getBestPrice(b);
-    if (bA.isWS && !bB.isWS) return -1;
-    if (!bA.isWS && bB.isWS) return 1;
-    return a.name.localeCompare(b.name);
-  });
-
-  document.getElementById('countBadge').textContent = filtered.length + ' productos';
-
-  if (!filtered.length) {
-    document.getElementById('productList').innerHTML = '<div class="empty-screen"><div style="font-size:36px;margin-bottom:12px">🔍</div><div>Sin resultados</div></div>';
-    return;
-  }
-
-  document.getElementById('productList').innerHTML = filtered.map(p => {
-    const best = getBestPrice(p);
-    const label = best.isWS ? '🟢 WORK SHOP' : '🔴 ' + best.provider;
-    const chips = Object.entries(p.prices).sort(([,a],[,b])=>a-b).map(([prov,price]) => {
-      const isW = best.allWinners.includes(prov);
-      const cls = isW ? 'compare-chip winner' : (prov==='WORK SHOP' ? 'compare-chip ws-chip' : 'compare-chip');
-      return '<span class="' + cls + '"><span class="pname">' + prov + '</span><span class="pprice">' + fmt(price) + '</span></span>';
-    }).join('');
-    const sellTag = currentMargin > 0 ? '<span class="sell-tag">Venta: ' + fmt(best.price) + '</span>' : '';
-    const copyTxt = p.name + (p.color ? ' — ' + p.color : '') + ' → ' + best.provider + ': ' + fmt(best.price);
-    return '<div class="product-card"><div class="card-top"><div><div class="product-name">' + p.name + ' ' + sellTag + '</div>' + (p.color ? '<div class="product-color">' + p.color + '</div>' : '') + '</div><div class="best-badge"><div class="best-provider' + (best.isWS?' ws-win':'') + '">' + label + '</div><div class="best-price">' + fmt(best.price) + '</div></div></div><div class="compare-row">' + chips + '</div><button class="btn-copy" onclick="doCopy(this,\'' + copyTxt.replace(/'/g,"&#39;") + '\')">📋 Copiar</button></div>';
-  }).join('');
-}
-
-function doCopy(btn, text) {
-  navigator.clipboard.writeText(text).then(() => {
-    btn.classList.add('copied'); btn.textContent = '✅ Copiado';
-    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋 Copiar'; }, 1800);
-  });
-}
-
-function exportExcel() {
-  const provSheets = SHEETS.filter(s => !s.isWorkShop);
-  const rows = [['Producto','Color','Mejor Precio','Mejor Proveedor','Precio WS',...provSheets.map(s=>s.name)]];
-  allProducts.forEach(p => {
-    const best = getBestPrice(p);
-    rows.push([p.name, p.color, best.price||'', best.provider, p.prices['WORK SHOP']||'', ...provSheets.map(s=>p.prices[s.name]||'')]);
-  });
-  const csv = rows.map(r=>r.map(c=>'"'+c+'"').join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
-  a.download = 'comparador_' + new Date().toISOString().slice(0,10) + '.csv';
-  a.click();
-}
-
-function switchSection(sec, el) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('secPrecios').style.display = sec==='precios' ? '' : 'none';
-  document.getElementById('secCuentas').style.display = sec==='cuentas' ? '' : 'none';
-  document.getElementById('secPedidos').style.display = sec==='pedidos' ? '' : 'none';
+function sec(s,el){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));el.classList.add("active");
+  document.getElementById("sP").style.display=s==="precios"?"":"none";
+  document.getElementById("sC").style.display=s==="cuentas"?"":"none";
+  document.getElementById("sPed").style.display=s==="pedidos"?"":"none"
 }
 
 loadAll();
