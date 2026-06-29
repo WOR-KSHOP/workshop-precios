@@ -281,7 +281,7 @@ function render(){
   const st=document.getElementById("stF").value;
   const wn=document.getElementById("wF").value;
   let f=ALL.filter(p=>{
-    if(sr&&!p.name.toLowerCase().includes(sr))return false;
+    if(sr){const words=sr.split(/\s+/).filter(Boolean);if(!words.every(w=>p.name.toLowerCase().includes(w)))return false;}
     if(br&&!p.name.includes(br))return false;
     const hw="WORK SHOP"in p.prices;
     if(st==="yes"&&!hw)return false;if(st==="no"&&hw)return false;
