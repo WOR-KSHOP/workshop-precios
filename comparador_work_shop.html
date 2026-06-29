@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -59,7 +60,34 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 .lt{font-size:14px;margin-bottom:6px}.lsub{font-size:12px}
 .eb{background:#fef2f2;border:1px solid #fecaca;border-radius:var(--r);padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--red)}
 .stag{display:inline-block;background:var(--ol);color:var(--orange);border:1px solid #fed7aa;border-radius:5px;font-size:11px;font-weight:700;padding:2px 7px;margin-left:6px}
-@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}.meta{display:none}.ctrl{flex-direction:column}}
+@media(max-width:640px){
+  .stats{grid-template-columns:repeat(2,1fr);gap:8px}
+  .stat{padding:10px 12px}
+  .sv{font-size:22px}
+  .meta{display:none}
+  .main{padding:12px}
+  .mbar{gap:6px;padding:10px 12px}
+  .ml{width:100%;margin-bottom:2px}
+  .mb{padding:4px 10px;font-size:11px}
+  .ctrl{flex-direction:column;gap:8px}
+  .sw{min-width:100%}
+  .sw input{font-size:14px;padding:10px 12px 10px 36px}
+  select{width:100%;font-size:14px;padding:10px 12px}
+  .cb{margin-left:0;text-align:right;width:100%}
+  .bex{width:100%;text-align:center;padding:10px 14px}
+  .ptabs{gap:5px;padding-bottom:4px}
+  .pt{padding:5px 10px;font-size:11px}
+  .pc{padding:12px}
+  .pn{font-size:13px}
+  .bpr{font-size:16px}
+  .bp{font-size:11px}
+  .ch{font-size:10px;padding:3px 7px}
+  .hdr{padding:10px 14px}
+  .logo{font-size:16px}
+  .btnR{padding:6px 10px;font-size:12px}
+  .tabs{padding:0 12px}
+  .tab{padding:9px 12px;font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -110,7 +138,7 @@ const SID="1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g";
 // parser: vertical=nombre/color/precio_colC | ws_costos=nombre/STOCK:X/precio_colC | inline=linea_unica_con_USD
 const SH=[
   {n:"COSTOS",            g:"1169477995",ws:true, co:true, p:"ws_costos"},
-  {n:"VIP",               g:"2103310165",ws:true, co:false,p:"vertical" },
+  {n:"VIP",               g:"2103310165",ws:false,co:false,p:"vertical" },
   {n:"LALO",              g:"376933543", ws:false,co:false,p:"vertical" },
   {n:"GUILLE GAMES",      g:"221847934", ws:false,co:false,p:"vertical" },
   {n:"MATIAS BELGRANO",   g:"457070983", ws:false,co:false,p:"vertical" },
@@ -250,7 +278,7 @@ async function loadAll(){
   document.getElementById("pList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Leyendo '+SH.length+' hojas...</div><div class="lsub">Un momento...</div></div>';
   const res=await Promise.all(SH.map(fetchS));
   const wsR=res.find(r=>r.s.co);const wsP=wsR?wsR.pr:[];
-  const provR=res.filter(r=>!r.s.ws);
+  const provR=res.filter(r=>!r.s.co);
   res.forEach(r=>{if(!r.ok)ERR.push(r.s.n+": "+r.err)});
   const map={};
   wsP.forEach(p=>{if(!map[p.name])map[p.name]={name:p.name,color:p.color,prices:{},stocks:{}};map[p.name].prices["COSTOS"]=p.price;if(p.stock!==null)map[p.name].stocks["COSTOS"]=p.stock});
@@ -275,7 +303,7 @@ function updStats(){
 }
 
 function buildTabs(res){
-  const ok=res.filter(r=>r.ok&&!r.s.ws);
+  const ok=res.filter(r=>r.ok&&!r.s.co);
   let h='<span class="pt active" onclick="fp(\'ALL\',this)">Comparativa <span>'+ALL.length+'</span></span>';
   ok.forEach(r=>{if(r.pr.length>0)h+='<span class="pt" onclick="fp(\''+r.s.n+'\',this)">'+r.s.n+' <span>'+r.pr.length+'</span></span>'});
   document.getElementById("pTabs").innerHTML=h
