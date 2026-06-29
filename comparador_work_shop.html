@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -24,396 +23,103 @@
     --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
     --radius: 10px;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
-
-  /* HEADER */
-  .header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: var(--shadow);
-  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
   .header-logo { font-size: 18px; font-weight: 700; color: var(--text); }
   .header-logo span { color: var(--green); }
   .header-meta { font-size: 12px; color: var(--text-muted); text-align: right; }
-  .btn-refresh {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 7px 14px;
-    font-size: 13px;
-    cursor: pointer;
-    color: var(--text);
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
+  .btn-refresh { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; color: var(--text); transition: all 0.15s; white-space: nowrap; }
   .btn-refresh:hover { background: var(--bg); }
   .btn-refresh.loading { opacity: 0.6; pointer-events: none; }
-
-  /* TABS */
-  .tabs {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 20px;
-    display: flex;
-    gap: 4px;
-    overflow-x: auto;
-  }
-  .tab {
-    padding: 11px 16px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    white-space: nowrap;
-    transition: all 0.15s;
-  }
+  .tabs { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; gap: 4px; overflow-x: auto; }
+  .tab { padding: 11px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.15s; }
   .tab:hover { color: var(--text); }
   .tab.active { color: var(--text); border-bottom-color: var(--text); }
-
-  /* MAIN */
   .main { padding: 20px; max-width: 900px; margin: 0 auto; }
-
-  /* STATS */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .stat {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    box-shadow: var(--shadow);
-  }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
   .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px; }
   .stat-value { font-size: 26px; font-weight: 700; color: var(--text); }
   .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-  /* MARGIN SELECTOR */
-  .margin-bar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    box-shadow: var(--shadow);
-  }
+  .margin-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; box-shadow: var(--shadow); }
   .margin-label { font-size: 13px; color: var(--text-muted); }
-  .margin-badge {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text-muted);
-    transition: all 0.15s;
-  }
-  .margin-badge.active {
-    background: var(--text);
-    color: #fff;
-    border-color: var(--text);
-  }
-
-  /* CONTROLS */
-  .controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+  .margin-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); transition: all 0.15s; }
+  .margin-badge.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
   .search-wrap { position: relative; flex: 1; min-width: 200px; }
-  .search-wrap input {
-    width: 100%;
-    padding: 9px 12px 9px 34px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 13px;
-    background: var(--surface);
-    color: var(--text);
-    outline: none;
-    transition: border 0.15s;
-  }
+  .search-wrap input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); color: var(--text); outline: none; transition: border 0.15s; }
   .search-wrap input:focus { border-color: var(--blue); }
-  .search-icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 14px;
-  }
-  select {
-    padding: 9px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 13px;
-    background: var(--surface);
-    color: var(--text);
-    cursor: pointer;
-    outline: none;
-  }
-  .count-badge {
-    font-size: 12px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    margin-left: auto;
-  }
-  .btn-export {
-    padding: 9px 14px;
-    background: var(--blue-light);
-    color: var(--blue);
-    border: 1px solid #bfdbfe;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.15s;
-  }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+  select { padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); color: var(--text); cursor: pointer; outline: none; }
+  .count-badge { font-size: 12px; color: var(--text-muted); white-space: nowrap; margin-left: auto; }
+  .btn-export { padding: 9px 14px; background: var(--blue-light); color: var(--blue); border: 1px solid #bfdbfe; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .btn-export:hover { background: #bfdbfe; }
-
-  /* PROVIDER TABS */
-  .provider-tabs {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 16px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-  }
-  .ptab {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text-muted);
-    white-space: nowrap;
-    transition: all 0.15s;
-  }
+  .provider-tabs { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 2px; }
+  .ptab { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); white-space: nowrap; transition: all 0.15s; }
   .ptab:hover { color: var(--text); }
-  .ptab.active {
-    background: var(--text);
-    color: #fff;
-    border-color: var(--text);
-  }
+  .ptab.active { background: var(--text); color: #fff; border-color: var(--text); }
   .ptab .cnt { opacity: 0.7; }
-
-  /* PRODUCT CARDS */
   .product-list { display: flex; flex-direction: column; gap: 10px; }
-
-  .product-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    box-shadow: var(--shadow);
-    transition: box-shadow 0.15s;
-  }
+  .product-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); transition: box-shadow 0.15s; }
   .product-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-  .card-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 8px;
-  }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
   .product-name { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
   .product-color { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .best-badge {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 3px;
-    flex-shrink: 0;
-  }
-  .best-provider {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--green);
-    text-align: right;
-  }
-  .best-price {
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--text);
-  }
+  .best-badge { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+  .best-provider { font-size: 12px; font-weight: 700; color: var(--green); text-align: right; }
+  .best-price { font-size: 18px; font-weight: 800; color: var(--text); }
   .ws-win { color: var(--green) !important; }
-  .ws-close { color: var(--yellow) !important; }
-
-  /* COMPARE ROW */
-  .compare-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
-  }
-  .compare-chip {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 9px;
-    border-radius: 6px;
-    font-size: 11px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-  }
+  .compare-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .compare-chip { display: flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 6px; font-size: 11px; border: 1px solid var(--border); background: var(--bg); }
   .compare-chip .pname { font-weight: 600; color: var(--text-muted); }
   .compare-chip .pprice { font-weight: 700; color: var(--text); }
   .compare-chip.winner { background: var(--green-light); border-color: #86efac; }
   .compare-chip.winner .pname { color: var(--green); }
   .compare-chip.ws-chip { background: var(--blue-light); border-color: #93c5fd; }
   .compare-chip.ws-chip .pname { color: var(--blue); }
-
-  /* COPY BUTTON */
-  .btn-copy {
-    margin-top: 8px;
-    padding: 5px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 11px;
-    cursor: pointer;
-    color: var(--text-muted);
-    transition: all 0.15s;
-  }
+  .btn-copy { margin-top: 8px; padding: 5px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; cursor: pointer; color: var(--text-muted); transition: all 0.15s; }
   .btn-copy:hover { background: var(--surface); color: var(--text); }
   .btn-copy.copied { color: var(--green); border-color: #86efac; background: var(--green-light); }
-
-  /* LOADING / EMPTY */
-  .loading-screen, .empty-screen {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-muted);
-  }
-  .spinner {
-    width: 36px; height: 36px;
-    border: 3px solid var(--border);
-    border-top-color: var(--text);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 16px;
-  }
+  .loading-screen, .empty-screen { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-text { font-size: 14px; margin-bottom: 6px; }
   .loading-sub { font-size: 12px; }
-
-  /* ERROR */
-  .error-banner {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    color: var(--red);
-  }
-
-  /* EMPTY STATE */
-  .empty-screen { font-size: 14px; }
-
-  /* SELL PRICE TAG */
-  .sell-tag {
-    display: inline-block;
-    background: var(--orange-light);
-    color: var(--orange);
-    border: 1px solid #fed7aa;
-    border-radius: 5px;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 7px;
-    margin-left: 6px;
-  }
-
-  @media (max-width: 600px) {
-    .stats { grid-template-columns: repeat(2, 1fr); }
-    .header-meta { display: none; }
-    .controls { flex-direction: column; }
-    .search-wrap { min-width: 100%; }
-  }
+  .error-banner { background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; font-size: 13px; color: var(--red); }
+  .sell-tag { display: inline-block; background: var(--orange-light); color: var(--orange); border: 1px solid #fed7aa; border-radius: 5px; font-size: 11px; font-weight: 700; padding: 2px 7px; margin-left: 6px; }
+  @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } .header-meta { display: none; } .controls { flex-direction: column; } .search-wrap { min-width: 100%; } }
 </style>
 </head>
 <body>
-
 <div class="header">
   <div class="header-logo">Work <span>Shop</span></div>
   <div class="header-meta" id="headerMeta">Cargando...</div>
   <button class="btn-refresh" id="btnRefresh" onclick="loadAll()">↺ Actualizar</button>
 </div>
-
 <div class="tabs">
-  <div class="tab active" onclick="switchSection('precios', this)">💰 Precios</div>
-  <div class="tab" onclick="switchSection('cuentas', this)">📋 Cuentas corrientes</div>
-  <div class="tab" onclick="switchSection('pedidos', this)">📦 Pedidos por salir</div>
+  <div class="tab active" onclick="switchSection('precios',this)">💰 Precios</div>
+  <div class="tab" onclick="switchSection('cuentas',this)">📋 Cuentas corrientes</div>
+  <div class="tab" onclick="switchSection('pedidos',this)">📦 Pedidos por salir</div>
 </div>
-
 <div class="main">
-
-  <!-- SECCIÓN PRECIOS -->
   <div id="secPrecios">
-
     <div class="stats">
-      <div class="stat">
-        <div class="stat-label">Productos</div>
-        <div class="stat-value" id="statTotal">—</div>
-        <div class="stat-sub">comparados</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">WS Mejor Precio</div>
-        <div class="stat-value" id="statWS" style="color:var(--green)">—</div>
-        <div class="stat-sub">ganamos</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Proveedores</div>
-        <div class="stat-value" id="statProviders">—</div>
-        <div class="stat-sub">activos</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Stock WS</div>
-        <div class="stat-value" id="statStock">—</div>
-        <div class="stat-sub">unidades</div>
-      </div>
+      <div class="stat"><div class="stat-label">Productos</div><div class="stat-value" id="statTotal">—</div><div class="stat-sub">comparados</div></div>
+      <div class="stat"><div class="stat-label">WS Mejor Precio</div><div class="stat-value" id="statWS" style="color:var(--green)">—</div><div class="stat-sub">ganamos</div></div>
+      <div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value" id="statProviders">—</div><div class="stat-sub">activos</div></div>
+      <div class="stat"><div class="stat-label">Stock WS</div><div class="stat-value" id="statStock">—</div><div class="stat-sub">unidades</div></div>
     </div>
-
     <div class="margin-bar">
       <span class="margin-label">✅ Precio de venta:</span>
-      <span class="margin-badge active" data-margin="0" onclick="setMargin(0, this)">Sin margen</span>
-      <span class="margin-badge" data-margin="0.03" onclick="setMargin(0.03, this)">+3%</span>
-      <span class="margin-badge" data-margin="0.04" onclick="setMargin(0.04, this)">+4%</span>
-      <span class="margin-badge" data-margin="0.05" onclick="setMargin(0.05, this)">+5%</span>
-      <span class="margin-badge" data-margin="0.07" onclick="setMargin(0.07, this)">+7%</span>
-      <span class="margin-badge" data-margin="0.10" onclick="setMargin(0.10, this)">+10%</span>
+      <span class="margin-badge active" onclick="setMargin(0,this)">Sin margen</span>
+      <span class="margin-badge" onclick="setMargin(0.03,this)">+3%</span>
+      <span class="margin-badge" onclick="setMargin(0.04,this)">+4%</span>
+      <span class="margin-badge" onclick="setMargin(0.05,this)">+5%</span>
+      <span class="margin-badge" onclick="setMargin(0.07,this)">+7%</span>
+      <span class="margin-badge" onclick="setMargin(0.10,this)">+10%</span>
     </div>
-
     <div id="errorBanner" style="display:none" class="error-banner"></div>
-
     <div class="controls">
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
@@ -441,10 +147,7 @@
       <span class="count-badge" id="countBadge">—</span>
       <button class="btn-export" onclick="exportExcel()">📊 Exportar Excel</button>
     </div>
-
-    <!-- PROVIDER FILTER TABS -->
     <div class="provider-tabs" id="providerTabs"></div>
-
     <div id="productList" class="product-list">
       <div class="loading-screen">
         <div class="spinner"></div>
@@ -452,321 +155,165 @@
         <div class="loading-sub">Leyendo todas las hojas del comparador</div>
       </div>
     </div>
-
   </div>
-
-  <!-- SECCIÓN CUENTAS -->
-  <div id="secCuentas" style="display:none">
-    <div class="empty-screen">
-      <div style="font-size:40px;margin-bottom:12px">📋</div>
-      <div>Cuentas corrientes — próximamente</div>
-    </div>
-  </div>
-
-  <!-- SECCIÓN PEDIDOS -->
-  <div id="secPedidos" style="display:none">
-    <div class="empty-screen">
-      <div style="font-size:40px;margin-bottom:12px">📦</div>
-      <div>Pedidos por salir — próximamente</div>
-    </div>
-  </div>
-
+  <div id="secCuentas" style="display:none"><div class="empty-screen"><div style="font-size:40px;margin-bottom:12px">📋</div><div>Cuentas corrientes — próximamente</div></div></div>
+  <div id="secPedidos" style="display:none"><div class="empty-screen"><div style="font-size:40px;margin-bottom:12px">📦</div><div>Pedidos por salir — próximamente</div></div></div>
 </div>
-
 <script>
-// ─────────────────────────────────────────────
-// CONFIGURACIÓN CENTRAL — editá solo esta sección
-// ─────────────────────────────────────────────
 const SPREADSHEET_ID = '1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g';
-
-// Lista de hojas: { name, gid, isWorkShop, isCosto }
-// isWorkShop = true → es la hoja de costos/VIP propios
-// Para agregar una hoja nueva: solo agregá una línea acá
 const SHEETS = [
-  { name: 'WORK SHOP',       gid: '1169477995', isWorkShop: true,  isCosto: true  },
-  { name: 'WORK SHOP VIP',   gid: '2103310165', isWorkShop: true,  isCosto: false },
-  { name: 'LALO',            gid: '376933543',  isWorkShop: false, isCosto: false },
-  { name: 'GUILLE GAMES',    gid: '221847934',  isWorkShop: false, isCosto: false },
-  { name: 'MATIAS BELGRANO', gid: '457070983',  isWorkShop: false, isCosto: false },
-  { name: 'GASTON TOMY',     gid: '1697227894', isWorkShop: false, isCosto: false },
-  { name: 'ALEJO',           gid: '1580662582', isWorkShop: false, isCosto: false },
-  { name: 'LUCHO PILAR',     gid: '1980722139', isWorkShop: false, isCosto: false },
-  { name: 'SERVICELL',       gid: '125678359',  isWorkShop: false, isCosto: false },
-  { name: 'MAZZEO',          gid: '803403481',  isWorkShop: false, isCosto: false },
-  { name: 'URQUIZA',         gid: '1411427043', isWorkShop: false, isCosto: false },
-  { name: 'TRONADOR',        gid: '1291580792', isWorkShop: false, isCosto: false },
-  { name: 'TURCO',           gid: '12113330',   isWorkShop: false, isCosto: false },
+  { name: 'WORK SHOP',          gid: '1169477995', isWorkShop: true,  isCosto: true  },
+  { name: 'WORK SHOP VIP',      gid: '2103310165', isWorkShop: true,  isCosto: false },
+  { name: 'LALO',               gid: '376933543',  isWorkShop: false, isCosto: false },
+  { name: 'GUILLE GAMES',       gid: '221847934',  isWorkShop: false, isCosto: false },
+  { name: 'MATIAS BELGRANO',    gid: '457070983',  isWorkShop: false, isCosto: false },
+  { name: 'GASTON TOMY',        gid: '1697227894', isWorkShop: false, isCosto: false },
+  { name: 'ALEJO',              gid: '1580662582', isWorkShop: false, isCosto: false },
+  { name: 'LUCHO PILAR',        gid: '1980722139', isWorkShop: false, isCosto: false },
+  { name: 'SERVICELL',          gid: '125678359',  isWorkShop: false, isCosto: false },
+  { name: 'MAZZEO',             gid: '803403481',  isWorkShop: false, isCosto: false },
+  { name: 'URQUIZA',            gid: '1411427043', isWorkShop: false, isCosto: false },
+  { name: 'TRONADOR',           gid: '1291580792', isWorkShop: false, isCosto: false },
+  { name: 'TURCO',              gid: '12113330',   isWorkShop: false, isCosto: false },
   { name: 'SEBASTIAN BELGRANO', gid: '1798307347', isWorkShop: false, isCosto: false },
 ];
 
-// ─────────────────────────────────────────────
-// ESTADO GLOBAL
-// ─────────────────────────────────────────────
-let allProducts   = [];   // Array de { name, color, prices: { proveedor: precio }, wsPrice, wsStock }
-let currentMargin = 0;
-let currentProvider = 'ALL';
-let loadErrors    = [];
+let allProducts = [], currentMargin = 0, currentProvider = 'ALL', loadErrors = [];
 
-// ─────────────────────────────────────────────
-// PARSER UNIVERSAL — lee el formato vertical:
-// fila N:   nombre producto  (col A)
-// fila N+1: color            (col A)
-// fila N+2: precio           (col C, puede ser col A también)
-// fila N+3: vacía
-// ─────────────────────────────────────────────
-function parseSheet(csvText, sheetName) {
+function parseSheet(csvText) {
   const rows = csvText.split('\n').map(r => r.split(','));
   const products = [];
   let i = 0;
-
   while (i < rows.length) {
-    const row = rows[i];
-    // Buscar fila con texto en columna A que no sea un precio
-    const cellA = (row[0] || '').trim();
+    const cellA = (rows[i][0] || '').trim();
     if (!cellA || isPrice(cellA)) { i++; continue; }
-
-    // Es un nombre de producto
     const name = cellA;
-
-    // Siguiente fila no vacía puede ser color o precio
-    let color = '';
-    let price = null;
-    let j = i + 1;
-
-    // Buscamos hasta 4 filas adelante para encontrar precio
-    while (j < rows.length && j < i + 5) {
-      const nextRow  = rows[j];
-      const nextA    = (nextRow[0] || '').trim();
-      const nextC    = (nextRow[2] || nextRow[1] || nextRow[0] || '').trim();
-
-      // Si la celda A tiene un precio directo
-      if (isPrice(nextA)) {
-        price = parsePrice(nextA);
-        j++;
-        break;
-      }
-      // Si la celda C tiene un precio
-      if (isPrice(nextC)) {
-        price = parsePrice(nextC);
-        // también puede haber un color en esta misma fila col A
-        if (!color && nextA && !isPrice(nextA)) color = nextA;
-        j++;
-        break;
-      }
-      // Si es texto = color (solo si aún no tenemos color)
-      if (nextA && !color) {
-        color = nextA;
-        j++;
-        continue;
-      }
-      // Fila vacía → termina el bloque
-      if (!nextA) { j++; break; }
+    let color = '', price = null, j = i + 1;
+    while (j < rows.length && j < i + 6) {
+      const rA = (rows[j][0] || '').trim();
+      const rC = (rows[j][2] || rows[j][1] || rows[j][0] || '').trim();
+      if (isPrice(rA)) { price = parsePrice(rA); j++; break; }
+      if (isPrice(rC)) { price = parsePrice(rC); if (!color && rA && !isPrice(rA)) color = rA; j++; break; }
+      if (rA && !color) { color = rA; j++; continue; }
+      if (!rA) { j++; break; }
       j++;
     }
-
-    if (price !== null && price > 0) {
-      products.push({ name: normalizeName(name), color, price });
-    }
-
+    if (price !== null && price > 0) products.push({ name: normName(name), color, price });
     i = j;
   }
-
   return products;
 }
 
-function isPrice(str) {
-  if (!str) return false;
-  // Acepta: $1,180 / 1180 / 1.180 / u$130 / 130,50
-  return /^[\$u]*[\d][\d\.,\$u\s]*$/.test(str.replace(/\s/g,'')) && parsePrice(str) > 0;
+function isPrice(s) {
+  if (!s) return false;
+  const n = parsePrice(s);
+  return n !== null && n > 0 && /\d/.test(s);
 }
 
-function parsePrice(str) {
-  if (!str) return null;
-  // Eliminar símbolos de moneda, espacios, letras
-  let clean = str.replace(/[^0-9\.,]/g, '');
-  if (!clean) return null;
-  // Manejar separadores: 1.180,50 → 1180.50 / 1,180.50 → 1180.50
-  if (clean.includes(',') && clean.includes('.')) {
-    // Detectar cuál es separador decimal
-    const lastComma = clean.lastIndexOf(',');
-    const lastDot   = clean.lastIndexOf('.');
-    if (lastComma > lastDot) {
-      // formato 1.180,50
-      clean = clean.replace(/\./g,'').replace(',','.');
-    } else {
-      // formato 1,180.50
-      clean = clean.replace(/,/g,'');
-    }
-  } else if (clean.includes(',')) {
-    // puede ser decimal (1,5) o miles (1,180)
-    const parts = clean.split(',');
-    if (parts[parts.length-1].length <= 2) {
-      clean = clean.replace(',', '.'); // decimal
-    } else {
-      clean = clean.replace(/,/g,''); // miles
-    }
-  } else if (clean.includes('.')) {
-    const parts = clean.split('.');
-    if (parts[parts.length-1].length <= 2) {
-      // decimal ok
-    } else {
-      clean = clean.replace(/\./g,''); // separador de miles
-    }
+function parsePrice(s) {
+  if (!s) return null;
+  let c = s.replace(/[^0-9.,]/g, '');
+  if (!c) return null;
+  if (c.includes(',') && c.includes('.')) {
+    c = c.lastIndexOf(',') > c.lastIndexOf('.') ? c.replace(/\./g,'').replace(',','.') : c.replace(/,/g,'');
+  } else if (c.includes(',')) {
+    c = c.split(',').pop().length <= 2 ? c.replace(',','.') : c.replace(/,/g,'');
+  } else if (c.includes('.')) {
+    if (c.split('.').pop().length > 2) c = c.replace(/\./g,'');
   }
-  const n = parseFloat(clean);
+  const n = parseFloat(c);
   return isNaN(n) ? null : n;
 }
 
-function normalizeName(str) {
-  return str.toUpperCase().trim()
-    .replace(/\s+/g, ' ')
-    .replace(/[""'']/g, '')
-    .replace(/\bC\/CARGADOR\b/g, 'C/CARGADOR')
-    .replace(/\bIMPORTADO\b/g, 'IMPORTADO');
+function normName(s) {
+  return s.toUpperCase().trim().replace(/\s+/g,' ').replace(/[""'']/g,'');
 }
 
-// ─────────────────────────────────────────────
-// FETCH DE UNA HOJA VÍA CSV PÚBLICO
-// ─────────────────────────────────────────────
 async function fetchSheet(sheet) {
   const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${sheet.gid}`;
   try {
     const res = await fetch(url, { cache: 'no-cache' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
-    return { sheet, products: parseSheet(text, sheet.name), ok: true };
+    return { sheet, products: parseSheet(text), ok: true };
   } catch(e) {
     return { sheet, products: [], ok: false, error: e.message };
   }
 }
 
-// ─────────────────────────────────────────────
-// CARGAR TODAS LAS HOJAS Y ARMAR COMPARATIVA
-// ─────────────────────────────────────────────
 async function loadAll() {
   const btn = document.getElementById('btnRefresh');
-  btn.classList.add('loading');
-  btn.textContent = '↺ Cargando...';
+  btn.classList.add('loading'); btn.textContent = '↺ Cargando...';
   document.getElementById('errorBanner').style.display = 'none';
   loadErrors = [];
+  document.getElementById('productList').innerHTML = '<div class="loading-screen"><div class="spinner"></div><div class="loading-text">Leyendo ' + SHEETS.length + ' hojas...</div><div class="loading-sub">Esto tarda unos segundos</div></div>';
 
-  document.getElementById('productList').innerHTML = `
-    <div class="loading-screen">
-      <div class="spinner"></div>
-      <div class="loading-text">Leyendo ${SHEETS.length} hojas...</div>
-      <div class="loading-sub">Esto tarda unos segundos</div>
-    </div>`;
-
-  // Fetch paralelo de todas las hojas
   const results = await Promise.all(SHEETS.map(fetchSheet));
-
-  // Separar WS costo de proveedores
-  const wsResult    = results.find(r => r.sheet.isCosto);
-  const wsProducts  = wsResult ? wsResult.products : [];
+  const wsResult = results.find(r => r.sheet.isCosto);
+  const wsProducts = wsResult ? wsResult.products : [];
   const provResults = results.filter(r => !r.sheet.isWorkShop);
 
-  // Errores
-  results.forEach(r => {
-    if (!r.ok) loadErrors.push(`${r.sheet.name}: ${r.error}`);
-  });
+  results.forEach(r => { if (!r.ok) loadErrors.push(r.sheet.name + ': ' + r.error); });
 
-  // Armar mapa WS { nombreNorm → precio }
-  const wsMap = {};
-  wsProducts.forEach(p => { wsMap[p.name] = p.price; });
-
-  // Armar mapa global de productos { nombre → { proveedores } }
   const productMap = {};
-
-  // Primero agregar todos los productos de WS
   wsProducts.forEach(p => {
-    if (!productMap[p.name]) {
-      productMap[p.name] = { name: p.name, color: p.color, prices: {} };
-    }
+    if (!productMap[p.name]) productMap[p.name] = { name: p.name, color: p.color, prices: {} };
     productMap[p.name].prices['WORK SHOP'] = p.price;
   });
-
-  // Agregar proveedores
   provResults.forEach(r => {
     r.products.forEach(p => {
-      if (!productMap[p.name]) {
-        productMap[p.name] = { name: p.name, color: p.color, prices: {} };
-      }
-      // Si ya existe un precio para este proveedor, tomar el menor
-      const existing = productMap[p.name].prices[r.sheet.name];
-      if (existing === undefined || p.price < existing) {
-        productMap[p.name].prices[r.sheet.name] = p.price;
-      }
-      if (!productMap[p.name].color && p.color) {
-        productMap[p.name].color = p.color;
-      }
+      if (!productMap[p.name]) productMap[p.name] = { name: p.name, color: p.color, prices: {} };
+      const ex = productMap[p.name].prices[r.sheet.name];
+      if (ex === undefined || p.price < ex) productMap[p.name].prices[r.sheet.name] = p.price;
+      if (!productMap[p.name].color && p.color) productMap[p.name].color = p.color;
     });
   });
 
-  // Convertir a array
   allProducts = Object.values(productMap);
-
-  // Actualizar UI
   updateStats();
   buildProviderTabs(results);
   renderCards();
 
   const now = new Date();
-  document.getElementById('headerMeta').textContent =
-    `${allProducts.length} prod · ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-  btn.classList.remove('loading');
-  btn.textContent = '↺ Actualizar';
+  document.getElementById('headerMeta').textContent = allProducts.length + ' prod · ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+  btn.classList.remove('loading'); btn.textContent = '↺ Actualizar';
 
   if (loadErrors.length > 0) {
     document.getElementById('errorBanner').style.display = 'block';
-    document.getElementById('errorBanner').innerHTML =
-      `⚠️ No se pudieron leer: ${loadErrors.map(e => e.split(':')[0]).join(', ')}`;
+    document.getElementById('errorBanner').innerHTML = '⚠️ No se pudieron leer: ' + loadErrors.map(e => e.split(':')[0]).join(', ');
   }
 }
 
-// ─────────────────────────────────────────────
-// STATS
-// ─────────────────────────────────────────────
+function getBestPrice(p) {
+  const entries = Object.entries(p.prices);
+  if (!entries.length) return { provider: '—', price: null, isWS: false, allWinners: [] };
+  let min = Infinity;
+  entries.forEach(([,v]) => { if (v < min) min = v; });
+  const winners = entries.filter(([,v]) => v === min).map(([k]) => k);
+  const isWS = winners.includes('WORK SHOP');
+  return { price: min, provider: winners.join(' / '), isWS, isTied: isWS && winners.length > 1, allWinners: winners };
+}
+
 function updateStats() {
-  const total = allProducts.length;
-  let wsWin = 0;
-  let activeProviders = new Set();
-
+  let wsWin = 0; const prov = new Set();
   allProducts.forEach(p => {
-    Object.keys(p.prices).forEach(prov => {
-      if (prov !== 'WORK SHOP') activeProviders.add(prov);
-    });
-    const best = getBestPrice(p);
-    if (best.provider === 'WORK SHOP' || best.isTied) wsWin++;
+    Object.keys(p.prices).forEach(k => { if (k !== 'WORK SHOP') prov.add(k); });
+    if (getBestPrice(p).isWS) wsWin++;
   });
-
-  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statTotal').textContent = allProducts.length;
   document.getElementById('statWS').textContent = wsWin;
-  document.getElementById('statProviders').textContent = activeProviders.size;
+  document.getElementById('statProviders').textContent = prov.size;
   document.getElementById('statStock').textContent = '—';
 }
 
-// ─────────────────────────────────────────────
-// PROVIDER TABS
-// ─────────────────────────────────────────────
 function buildProviderTabs(results) {
-  const container = document.getElementById('providerTabs');
-  const counts = {};
   const ok = results.filter(r => r.ok && !r.sheet.isWorkShop);
-
-  // Contar productos por proveedor
-  ok.forEach(r => { counts[r.sheet.name] = r.products.length; });
-
-  let html = `<span class="ptab active" onclick="filterProvider('ALL', this)">Comparativa <span class="cnt">${allProducts.length}</span></span>`;
-
+  let html = '<span class="ptab active" onclick="filterProvider(\'ALL\',this)">Comparativa <span class="cnt">' + allProducts.length + '</span></span>';
   ok.forEach(r => {
-    const c = counts[r.sheet.name] || 0;
-    if (c > 0) {
-      html += `<span class="ptab" onclick="filterProvider('${r.sheet.name}', this)">${r.sheet.name} <span class="cnt">${c}</span></span>`;
-    }
+    if (r.products.length > 0)
+      html += '<span class="ptab" onclick="filterProvider(\'' + r.sheet.name + '\',this)">' + r.sheet.name + ' <span class="cnt">' + r.products.length + '</span></span>';
   });
-
-  container.innerHTML = html;
+  document.getElementById('providerTabs').innerHTML = html;
 }
 
 function filterProvider(name, el) {
@@ -776,9 +323,6 @@ function filterProvider(name, el) {
   renderCards();
 }
 
-// ─────────────────────────────────────────────
-// MARGEN
-// ─────────────────────────────────────────────
 function setMargin(val, el) {
   currentMargin = val;
   document.querySelectorAll('.margin-badge').forEach(b => b.classList.remove('active'));
@@ -786,190 +330,86 @@ function setMargin(val, el) {
   renderCards();
 }
 
-function applyMargin(price) {
-  if (!currentMargin) return price;
-  return price * (1 + currentMargin);
+function fmt(p) {
+  return 'u$' + (p * (1 + currentMargin)).toFixed(2).replace(/\.00$/,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 }
 
-function formatPrice(p) {
-  return 'u$' + p.toFixed(2).replace(/\.00$/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
-
-// ─────────────────────────────────────────────
-// MEJOR PRECIO
-// ─────────────────────────────────────────────
-function getBestPrice(product) {
-  const entries = Object.entries(product.prices);
-  if (!entries.length) return { provider: '—', price: null, isTied: false };
-
-  let minPrice = Infinity;
-  entries.forEach(([, p]) => { if (p < minPrice) minPrice = p; });
-
-  const winners = entries.filter(([, p]) => p === minPrice).map(([prov]) => prov);
-  const isWS = winners.includes('WORK SHOP');
-
-  return {
-    price: minPrice,
-    provider: winners.join(' / '),
-    isWS,
-    isTied: isWS && winners.length > 1,
-    allWinners: winners
-  };
-}
-
-// ─────────────────────────────────────────────
-// RENDER CARDS
-// ─────────────────────────────────────────────
 function renderCards() {
-  const search   = document.getElementById('searchInput').value.toLowerCase().trim();
-  const brand    = document.getElementById('brandFilter').value.toUpperCase();
-  const stock    = document.getElementById('stockFilter').value;
-  const winner   = document.getElementById('winnerFilter').value;
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const brand  = document.getElementById('brandFilter').value.toUpperCase();
+  const stock  = document.getElementById('stockFilter').value;
+  const winner = document.getElementById('winnerFilter').value;
 
   let filtered = allProducts.filter(p => {
     if (search && !p.name.toLowerCase().includes(search)) return false;
     if (brand && !p.name.includes(brand)) return false;
-
     const hasWS = 'WORK SHOP' in p.prices;
     if (stock === 'yes' && !hasWS) return false;
     if (stock === 'no'  &&  hasWS) return false;
-
     const best = getBestPrice(p);
-    if (winner === 'ws'    && !best.isWS)  return false;
-    if (winner === 'other' &&  best.isWS)  return false;
-
-    if (currentProvider !== 'ALL') {
-      if (!(currentProvider in p.prices) && !('WORK SHOP' in p.prices && currentProvider === 'WORK SHOP')) {
-        // Mostrar solo si el proveedor seleccionado tiene precio para este producto
-        if (!(currentProvider in p.prices)) return false;
-      }
-    }
-
+    if (winner === 'ws'    && !best.isWS) return false;
+    if (winner === 'other' &&  best.isWS) return false;
+    if (currentProvider !== 'ALL' && !(currentProvider in p.prices)) return false;
     return true;
   });
 
-  // Ordenar: WS ganadores primero, luego por nombre
-  filtered.sort((a, b) => {
-    const bA = getBestPrice(a);
-    const bB = getBestPrice(b);
+  filtered.sort((a,b) => {
+    const bA = getBestPrice(a), bB = getBestPrice(b);
     if (bA.isWS && !bB.isWS) return -1;
     if (!bA.isWS && bB.isWS) return 1;
     return a.name.localeCompare(b.name);
   });
 
-  document.getElementById('countBadge').textContent = `${filtered.length} productos`;
+  document.getElementById('countBadge').textContent = filtered.length + ' productos';
 
   if (!filtered.length) {
-    document.getElementById('productList').innerHTML = `
-      <div class="empty-screen">
-        <div style="font-size:36px;margin-bottom:12px">🔍</div>
-        <div>No se encontraron productos con esos filtros</div>
-      </div>`;
+    document.getElementById('productList').innerHTML = '<div class="empty-screen"><div style="font-size:36px;margin-bottom:12px">🔍</div><div>Sin resultados</div></div>';
     return;
   }
 
-  const html = filtered.map(p => renderCard(p)).join('');
-  document.getElementById('productList').innerHTML = html;
-}
-
-function renderCard(p) {
-  const best      = getBestPrice(p);
-  const sellPrice = best.price ? applyMargin(best.price) : null;
-  const wsPrice   = p.prices['WORK SHOP'];
-
-  // Badge de mejor precio
-  const winClass  = best.isWS ? 'ws-win' : '';
-  const bestLabel = best.isWS ? '🟢 WORK SHOP' : `🔴 ${best.provider}`;
-
-  // Chips de todos los proveedores, ordenados de menor a mayor
-  const entries = Object.entries(p.prices).sort(([,a],[,b]) => a - b);
-
-  const chips = entries.map(([prov, price]) => {
-    const isWinner = best.allWinners && best.allWinners.includes(prov);
-    const isWS     = prov === 'WORK SHOP';
-    let cls = 'compare-chip';
-    if (isWinner) cls += ' winner';
-    else if (isWS) cls += ' ws-chip';
-    return `<span class="${cls}">
-      <span class="pname">${prov}</span>
-      <span class="pprice">${formatPrice(price)}</span>
-    </span>`;
+  document.getElementById('productList').innerHTML = filtered.map(p => {
+    const best = getBestPrice(p);
+    const label = best.isWS ? '🟢 WORK SHOP' : '🔴 ' + best.provider;
+    const chips = Object.entries(p.prices).sort(([,a],[,b])=>a-b).map(([prov,price]) => {
+      const isW = best.allWinners.includes(prov);
+      const cls = isW ? 'compare-chip winner' : (prov==='WORK SHOP' ? 'compare-chip ws-chip' : 'compare-chip');
+      return '<span class="' + cls + '"><span class="pname">' + prov + '</span><span class="pprice">' + fmt(price) + '</span></span>';
+    }).join('');
+    const sellTag = currentMargin > 0 ? '<span class="sell-tag">Venta: ' + fmt(best.price) + '</span>' : '';
+    const copyTxt = p.name + (p.color ? ' — ' + p.color : '') + ' → ' + best.provider + ': ' + fmt(best.price);
+    return '<div class="product-card"><div class="card-top"><div><div class="product-name">' + p.name + ' ' + sellTag + '</div>' + (p.color ? '<div class="product-color">' + p.color + '</div>' : '') + '</div><div class="best-badge"><div class="best-provider' + (best.isWS?' ws-win':'') + '">' + label + '</div><div class="best-price">' + fmt(best.price) + '</div></div></div><div class="compare-row">' + chips + '</div><button class="btn-copy" onclick="doCopy(this,\'' + copyTxt.replace(/'/g,"&#39;") + '\')">📋 Copiar</button></div>';
   }).join('');
-
-  // Precio de venta con margen
-  const sellTag = currentMargin > 0 && sellPrice
-    ? `<span class="sell-tag">Venta: ${formatPrice(sellPrice)}</span>`
-    : '';
-
-  // Texto para copiar
-  const copyText = `${p.name}${p.color ? ' — ' + p.color : ''} → ${best.provider}: ${best.price ? formatPrice(best.price) : '—'}`;
-
-  return `
-  <div class="product-card">
-    <div class="card-top">
-      <div>
-        <div class="product-name">${p.name} ${sellTag}</div>
-        ${p.color ? `<div class="product-color">${p.color}</div>` : ''}
-      </div>
-      <div class="best-badge">
-        <div class="best-provider ${winClass}">${bestLabel}</div>
-        <div class="best-price">${best.price ? formatPrice(best.price) : '—'}</div>
-      </div>
-    </div>
-    <div class="compare-row">${chips}</div>
-    <button class="btn-copy" onclick="copyText(this, \`${copyText.replace(/`/g,"'")}\`)">📋 Copiar</button>
-  </div>`;
 }
 
-// ─────────────────────────────────────────────
-// COPY
-// ─────────────────────────────────────────────
-function copyText(btn, text) {
+function doCopy(btn, text) {
   navigator.clipboard.writeText(text).then(() => {
-    btn.classList.add('copied');
-    btn.textContent = '✅ Copiado';
-    setTimeout(() => {
-      btn.classList.remove('copied');
-      btn.textContent = '📋 Copiar';
-    }, 1800);
+    btn.classList.add('copied'); btn.textContent = '✅ Copiado';
+    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋 Copiar'; }, 1800);
   });
 }
 
-// ─────────────────────────────────────────────
-// EXPORT EXCEL (CSV)
-// ─────────────────────────────────────────────
 function exportExcel() {
-  const rows = [['Producto', 'Color', 'Mejor Precio', 'Mejor Proveedor', 'Precio WS', ...SHEETS.filter(s=>!s.isCosto&&!s.isWorkShop).map(s=>s.name)]];
-
+  const provSheets = SHEETS.filter(s => !s.isWorkShop);
+  const rows = [['Producto','Color','Mejor Precio','Mejor Proveedor','Precio WS',...provSheets.map(s=>s.name)]];
   allProducts.forEach(p => {
     const best = getBestPrice(p);
-    const wsP  = p.prices['WORK SHOP'] || '';
-    const provPrices = SHEETS.filter(s=>!s.isCosto&&!s.isWorkShop).map(s => p.prices[s.name] || '');
-    rows.push([p.name, p.color, best.price || '', best.provider, wsP, ...provPrices]);
+    rows.push([p.name, p.color, best.price||'', best.provider, p.prices['WORK SHOP']||'', ...provSheets.map(s=>p.prices[s.name]||'')]);
   });
-
-  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const csv = rows.map(r=>r.map(c=>'"'+c+'"').join(',')).join('\n');
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `comparador_${new Date().toISOString().slice(0,10)}.csv`;
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
+  a.download = 'comparador_' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
 }
 
-// ─────────────────────────────────────────────
-// SWITCH SECCIÓN
-// ─────────────────────────────────────────────
 function switchSection(sec, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('secPrecios').style.display  = sec === 'precios'  ? '' : 'none';
-  document.getElementById('secCuentas').style.display  = sec === 'cuentas'  ? '' : 'none';
-  document.getElementById('secPedidos').style.display  = sec === 'pedidos'  ? '' : 'none';
+  document.getElementById('secPrecios').style.display = sec==='precios' ? '' : 'none';
+  document.getElementById('secCuentas').style.display = sec==='cuentas' ? '' : 'none';
+  document.getElementById('secPedidos').style.display = sec==='pedidos' ? '' : 'none';
 }
 
-// ─────────────────────────────────────────────
-// ARRANCAR
-// ─────────────────────────────────────────────
 loadAll();
 </script>
 </body>
