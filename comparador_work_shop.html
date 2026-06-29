@@ -158,22 +158,40 @@ function csvR(l){const r=[];let c="",q=false;for(let i=0;i<l.length;i++){if(l[i]
 function cl(s){return(s||"").replace(/^["'\s]+|["'\s]+$/g,"").trim()}
 function toN(s){
   if(!s)return null;
-  let c=s.replace(/[^0-9.,]/g,"");
+  // Limpiar símbolo de moneda y espacios
+  let c=s.replace(/[$u\s]/g,"").trim();
   if(!c)return null;
-  if(c.includes(",")&&c.includes(".")){c=c.lastIndexOf(",")>c.lastIndexOf(".")?c.replace(/\./g,"").replace(",","."):c.replace(/,/g,"")}
-  else if(c.includes(",")){c=c.split(",").pop().length<=2?c.replace(",","."):c.replace(/,/g,"")}
-  else if(c.includes(".")){if(c.split(".").pop().length>2)c=c.replace(/\./g,"")}
-  const n=parseFloat(c);return isNaN(n)?null:n
+  // $596,09 → 596.09 (coma como decimal cuando solo hay 2 decimales)
+  // $1.180  → 1180   (punto como separador de miles cuando hay 3 dígitos después)
+  if(c.includes(",")&&c.includes(".")){
+    // ambos: 1.180,50 → coma es decimal
+    c=c.replace(/\./g,"").replace(",",".");
+  } else if(c.includes(",")){
+    const partes=c.split(",");
+    if(partes[partes.length-1].length<=2){
+      c=c.replace(",","."); // coma decimal: 596,09 → 596.09
+    } else {
+      c=c.replace(/,/g,""); // coma miles: 1,180 → 1180
+    }
+  } else if(c.includes(".")){
+    const partes=c.split(".");
+    if(partes[partes.length-1].length>2){
+      c=c.replace(/\./g,""); // punto miles: 1.180 → 1180
+    }
+    // si tiene 2 decimales lo dejamos: 67.98
+  }
+  const n=parseFloat(c);
+  return isNaN(n)?null:n;
 }
 // Detecta si una celda contiene SOLO un precio (número con o sin $ al inicio)
 function isP(s){
   if(!s)return false;
-  // Eliminar $ o u$ al inicio y espacios
-  const stripped=s.replace(/^[\$u\s]+/,"").trim();
+  const stripped=s.replace(/^[$u\s]+/,"").trim();
   if(!stripped)return false;
-  const n=toN(stripped);
-  // Debe ser número válido, positivo, sin letras largas
-  return n!==null&&n>0&&/^\$?[\d.,]+$/.test(s.trim().replace(/^u/,""));
+  if(!/^\d/.test(stripped))return false; // debe empezar con dígito
+  if(/[a-zA-Z]{2,}/.test(stripped))return false; // no debe tener palabras
+  const n=toN(s);
+  return n!==null&&n>0;
 }
 // Busca precio en cualquier columna de la fila (A, B, C, D...)
 function findPrice(row){
