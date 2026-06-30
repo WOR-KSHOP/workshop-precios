@@ -344,21 +344,36 @@ function renderOp(){
   if(cercaList.length){
     html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128997; Cerca de ganar (ajustando precio)</div>';
     html+=cercaList.map(({p,b,wsPrice,diffPct})=>{
+      const chips=opChips(p,b);
       return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+'</div>'
         +'<div class="pm">Tu costo: '+fmtRaw(wsPrice)+' · Líder: '+b.pr+' a '+fmtRaw(b.price)+' · Diferencia: +'+diffPct.toFixed(1)+'%</div></div>'
-        +'<div class="bb"><div class="bp" style="color:var(--yellow)">&#9888; A '+diffPct.toFixed(1)+'%</div><div class="bpr">'+fmtRaw(wsPrice)+'</div></div></div></div>'
+        +'<div class="bb"><div class="bp" style="color:var(--yellow)">&#9888; A '+diffPct.toFixed(1)+'%</div><div class="bpr">'+fmtRaw(wsPrice)+'</div></div></div>'
+        +'<div class="cr">'+chips+'</div></div>'
     }).join("");
   }
   if(sinStockList.length){
     html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128997; Sin stock, con demanda activa</div>';
     html+=sinStockList.map(({p,b,nProv})=>{
+      const chips=opChips(p,b);
       return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+'</div>'
         +'<div class="pm">'+nProv+' proveedores compitiendo · Mejor precio: '+b.pr+'</div></div>'
-        +'<div class="bb"><div class="bp" style="color:var(--red)">&#128308; Sin stock</div><div class="bpr">'+fmtRaw(b.price)+'</div></div></div></div>'
+        +'<div class="bb"><div class="bp" style="color:var(--red)">&#128308; Sin stock</div><div class="bpr">'+fmtRaw(b.price)+'</div></div></div>'
+        +'<div class="cr">'+chips+'</div></div>'
     }).join("");
   }
   if(!html)html='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#9989;</div>Sin oportunidades detectadas por ahora</div>';
   document.getElementById("opList").innerHTML=html;
+}
+
+// Genera los chips de todos los proveedores (con link a Sheets) para una card de Oportunidades
+function opChips(p,b){
+  return Object.entries(p.prices).sort(([,a],[,b])=>a-b).map(([pv,pr])=>{
+    const iw=b.all.includes(pv);const iws=pv==="COSTOS";
+    const cls=iw?"ch win":(iws?"ch wsc":"ch");
+    const url=sheetUrl(pv);
+    const linkIcon=(!iws&&url)?'<a href="'+url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="margin-left:4px;text-decoration:none;opacity:.55" title="Ver en Google Sheets">&#128279;</a>':"";
+    return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmtRaw(pr)+"</span>"+linkIcon+"</span>"
+  }).join("");
 }
 
 async function loadAll(){
@@ -383,6 +398,7 @@ async function loadAll(){
 function best(p){const e=Object.entries(p.prices);if(!e.length)return{pr:"—",price:null,isWS:false,all:[]};let m=Infinity;e.forEach(([,v])=>{if(v<m)m=v});const w=e.filter(([,v])=>v===m).map(([k])=>k);return{price:m,pr:w.join(" / "),isWS:w.includes("COSTOS"),all:w}}
 function fmt(p){return"u$"+(p*(1+MAR)).toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
 function fmtRaw(p){return"u$"+p.toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
+function sheetUrl(provName){const sh=SH.find(s=>s.n===provName);return sh?`https://docs.google.com/spreadsheets/d/${SID}/edit#gid=${sh.g}`:null}
 
 function updStats(){
   let ww=0;const pv=new Set();let ts=0;
@@ -428,7 +444,9 @@ function render(){
       const iw=b.all.includes(pv);const iws=pv==="COSTOS";
       const cls=iw?"ch win":(iws?"ch wsc":"ch");
       const stk=(iws&&wsSt)?'<span style="opacity:.6;font-size:10px;margin-left:3px">'+wsSt+"</span>":"";
-      return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmtRaw(pr)+"</span>"+stk+"</span>"
+      const url=sheetUrl(pv);
+      const linkIcon=(!iws&&url)?'<a href="'+url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="margin-left:4px;text-decoration:none;opacity:.55" title="Ver en Google Sheets">&#128279;</a>':"";
+      return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmtRaw(pr)+"</span>"+stk+linkIcon+"</span>"
     }).join("");
     const stag=MAR>0?'<span class="stag">Venta: '+fmt(b.price)+"</span>":"";
     const meta=[p.color,wsSt].filter(Boolean).join(" · ");
