@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0066)file:///Users/matiasfrancois/Downloads/comparador_work_shop_6.html -->
+<!-- saved from url=(0066)file:///Users/matiasfrancois/Downloads/comparador_work_shop_7.html -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -92,7 +92,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 <body>
 <div class="hdr">
   <div class="logo">Work <span>Shop</span></div>
-  <div class="meta" id="hMeta">0 prod · 12:24</div>
+  <div class="meta" id="hMeta">0 prod · 12:43</div>
   <button class="btnR" id="btnR" onclick="loadAll()">↺ Actualizar</button>
 </div>
 <div class="tabs">
@@ -397,7 +397,7 @@ function opChips(p,b){
   }).join("");
 }
 
-// Parser simple de tabla: columna A = nombre, columna B = importe
+// Parser simple de tabla: columna A = nombre, columna B = importe, columna C = link opcional (ej: Cianbox)
 // Ignora filas de encabezado/sección (texto sin número en B) y filas vacías
 function pTabla(csv){
   const rows=csv.split("\n").map(r=>csvR(r));
@@ -405,10 +405,11 @@ function pTabla(csv){
   for(const row of rows){
     const name=cl(row[0]);
     const val=cl(row[1]);
+    const link=cl(row[2]||"");
     if(!name||!val)continue;
     const n=toN(val);
     if(n===null)continue; // fila de header tipo "CLIENTES"/"DEUDA" sin número válido
-    out.push({name,amount:n});
+    out.push({name,amount:n,link:(link&&/^https?:\/\//i.test(link))?link:null});
   }
   return out;
 }
@@ -455,8 +456,10 @@ function renderPed(){
   document.getElementById("pdM").textContent=fmtRaw(total);
   if(!f.length){document.getElementById("pedList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';return}
   document.getElementById("pedList").innerHTML=f.map(c=>{
+    const linkBtn=c.link?'<a href="'+c.link+'" target="_blank" rel="noopener" class="bcp" style="display:inline-block;text-decoration:none;margin-top:8px">&#128279; Ver en Cianbox</a>':"";
     return'<div class="pc"><div class="ct"><div><div class="pn">'+c.name+'</div></div>'
-      +'<div class="bb"><div class="bpr" style="color:var(--blue)">'+fmtRaw(c.amount)+'</div></div></div></div>'
+      +'<div class="bb"><div class="bpr" style="color:var(--blue)">'+fmtRaw(c.amount)+'</div></div></div>'
+      +linkBtn+'</div>'
   }).join("");
 }
 
