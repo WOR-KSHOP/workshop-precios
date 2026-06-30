@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -160,6 +159,7 @@ const SH=[
   {n:"TRONADOR",          g:"1291580792",ws:false,co:false,p:"vertical" },
   {n:"TURCO",             g:"12113330",  ws:false,co:false,p:"vertical" },
   {n:"SEBASTIAN BELGRANO",g:"1798307347",ws:false,co:false,p:"vertical" },
+  {n:"TODO ELECTRO",      g:"1765329200",ws:false,co:false,p:"vertical" },
 ];
 let ALL=[],MAR=0,PRV="ALL",ERR=[];
 
@@ -267,7 +267,7 @@ function pUniversal(csv, conStock){
       if(rA&&!color)color=rA;
       j++
     }
-    if(price&&price>0)out.push({name:nn(name),color,price,stock});
+    if(price&&price>0&&price<5000)out.push({name:nn(name),color,price,stock});
     i=j
   }
   return out
