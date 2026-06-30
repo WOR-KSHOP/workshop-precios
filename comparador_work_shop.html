@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Work Shop - Comparador de Precios</title>
 <style>
-:root{--bg:#f7f8fa;--surface:#fff;--border:#e4e7ec;--text:#111827;--muted:#6b7280;--green:#16a34a;--gl:#dcfce7;--blue:#2563eb;--bl:#dbeafe;--orange:#ea580c;--ol:#fff7ed;--red:#dc2626;--shadow:0 1px 3px rgba(0,0,0,.08);--r:10px}
+:root{--bg:#f7f8fa;--surface:#fff;--border:#e4e7ec;--text:#111827;--muted:#6b7280;--green:#16a34a;--gl:#dcfce7;--blue:#2563eb;--bl:#dbeafe;--orange:#ea580c;--ol:#fff7ed;--red:#dc2626;--yellow:#ca8a04;--shadow:0 1px 3px rgba(0,0,0,.08);--r:10px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 .hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
@@ -98,6 +98,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 </div>
 <div class="tabs">
   <div class="tab active" onclick="sec('precios',this)">&#128176; Precios</div>
+  <div class="tab" onclick="sec('oportunidades',this)">&#128161; Oportunidades</div>
   <div class="tab" onclick="sec('cuentas',this)">&#128203; Cuentas corrientes</div>
   <div class="tab" onclick="sec('pedidos',this)">&#128230; Pedidos por salir</div>
 </div>
@@ -129,6 +130,14 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
     </div>
     <div class="ptabs" id="pTabs"></div>
     <div id="pList" class="pl"><div class="ls"><div class="sp"></div><div class="lt">Cargando...</div></div></div>
+  </div>
+  <div id="sOp" style="display:none">
+    <div class="stats">
+      <div class="stat"><div class="sl">Oportunidades</div><div class="sv" id="oT" style="color:var(--orange)">-</div><div class="ss">detectadas</div></div>
+      <div class="stat"><div class="sl">Cerca del mejor precio</div><div class="sv" id="oC" style="color:var(--yellow)">-</div><div class="ss">a menos de 5%</div></div>
+      <div class="stat"><div class="sl">Sin stock + demanda</div><div class="sv" id="oD" style="color:var(--red)">-</div><div class="ss">3+ proveedores</div></div>
+    </div>
+    <div id="opList" class="pl"></div>
   </div>
   <div id="sC" style="display:none"><div class="es"><div style="font-size:40px;margin-bottom:12px">&#128203;</div>Cuentas corrientes - proximamente</div></div>
   <div id="sPed" style="display:none"><div class="es"><div style="font-size:40px;margin-bottom:12px">&#128230;</div>Pedidos por salir - proximamente</div></div>
@@ -194,9 +203,21 @@ function isP(s){
   return n!==null&&n>0;
 }
 // Busca precio en cualquier columna de la fila (A, B, C, D...)
+// Si un número quedó partido por la coma del CSV (ej: $596,09 -> "$596" | "09"),
+// lo reconstruye uniendo con la columna siguiente si esta es solo 1-2 dígitos
 function findPrice(row){
   for(let i=0;i<row.length;i++){
     const v=cl(row[i]);
+    if(!v)continue;
+    // ¿Empieza como entero y la siguiente columna son 1-2 dígitos? → probablemente partido por coma decimal
+    if(/^[$u\s]*\d+$/.test(v)){
+      const next=cl(row[i+1]||"");
+      if(/^\d{1,2}$/.test(next)){
+        const n=toN(v+","+next);
+        if(n!==null&&n>0)return n;
+      }
+    }
+    // Si no se reconstruyó, ¿es un precio normal por sí solo?
     if(isP(v))return toN(v);
   }
   return null;
@@ -289,6 +310,57 @@ async function fetchS(s){
   }catch(e){return{s,pr:[],ok:false,err:e.message}}
 }
 
+// OPORTUNIDADES: combina 2 criterios
+// A) WS tiene stock pero NO es el mejor precio, y está a menos de 5% del líder (cerca de ganar)
+// B) WS no tiene stock, pero hay 3+ proveedores compitiendo (señal de demanda activa)
+function renderOp(){
+  const cercaList=[],sinStockList=[];
+  ALL.forEach(p=>{
+    const b=best(p);
+    if(!b.price)return;
+    const hasWS="COSTOS"in p.prices;
+    if(hasWS&&!b.isWS){
+      const wsPrice=p.prices["COSTOS"];
+      const diffPct=((wsPrice-b.price)/b.price)*100;
+      if(diffPct>0&&diffPct<=5){
+        cercaList.push({p,b,wsPrice,diffPct});
+      }
+    }
+    if(!hasWS){
+      const nProv=Object.keys(p.prices).length;
+      if(nProv>=3){
+        sinStockList.push({p,b,nProv});
+      }
+    }
+  });
+  cercaList.sort((a,b)=>a.diffPct-b.diffPct);
+  sinStockList.sort((a,b)=>b.nProv-a.nProv);
+
+  document.getElementById("oT").textContent=cercaList.length+sinStockList.length;
+  document.getElementById("oC").textContent=cercaList.length;
+  document.getElementById("oD").textContent=sinStockList.length;
+
+  let html="";
+  if(cercaList.length){
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128997; Cerca de ganar (ajustando precio)</div>';
+    html+=cercaList.map(({p,b,wsPrice,diffPct})=>{
+      return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+'</div>'
+        +'<div class="pm">Tu costo: '+fmtRaw(wsPrice)+' · Líder: '+b.pr+' a '+fmtRaw(b.price)+' · Diferencia: +'+diffPct.toFixed(1)+'%</div></div>'
+        +'<div class="bb"><div class="bp" style="color:var(--yellow)">&#9888; A '+diffPct.toFixed(1)+'%</div><div class="bpr">'+fmtRaw(wsPrice)+'</div></div></div></div>'
+    }).join("");
+  }
+  if(sinStockList.length){
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128997; Sin stock, con demanda activa</div>';
+    html+=sinStockList.map(({p,b,nProv})=>{
+      return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+'</div>'
+        +'<div class="pm">'+nProv+' proveedores compitiendo · Mejor precio: '+b.pr+'</div></div>'
+        +'<div class="bb"><div class="bp" style="color:var(--red)">&#128308; Sin stock</div><div class="bpr">'+fmtRaw(b.price)+'</div></div></div></div>'
+    }).join("");
+  }
+  if(!html)html='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#9989;</div>Sin oportunidades detectadas por ahora</div>';
+  document.getElementById("opList").innerHTML=html;
+}
+
 async function loadAll(){
   const btn=document.getElementById("btnR");
   btn.classList.add("loading");btn.textContent="↺ Cargando...";
@@ -310,6 +382,7 @@ async function loadAll(){
 
 function best(p){const e=Object.entries(p.prices);if(!e.length)return{pr:"—",price:null,isWS:false,all:[]};let m=Infinity;e.forEach(([,v])=>{if(v<m)m=v});const w=e.filter(([,v])=>v===m).map(([k])=>k);return{price:m,pr:w.join(" / "),isWS:w.includes("COSTOS"),all:w}}
 function fmt(p){return"u$"+(p*(1+MAR)).toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
+function fmtRaw(p){return"u$"+p.toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
 
 function updStats(){
   let ww=0;const pv=new Set();let ts=0;
@@ -355,14 +428,14 @@ function render(){
       const iw=b.all.includes(pv);const iws=pv==="COSTOS";
       const cls=iw?"ch win":(iws?"ch wsc":"ch");
       const stk=(iws&&wsSt)?'<span style="opacity:.6;font-size:10px;margin-left:3px">'+wsSt+"</span>":"";
-      return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmt(pr)+"</span>"+stk+"</span>"
+      return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmtRaw(pr)+"</span>"+stk+"</span>"
     }).join("");
     const stag=MAR>0?'<span class="stag">Venta: '+fmt(b.price)+"</span>":"";
     const meta=[p.color,wsSt].filter(Boolean).join(" · ");
-    const ct=p.name+(p.color?" - "+p.color:"")+" -> "+b.pr+": "+fmt(b.price);
+    const ct=p.name+(p.color?" - "+p.color:"")+" -> "+b.pr+": "+fmtRaw(b.price);
     return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+" "+stag+"</div>"+(meta?'<div class="pm">'+meta+"</div>":"")+"</div>"
       +'<div class="bb"><div class="bp'+( b.isWS?" wsw":"")+'">'+ lbl+"</div>"
-      +'<div class="bpr">'+fmt(b.price)+"</div></div></div>"
+      +'<div class="bpr">'+fmtRaw(b.price)+"</div></div></div>"
       +'<div class="cr">'+chips+"</div>"
       +'<button class="bcp" onclick="cp(this,\''+ct.replace(/'/g,"&#39;")+'\')">&#128203; Copiar</button></div>'
   }).join("")
@@ -381,8 +454,10 @@ function exportXls(){
 function sec(s,el){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));el.classList.add("active");
   document.getElementById("sP").style.display=s==="precios"?"":"none";
+  document.getElementById("sOp").style.display=s==="oportunidades"?"":"none";
   document.getElementById("sC").style.display=s==="cuentas"?"":"none";
-  document.getElementById("sPed").style.display=s==="pedidos"?"":"none"
+  document.getElementById("sPed").style.display=s==="pedidos"?"":"none";
+  if(s==="oportunidades")renderOp();
 }
 
 loadAll();
