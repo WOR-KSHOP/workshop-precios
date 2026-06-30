@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0066)file:///Users/matiasfrancois/Downloads/comparador_work_shop_6.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Work Shop - Comparador de Precios</title>
 <style>
@@ -92,25 +92,25 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 <body>
 <div class="hdr">
   <div class="logo">Work <span>Shop</span></div>
-  <div class="meta" id="hMeta">Cargando...</div>
-  <button class="btnR" id="btnR" onclick="loadAll()">&#8635; Actualizar</button>
+  <div class="meta" id="hMeta">0 prod · 12:24</div>
+  <button class="btnR" id="btnR" onclick="loadAll()">↺ Actualizar</button>
 </div>
 <div class="tabs">
-  <div class="tab active" onclick="sec('precios',this)">&#128176; Precios</div>
-  <div class="tab" onclick="sec('oportunidades',this)">&#128161; Oportunidades</div>
-  <div class="tab" onclick="sec('cuentas',this)">&#128203; Cuentas corrientes</div>
-  <div class="tab" onclick="sec('pedidos',this)">&#128230; Pedidos por salir</div>
+  <div class="tab active" onclick="sec(&#39;precios&#39;,this)">💰 Precios</div>
+  <div class="tab" onclick="sec(&#39;oportunidades&#39;,this)">💡 Oportunidades</div>
+  <div class="tab" onclick="sec(&#39;cuentas&#39;,this)">📋 Cuentas corrientes</div>
+  <div class="tab" onclick="sec(&#39;pedidos&#39;,this)">📦 Pedidos por salir</div>
 </div>
 <div class="main">
   <div id="sP">
     <div class="stats">
-      <div class="stat"><div class="sl">Productos</div><div class="sv" id="sT">-</div><div class="ss">comparados</div></div>
-      <div class="stat"><div class="sl">WS Mejor Precio</div><div class="sv" id="sW" style="color:var(--green)">-</div><div class="ss">ganamos</div></div>
-      <div class="stat"><div class="sl">Proveedores</div><div class="sv" id="sPr">-</div><div class="ss">activos</div></div>
-      <div class="stat"><div class="sl">Stock WS</div><div class="sv" id="sSt">-</div><div class="ss">unidades</div></div>
+      <div class="stat"><div class="sl">Productos</div><div class="sv" id="sT">0</div><div class="ss">comparados</div></div>
+      <div class="stat"><div class="sl">WS Mejor Precio</div><div class="sv" id="sW" style="color:var(--green)">0</div><div class="ss">ganamos</div></div>
+      <div class="stat"><div class="sl">Proveedores</div><div class="sv" id="sPr">0</div><div class="ss">activos</div></div>
+      <div class="stat"><div class="sl">Stock WS</div><div class="sv" id="sSt">—</div><div class="ss">unidades</div></div>
     </div>
     <div class="mbar">
-      <span class="ml">&#9989; Precio de venta:</span>
+      <span class="ml">✅ Precio de venta:</span>
       <span class="mb active" onclick="setM(0,this)">Sin margen</span>
       <span class="mb" onclick="setM(.03,this)">+3%</span>
       <span class="mb" onclick="setM(.04,this)">+4%</span>
@@ -118,17 +118,17 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
       <span class="mb" onclick="setM(.07,this)">+7%</span>
       <span class="mb" onclick="setM(.10,this)">+10%</span>
     </div>
-    <div id="eb" style="display:none" class="eb"></div>
+    <div id="eb" style="display: block;" class="eb">⚠️ No se pudieron leer: COSTOS, VIP, LALO, GUILLE GAMES, MATIAS BELGRANO, GASTON TOMY, ALEJO, LUCHO PILAR, SERVICELL, MAZZEO, URQUIZA, TRONADOR, TURCO, SEBASTIAN BELGRANO, TODO ELECTRO</div>
     <div class="ctrl">
-      <div class="sw"><span class="si">&#128269;</span><input type="text" id="srch" placeholder="Buscar producto..." oninput="render()"></div>
+      <div class="sw"><span class="si">🔍</span><input type="text" id="srch" placeholder="Buscar producto..." oninput="render()"></div>
       <select id="bF" onchange="render()"><option value="">Todas las marcas</option><option value="SAMSUNG">Samsung</option><option value="MOTOROLA">Motorola</option><option value="XIAOMI">Xiaomi</option><option value="IPHONE">iPhone</option><option value="INFINIX">Infinix</option><option value="NOKIA">Nokia</option></select>
       <select id="stF" onchange="render()"><option value="all">Con y sin stock</option><option value="yes">Solo con stock WS</option><option value="no">Sin stock WS</option></select>
       <select id="wF" onchange="render()"><option value="all">Todos</option><option value="ws">WS mejor precio</option><option value="other">Otros ganan</option></select>
-      <span class="cb" id="cnt">-</span>
-      <button class="bex" onclick="exportXls()">&#128202; Exportar Excel</button>
+      <span class="cb" id="cnt">0 productos</span>
+      <button class="bex" onclick="exportXls()">📊 Exportar Excel</button>
     </div>
-    <div class="ptabs" id="pTabs"></div>
-    <div id="pList" class="pl"><div class="ls"><div class="sp"></div><div class="lt">Cargando...</div></div></div>
+    <div class="ptabs" id="pTabs"><span class="pt active" onclick="fp(&#39;ALL&#39;,this)">Comparativa <span>0</span></span></div>
+    <div id="pList" class="pl"><div class="es"><div style="font-size:36px;margin-bottom:12px">🔍</div>Sin resultados</div></div>
   </div>
   <div id="sOp" style="display:none">
     <div class="stats">
@@ -138,8 +138,26 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
     </div>
     <div id="opList" class="pl"></div>
   </div>
-  <div id="sC" style="display:none"><div class="es"><div style="font-size:40px;margin-bottom:12px">&#128203;</div>Cuentas corrientes - proximamente</div></div>
-  <div id="sPed" style="display:none"><div class="es"><div style="font-size:40px;margin-bottom:12px">&#128230;</div>Pedidos por salir - proximamente</div></div>
+  <div id="sC" style="display:none">
+    <div class="stats">
+      <div class="stat"><div class="sl">Clientes</div><div class="sv" id="ccT">-</div><div class="ss">con saldo</div></div>
+      <div class="stat"><div class="sl">Deuda total</div><div class="sv" id="ccD" style="color:var(--red)">-</div><div class="ss">a cobrar</div></div>
+    </div>
+    <div class="ctrl">
+      <div class="sw"><span class="si">🔍</span><input type="text" id="ccSrch" placeholder="Buscar cliente..." oninput="renderCC()"></div>
+    </div>
+    <div id="ccList" class="pl"></div>
+  </div>
+  <div id="sPed" style="display:none">
+    <div class="stats">
+      <div class="stat"><div class="sl">Pedidos</div><div class="sv" id="pdT">-</div><div class="ss">por salir</div></div>
+      <div class="stat"><div class="sl">Total</div><div class="sv" id="pdM" style="color:var(--blue)">-</div><div class="ss">en pedidos</div></div>
+    </div>
+    <div class="ctrl">
+      <div class="sw"><span class="si">🔍</span><input type="text" id="pdSrch" placeholder="Buscar cliente..." oninput="renderPed()"></div>
+    </div>
+    <div id="pedList" class="pl"></div>
+  </div>
 </div>
 <script>
 const SID="1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g";
@@ -161,6 +179,9 @@ const SH=[
   {n:"SEBASTIAN BELGRANO",g:"1798307347",ws:false,co:false,p:"vertical" },
   {n:"TODO ELECTRO",      g:"1765329200",ws:false,co:false,p:"vertical" },
 ];
+const CC_GID="1313251460";
+const PED_GID="890878891";
+let CC_DATA=[],PED_DATA=[];
 let ALL=[],MAR=0,PRV="ALL",ERR=[];
 
 function csvR(l){const r=[];let c="",q=false;for(let i=0;i<l.length;i++){if(l[i]==='"'){q=!q}else if(l[i]===","&&!q){r.push(c);c=""}else c+=l[i]}r.push(c);return r}
@@ -376,6 +397,69 @@ function opChips(p,b){
   }).join("");
 }
 
+// Parser simple de tabla: columna A = nombre, columna B = importe
+// Ignora filas de encabezado/sección (texto sin número en B) y filas vacías
+function pTabla(csv){
+  const rows=csv.split("\n").map(r=>csvR(r));
+  const out=[];
+  for(const row of rows){
+    const name=cl(row[0]);
+    const val=cl(row[1]);
+    if(!name||!val)continue;
+    const n=toN(val);
+    if(n===null)continue; // fila de header tipo "CLIENTES"/"DEUDA" sin número válido
+    out.push({name,amount:n});
+  }
+  return out;
+}
+
+async function fetchSimple(gid){
+  const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${gid}`;
+  try{
+    const r=await fetch(url,{cache:"no-cache"});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const t=await r.text();
+    return pTabla(t);
+  }catch(e){return []}
+}
+
+async function loadCC(){
+  document.getElementById("ccList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Cargando...</div></div>';
+  CC_DATA=await fetchSimple(CC_GID);
+  renderCC();
+}
+function renderCC(){
+  const sr=(document.getElementById("ccSrch").value||"").toLowerCase().trim();
+  let f=CC_DATA.filter(c=>!sr||c.name.toLowerCase().includes(sr));
+  f.sort((a,b)=>b.amount-a.amount);
+  const total=CC_DATA.reduce((s,c)=>s+c.amount,0);
+  document.getElementById("ccT").textContent=CC_DATA.length;
+  document.getElementById("ccD").textContent=fmtRaw(total);
+  if(!f.length){document.getElementById("ccList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';return}
+  document.getElementById("ccList").innerHTML=f.map(c=>{
+    return'<div class="pc"><div class="ct"><div><div class="pn">'+c.name+'</div></div>'
+      +'<div class="bb"><div class="bpr" style="color:var(--red)">'+fmtRaw(c.amount)+'</div></div></div></div>'
+  }).join("");
+}
+
+async function loadPed(){
+  document.getElementById("pedList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Cargando...</div></div>';
+  PED_DATA=await fetchSimple(PED_GID);
+  renderPed();
+}
+function renderPed(){
+  const sr=(document.getElementById("pdSrch").value||"").toLowerCase().trim();
+  let f=PED_DATA.filter(c=>!sr||c.name.toLowerCase().includes(sr));
+  const total=PED_DATA.reduce((s,c)=>s+c.amount,0);
+  document.getElementById("pdT").textContent=PED_DATA.length;
+  document.getElementById("pdM").textContent=fmtRaw(total);
+  if(!f.length){document.getElementById("pedList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';return}
+  document.getElementById("pedList").innerHTML=f.map(c=>{
+    return'<div class="pc"><div class="ct"><div><div class="pn">'+c.name+'</div></div>'
+      +'<div class="bb"><div class="bpr" style="color:var(--blue)">'+fmtRaw(c.amount)+'</div></div></div></div>'
+  }).join("");
+}
+
 async function loadAll(){
   const btn=document.getElementById("btnR");
   btn.classList.add("loading");btn.textContent="↺ Cargando...";
@@ -476,9 +560,11 @@ function sec(s,el){
   document.getElementById("sC").style.display=s==="cuentas"?"":"none";
   document.getElementById("sPed").style.display=s==="pedidos"?"":"none";
   if(s==="oportunidades")renderOp();
+  if(s==="cuentas"&&!CC_DATA.length)loadCC();
+  if(s==="pedidos"&&!PED_DATA.length)loadPed();
 }
 
 loadAll();
 </script>
-</body>
-</html>
+
+</body></html>
