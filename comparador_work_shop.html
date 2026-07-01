@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0066)file:///Users/matiasfrancois/Downloads/comparador_work_shop_7.html -->
+<!-- saved from url=(0066)file:///Users/matiasfrancois/Downloads/comparador_work_shop_8.html -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -92,7 +92,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 <body>
 <div class="hdr">
   <div class="logo">Work <span>Shop</span></div>
-  <div class="meta" id="hMeta">0 prod · 12:43</div>
+  <div class="meta" id="hMeta">0 prod · 14:28</div>
   <button class="btnR" id="btnR" onclick="loadAll()">↺ Actualizar</button>
 </div>
 <div class="tabs">
@@ -258,64 +258,107 @@ function nn(s){return s.toUpperCase().trim().replace(/\s+/g," ").replace(/[""\''
 // Un nombre válido: tiene letras, longitud razonable, no es solo número
 function isNombre(s){return s&&s.length>3&&/[a-zA-Z]/.test(s)&&!isP(s)&&!isSt(s)&&!isHd(s)}
 
-// PARSER UNIVERSAL: sirve para WS-COSTOS, WS-VIP y LUCHO PILAR
-// Busca el precio en CUALQUIER columna de cada fila
-// Acepta hasta 5 filas de texto (color, notas, etc.) antes del precio
-function pUniversal(csv, conStock){
+// ─── MARCAS Y PALABRAS CLAVE DE PRODUCTOS ───────────────────────────────────
+const MARCAS=/\b(SAMSUNG|MOTOROLA|XIAOMI|NOKIA|IPHONE|INFINIX|POCO|REDMI|APPLE|MOTO|GALAXY|NOTE|EDGE|RAZR|PLAYSTATION|JOYSTICK|TABLET|TCL|ZTE|GOOGLE|PIXEL|SONY|LG|HUAWEI)\b/i;
+
+function esProdName(s){
+  if(!s||s.length<4)return false;
+  if(isHd(s)||isSt(s))return false;
+  return MARCAS.test(s)||/[A-Z]{2,}\s*\d+/i.test(s);
+}
+
+// Extrae precio de una cadena (puede estar mezclado con el nombre)
+function extractPrice(s){
+  if(!s)return null;
+  const m=s.match(/u?\$\s*([\d.,]+)/i)||s.match(/\b(\d{2,4}[.,]\d{2})\b/);
+  if(!m)return null;
+  const n=toN(m[1]||m[0]);
+  if(!n||n<10||n>4999)return null;
+  return n;
+}
+
+// Elimina el precio del nombre si están en la misma celda
+function cleanName(s){
+  return s.replace(/u?\$[\s\d.,]+$/i,"").replace(/\s*[-–]\s*$/,"").trim();
+}
+
+// Busca precio en cualquier columna de la fila
+function extractPriceFromRow(row){
+  for(let i=0;i<row.length;i++){
+    const v=cl(row[i]);
+    if(!v)continue;
+    // Número partido por coma CSV: "$596" + "09" → 596.09
+    if(/^[$u\s]*\d+$/.test(v)){
+      const next=cl(row[i+1]||"");
+      if(/^\d{1,2}$/.test(next)){
+        const n=toN(v+","+next);
+        if(n&&n>10&&n<5000)return n;
+      }
+    }
+    // Solo precio (sin letras largas)
+    if(!/[a-zA-Z]{4,}/.test(v)){
+      const p=extractPrice(v);
+      if(p!==null)return p;
+    }
+  }
+  // Precio incrustado en el texto de col A (ej: "SAMSUNG A16 $132")
+  const full=row.map(c=>cl(c)).filter(Boolean).join(" ");
+  if(/[$u]\s*\d/.test(full)){const p=extractPrice(full);if(p)return p;}
+  return null;
+}
+
+// ─── PARSER ÚNICO INTELIGENTE ────────────────────────────────────────────────
+function parseAny(csv){
   const rows=csv.split("\n").map(r=>csvR(r));
   const out=[];let i=0;
   while(i<rows.length){
-    const a=cl(rows[i][0]);
-    // Saltar filas vacías, precios sueltos, STOCK lines, headers de sección
-    if(!a||isP(a)||isSt(a)||isHd(a)){i++;continue}
-    // Si no parece nombre de producto, saltar
-    if(!isNombre(a)){i++;continue}
-    const name=a;
-    let stock=null,color="",price=null,j=i+1;
-    // Buscar dentro de las próximas 8 filas
-    while(j<rows.length&&j<i+8){
-      const rA=cl(rows[j][0]);
-      // ¿Fila vacía? terminar bloque
-      if(!rA&&!findPrice(rows[j])){j++;break}
-      // ¿STOCK line?
-      if(isSt(rA)){stock=exSt(rA);j++;continue}
-      // ¿Header de sección? terminar bloque
-      if(isHd(rA)){break}
-      // ¿Precio en alguna columna?
-      const p=findPrice(rows[j]);
-      if(p!==null){price=p;j++;break}
-      // Texto extra (color, nota) — guardar como color si no tenemos
-      if(rA&&!color)color=rA;
-      j++
+    const colA=cl(rows[i][0]);
+    if(!colA||isHd(colA)||isSt(colA)){i++;continue}
+    if(!esProdName(colA)){i++;continue}
+
+    const name=cleanName(colA);
+    let color="",stock=null,price=null;
+
+    // ¿El precio ya está en esta fila?
+    const inlinePrice=extractPriceFromRow(rows[i]);
+    if(inlinePrice!==null){
+      price=inlinePrice;
+      // Buscar color/stock en filas siguientes
+      let j=i+1;
+      while(j<rows.length&&j<i+4){
+        const nA=cl(rows[j][0]);
+        if(!nA){j++;break}
+        if(isSt(nA)){stock=exSt(nA);j++;continue}
+        if(isHd(nA)||esProdName(nA)||extractPriceFromRow(rows[j])!==null)break;
+        if(!color)color=nA;
+        j++;
+      }
+      i=j;
+    } else {
+      // Precio en filas siguientes
+      let j=i+1;
+      while(j<rows.length&&j<i+8){
+        const nA=cl(rows[j][0]);
+        const rowP=extractPriceFromRow(rows[j]);
+        if(isSt(nA)){stock=exSt(nA);j++;continue}
+        if(isHd(nA)){break}
+        if(rowP!==null){price=rowP;j++;break}
+        if(!nA){j++;break}
+        if(!color&&!esProdName(nA))color=nA;
+        j++;
+      }
+      i=j;
     }
-    if(price&&price>0&&price<5000)out.push({name:nn(name),color,price,stock});
-    i=j
+
+    if(name&&price&&price>0&&price<5000)out.push({name:nn(name),color,price,stock});
   }
-  return out
+  return out;
 }
 
-// PARSER VERTICAL: para proveedores externos (mismo lógica, sin stock)
-function pVertical(csv){return pUniversal(csv,false)}
-
-// PARSER WS COSTOS: igual pero extrae stock
-function pWsCostos(csv){return pUniversal(csv,true)}
-
-// PARSER 3: Inline "Nombre – 103 USD – Stock: 30 – Color: Verde"
-function pInline(csv){
-  const rows=csv.split("\n").map(r=>csvR(r));const out=[];
-  for(const row of rows){
-    const line=row.map(c=>cl(c)).filter(Boolean).join(" ");
-    if(!line)continue;
-    const pm=line.match(/[-\u2013]\s*(\d[\d.,]*)\s*USD/i)||line.match(/(\d[\d.,]*)\s*USD/i);
-    if(!pm)continue;
-    const price=toN(pm[1]);if(!price||price<=0)continue;
-    let name=line.split(/\s*[-\u2013]\s*/)[0].trim();if(!name)continue;
-    const sm=line.match(/Stock[:\s]+(\d+)/i);const stock=sm?parseInt(sm[1]):null;
-    const cm=line.match(/Color[:\s]+([^\-\u2013]+)/i);const color=cm?cm[1].trim():"";
-    out.push({name:nn(name),color,price,stock})
-  }
-  return out
-}
+// Un solo parser para todo — no más tipos distintos
+function pVertical(csv){return parseAny(csv)}
+function pWsCostos(csv){return parseAny(csv)}
+function pInline(csv){return parseAny(csv)}
 
 async function fetchS(s){
   const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${s.g}`;
