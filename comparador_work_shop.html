@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0066)file:///Users/matiasfrancois/Downloads/comparador_work_shop_8.html -->
+<!-- saved from url=(0067)file:///Users/matiasfrancois/Downloads/comparador_work_shop_10.html -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -92,7 +92,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 <body>
 <div class="hdr">
   <div class="logo">Work <span>Shop</span></div>
-  <div class="meta" id="hMeta">0 prod · 14:28</div>
+  <div class="meta" id="hMeta">0 prod · 11:03</div>
   <button class="btnR" id="btnR" onclick="loadAll()">↺ Actualizar</button>
 </div>
 <div class="tabs">
@@ -342,9 +342,12 @@ function parseAny(csv){
         const rowP=extractPriceFromRow(rows[j]);
         if(isSt(nA)){stock=exSt(nA);j++;continue}
         if(isHd(nA)){break}
+        // Si encontramos un precio, lo tomamos
         if(rowP!==null){price=rowP;j++;break}
-        if(!nA){j++;break}
-        if(!color&&!esProdName(nA))color=nA;
+        // Si encontramos otro producto nuevo, terminamos sin precio
+        if(nA&&esProdName(nA)){break}
+        // Fila vacía O texto sin precio → seguimos buscando (no cortamos)
+        if(nA&&!color&&!esProdName(nA))color=nA;
         j++;
       }
       i=j;
