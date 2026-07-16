@@ -268,6 +268,8 @@ const MARCAS=/\b(SAMSUNG|MOTOROLA|XIAOMI|NOKIA|IPHONE|INFINIX|POCO|REDMI|APPLE|M
 function esProdName(s){
   if(!s||s.length<4)return false;
   if(isHd(s)||isSt(s))return false;
+  // Línea con precio inline (ej: "G04S 4/256GB - u$125") → siempre es producto
+  if(/u?\$\s*\d/i.test(s))return true;
   return MARCAS.test(s)||/[A-Z]{2,}\s*\d+/i.test(s);
 }
 
@@ -315,19 +317,30 @@ function extractPriceFromRow(row){
 function parseAny(csv){
   const rows=csv.split("\n").map(r=>csvR(r));
   const out=[];let i=0;
+  let marcaActual=""; // track del último header de marca visto
+
   while(i<rows.length){
     const colA=cl(rows[i][0]);
-    if(!colA||isHd(colA)||isSt(colA)){i++;continue}
+
+    // Si es header de marca (SAMSUNG, MOTOROLA, etc.) → lo guardamos y seguimos
+    if(isHd(colA)){
+      if(MARCAS.test(colA))marcaActual=colA.toUpperCase().trim();
+      i++;continue;
+    }
+    if(!colA||isSt(colA)){i++;continue}
     if(!esProdName(colA)){i++;continue}
 
-    const name=cleanName(colA);
+    // Construir nombre: si no tiene marca propia, prefixar con la última marca vista
+    let rawName=cleanName(colA);
+    const tieneMarca=MARCAS.test(rawName);
+    const nameConMarca=(marcaActual&&!tieneMarca)?marcaActual+" "+rawName:rawName;
+
     let color="",stock=null,price=null;
 
     // ¿El precio ya está en esta fila?
     const inlinePrice=extractPriceFromRow(rows[i]);
     if(inlinePrice!==null){
       price=inlinePrice;
-      // Buscar color/stock en filas siguientes
       let j=i+1;
       while(j<rows.length&&j<i+4){
         const nA=cl(rows[j][0]);
@@ -339,25 +352,21 @@ function parseAny(csv){
       }
       i=j;
     } else {
-      // Precio en filas siguientes
       let j=i+1;
       while(j<rows.length&&j<i+8){
         const nA=cl(rows[j][0]);
         const rowP=extractPriceFromRow(rows[j]);
         if(isSt(nA)){stock=exSt(nA);j++;continue}
         if(isHd(nA)){break}
-        // Si encontramos un precio, lo tomamos
         if(rowP!==null){price=rowP;j++;break}
-        // Si encontramos otro producto nuevo, terminamos sin precio
         if(nA&&esProdName(nA)){break}
-        // Fila vacía O texto sin precio → seguimos buscando (no cortamos)
         if(nA&&!color&&!esProdName(nA))color=nA;
         j++;
       }
       i=j;
     }
 
-    if(name&&price&&price>0&&price<5000)out.push({name:nn(name),color,price,stock});
+    if(nameConMarca&&price&&price>0&&price<5000)out.push({name:nn(nameConMarca),color,price,stock});
   }
   return out;
 }
@@ -454,11 +463,23 @@ function pTabla(csv){
   const out=[];
   for(const row of rows){
     const name=cl(row[0]);
-    const val=cl(row[1]);
-    const link=cl(row[2]||"");
-    if(!name||!val)continue;
+    if(!name)continue;
+
+    // El importe puede estar partido por la coma del CSV:
+    // "$8,474.00" sin comillas → col[1]="$8" col[2]="474.00"
+    // Intentar reconstruir el número completo
+    let val=cl(row[1]||"");
+    let link=cl(row[2]||"");
+
+    // Si col[1] parece un número truncado ($8, $1) y col[2] son decimales/miles (474.00)
+    if(val&&/^[\$]?\d+$/.test(val)&&link&&/^\d{3}(\.\d+)?$/.test(link)){
+      val=val+","+link; // reconstruir: "$8,474.00"
+      link=cl(row[3]||""); // el link real está en col[3]
+    }
+
+    if(!val)continue;
     const n=toN(val);
-    if(n===null)continue; // fila de header tipo "CLIENTES"/"DEUDA" sin número válido
+    if(n===null||n===0)continue;
     out.push({name,amount:n,link:(link&&/^https?:\/\//i.test(link))?link:null});
   }
   return out;
