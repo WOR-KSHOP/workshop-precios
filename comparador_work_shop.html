@@ -192,14 +192,18 @@ function csvR(l){const r=[];let c="",q=false;for(let i=0;i<l.length;i++){if(l[i]
 function cl(s){return(s||"").replace(/^["'\s]+|["'\s]+$/g,"").trim()}
 function toN(s){
   if(!s)return null;
-  // Limpiar símbolo de moneda y espacios
   let c=s.replace(/[$u\s]/g,"").trim();
   if(!c)return null;
-  // $596,09 → 596.09 (coma como decimal cuando solo hay 2 decimales)
-  // $1.180  → 1180   (punto como separador de miles cuando hay 3 dígitos después)
   if(c.includes(",")&&c.includes(".")){
-    // ambos: 1.180,50 → coma es decimal
-    c=c.replace(/\./g,"").replace(",",".");
+    const lastComma=c.lastIndexOf(",");
+    const lastDot=c.lastIndexOf(".");
+    if(lastDot>lastComma){
+      // formato AMERICANO: 8,474.00 → punto es decimal
+      c=c.replace(/,/g,""); // quitar comas de miles → 8474.00
+    } else {
+      // formato EUROPEO: 1.180,50 → coma es decimal
+      c=c.replace(/\./g,"").replace(",",".");
+    }
   } else if(c.includes(",")){
     const partes=c.split(",");
     if(partes[partes.length-1].length<=2){
@@ -212,7 +216,6 @@ function toN(s){
     if(partes[partes.length-1].length>2){
       c=c.replace(/\./g,""); // punto miles: 1.180 → 1180
     }
-    // si tiene 2 decimales lo dejamos: 67.98
   }
   const n=parseFloat(c);
   return isNaN(n)?null:n;
