@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -262,7 +263,21 @@ function isHd(s){
   return false;
 }
 function exSt(s){const m=s.match(/\d+/);return m?parseInt(m[0]):null}
-function nn(s){return s.toUpperCase().trim().replace(/\s+/g," ").replace(/[""\'']/g,"")}
+function nn(s){
+  let r=s.toUpperCase().trim();
+  r=r.replace(/[""\'']/g,"");
+  // Normalizar separador guión con espacios
+  r=r.replace(/\s*-\s*/g," ");
+  // Normalizar RAM/Storage: "4GB/128GB" → "4/128GB"
+  r=r.replace(/(\d+)\s*GB\s*\/\s*(\d+)\s*GB/gi,"$1/$2GB");
+  r=r.replace(/(\d+)\s*GB\s*RAM/gi,"$1");
+  r=r.replace(/(\d+)\s*RAM\s*\/\s*(\d+)\s*GB/gi,"$1/$2GB");
+  // Quitar palabras que varían entre proveedores pero no identifican el modelo
+  r=r.replace(/\b(DS|SS|GLOBAL|SLIM|C\/CARGADOR|S\/CARGADOR|IMPORTADO|NACIONAL|EUR|BR|US|CH|INDIA|NFC|ESIM|L\.P|CX\.F|3P)\b/g,"");
+  // Limpiar espacios múltiples
+  r=r.replace(/\s+/g," ").trim();
+  return r;
+}
 // Un nombre válido: tiene letras, longitud razonable, no es solo número
 function isNombre(s){return s&&s.length>3&&/[a-zA-Z]/.test(s)&&!isP(s)&&!isSt(s)&&!isHd(s)}
 
