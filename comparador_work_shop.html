@@ -552,6 +552,26 @@ function renderPed(){
   }).join("");
 }
 
+// Genera una clave simplificada para comparar productos entre proveedores
+// Extrae solo marca + modelo base + storage, ignorando orden de RAM/GB y palabras extra
+function mkKey(name){
+  let k=name.toUpperCase();
+  // Extraer números de memoria: normalizar "8/256GB" y "256GB/8GB" al mismo formato
+  const mem=[];
+  k=k.replace(/(\d+)\s*\/\s*(\d+)\s*GB/g,function(_,a,b){
+    // ordenar los dos números: el menor es RAM, el mayor es storage
+    const x=parseInt(a),y=parseInt(b);
+    mem.push(Math.min(x,y)+"/"+Math.max(x,y));return"__MEM__";
+  });
+  k=k.replace(/(\d+)\s*GB/g,function(_,n){mem.push(n);return"__MEM__";});
+  // Quitar palabras no identificadoras
+  k=k.replace(/\b(DS|SS|5G|4G|GLOBAL|SLIM|C\/CARGADOR|S\/CARGADOR|IMPORTADO|NACIONAL|EUR|BR|US|CH|INDIA|NFC|ESIM|L\.P|CX\.F|3P|POWER|PRO|PLUS|\+|MAX|ULTRA|NEO|FE|SE)\b/g," ");
+  k=k.replace(/[^A-Z0-9\s]/g," ").replace(/\s+/g," ").trim();
+  // Reincorporar memoria normalizada
+  if(mem.length)k=k+" "+mem.sort().join("/");
+  return k.trim();
+}
+
 async function loadAll(){
   const btn=document.getElementById("btnR");
   btn.classList.add("loading");btn.textContent="↺ Cargando...";
@@ -562,8 +582,19 @@ async function loadAll(){
   const provR=res.filter(r=>!r.s.co);
   res.forEach(r=>{if(!r.ok)ERR.push(r.s.n+": "+r.err)});
   const map={};
-  wsP.forEach(p=>{if(!map[p.name])map[p.name]={name:p.name,color:p.color,prices:{},stocks:{}};map[p.name].prices["COSTOS"]=p.price;if(p.stock!==null)map[p.name].stocks["COSTOS"]=p.stock});
-  provR.forEach(r=>{r.pr.forEach(p=>{if(!map[p.name])map[p.name]={name:p.name,color:p.color,prices:{},stocks:{}};const ex=map[p.name].prices[r.s.n];if(ex===undefined||p.price<ex)map[p.name].prices[r.s.n]=p.price;if(p.stock!==null)map[p.name].stocks[r.s.n]=p.stock;if(!map[p.name].color&&p.color)map[p.name].color=p.color})});
+  // Función helper para agregar producto al mapa usando clave normalizada
+  function addToMap(p, provName){
+    const key=mkKey(p.name);
+    if(!map[key])map[key]={name:p.name,color:p.color,prices:{},stocks:{}};
+    // Preferir el nombre más descriptivo (más largo)
+    if(p.name.length>map[key].name.length)map[key].name=p.name;
+    const ex=map[key].prices[provName];
+    if(ex===undefined||p.price<ex)map[key].prices[provName]=p.price;
+    if(p.stock!==null)map[key].stocks[provName]=p.stock;
+    if(!map[key].color&&p.color)map[key].color=p.color;
+  }
+  wsP.forEach(p=>addToMap(p,"COSTOS"));
+  provR.forEach(r=>{r.pr.forEach(p=>addToMap(p,r.s.n));});
   ALL=Object.values(map);
   updStats();buildTabs(res);render();
   const now=new Date();document.getElementById("hMeta").textContent=ALL.length+" prod · "+now.getHours()+":"+String(now.getMinutes()).padStart(2,"0");
