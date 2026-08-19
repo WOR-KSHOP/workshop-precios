@@ -162,10 +162,11 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 
   <!-- VIP VS RIVALES -->
   <div id="sVIP" style="display:none">
-    <div class="stats" style="grid-template-columns:repeat(3,1fr)">
-      <div class="stat"><div class="sl">Productos VIP</div><div class="sv" id="vipTotal">-</div><div class="ss">en lista</div></div>
+    <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat"><div class="sl">Productos VIP</div><div class="sv" id="vipTotal">-</div><div class="ss">en lista propia</div></div>
       <div class="stat"><div class="sl">Ganamos</div><div class="sv" id="vipGanamos" style="color:var(--green)">-</div><div class="ss">somos los más baratos</div></div>
       <div class="stat"><div class="sl">Nos superan</div><div class="sv" id="vipPerdemos" style="color:var(--red)">-</div><div class="ss">algún rival es más barato</div></div>
+      <div class="stat" style="cursor:pointer" onclick="toggleSinVIP()"><div class="sl">Sin stock propio</div><div class="sv" id="vipSinVIP" style="color:var(--orange)">-</div><div class="ss" id="vipSinVIPLabel">solo en rivales · ver</div></div>
     </div>
     <div class="ctrl">
       <div class="sw"><span class="si">&#128269;</span><input type="text" id="vipSrch" placeholder="Buscar producto..." oninput="renderVIPTab()"></div>
@@ -173,6 +174,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
         <option value="all">Todos los productos VIP</option>
         <option value="ganamos">Solo donde ganamos a todos</option>
         <option value="perdemos">Solo donde nos superan</option>
+        <option value="sinvip">Sin VIP propio (solo rivales)</option>
       </select>
       <select id="vipBF" onchange="renderVIPTab()">
         <option value="">Todas las marcas</option>
@@ -181,6 +183,8 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
         <option value="XIAOMI">Xiaomi</option>
         <option value="IPHONE">iPhone</option>
         <option value="INFINIX">Infinix</option>
+        <option value="NOKIA">Nokia</option>
+        <option value="NOBLEX">Noblex</option>
       </select>
       <span class="cb" id="vipCnt">-</span>
       <button class="bex" onclick="printVIP()" style="background:var(--surface);color:var(--text);border-color:var(--border)">&#128438; Imprimir</button>
@@ -523,16 +527,58 @@ function toggleRival(name,el){
   else{SELECTED_RIVALES.push(name);el.classList.add("active")}
   renderVIPTab();
 }
+function toggleSinVIP(){
+  const sel=document.getElementById("vipF");
+  sel.value=(sel.value==="sinvip")?"all":"sinvip";
+  renderVIPTab();
+}
 function renderVIPTab(){
   const sr=(document.getElementById("vipSrch").value||"").toLowerCase().trim();
   const filtro=document.getElementById("vipF").value;
   const br=(document.getElementById("vipBF").value||"").toUpperCase();
 
+  // Stat: productos que rivales tienen pero WS no tiene en VIP
+  const sinVIPCount=ALL.filter(p=>!("VIP"in p.prices)&&SELECTED_RIVALES.some(r=>r in p.prices)).length;
+  document.getElementById("vipSinVIP").textContent=sinVIPCount;
+  document.getElementById("vipSinVIPLabel").textContent=filtro==="sinvip"?"solo en rivales · ocultar":"solo en rivales · ver";
+
+  // ── MODO SIN VIP: artículos que rivales tienen pero WS no ──
+  if(filtro==="sinvip"){
+    let f=ALL.filter(p=>!("VIP"in p.prices)&&SELECTED_RIVALES.some(r=>r in p.prices));
+    if(sr){const words=sr.split(/\s+/).filter(Boolean);f=f.filter(p=>words.every(w=>p.name.toLowerCase().includes(w)))}
+    if(br)f=f.filter(p=>p.name.includes(br));
+    f.sort((a,b)=>a.name.localeCompare(b.name));
+    document.getElementById("vipCnt").textContent=f.length+" sin VIP propio";
+    if(!f.length){
+      document.getElementById("vipList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';
+      return;
+    }
+    let html='<div class="vip-wrap"><table class="vip-table"><thead><tr>';
+    html+='<th style="text-align:left">Producto (sin VIP propio)</th><th class="th-costos">COSTOS</th>';
+    SELECTED_RIVALES.forEach(r=>{html+='<th>'+r+'</th>'});
+    html+='</tr></thead><tbody>';
+    f.forEach(p=>{
+      const costo=p.prices["COSTOS"];
+      html+='<tr>';
+      html+='<td style="text-align:left;color:var(--orange);font-weight:600">'+p.name+'</td>';
+      if(costo){html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span></td>'}
+      else{html+='<td><span style="color:var(--border)">—</span></td>'}
+      SELECTED_RIVALES.forEach(r=>{
+        if(r in p.prices){html+='<td><span class="badge badge-gray">'+fmtRaw(p.prices[r])+'</span></td>'}
+        else{html+='<td><span style="color:var(--border)">—</span></td>'}
+      });
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+    document.getElementById("vipList").innerHTML=html;
+    return;
+  }
+
+  // ── MODO NORMAL: productos VIP propios ──
   let f=ALL.filter(p=>"VIP"in p.prices);
   if(sr){const words=sr.split(/\s+/).filter(Boolean);f=f.filter(p=>words.every(w=>p.name.toLowerCase().includes(w)))}
   if(br)f=f.filter(p=>p.name.includes(br));
 
-  // Clasificar cada producto contra los seleccionados
   f=f.map(p=>{
     const vip=p.prices["VIP"];
     const rivalesConPrecio=SELECTED_RIVALES.filter(r=>r in p.prices);
@@ -541,18 +587,15 @@ function renderVIPTab(){
     return{...p,vip,rivalesConPrecio,pierdeContra,ganaContra};
   });
 
-  // Stats
   const ganamos=f.filter(p=>p.rivalesConPrecio.length>0&&p.pierdeContra.length===0).length;
   const perdemos=f.filter(p=>p.pierdeContra.length>0).length;
   document.getElementById("vipTotal").textContent=f.length;
   document.getElementById("vipGanamos").textContent=ganamos;
   document.getElementById("vipPerdemos").textContent=perdemos;
 
-  // Filtro
   if(filtro==="ganamos")f=f.filter(p=>p.rivalesConPrecio.length>0&&p.pierdeContra.length===0);
   else if(filtro==="perdemos")f=f.filter(p=>p.pierdeContra.length>0);
 
-  // Ordenar: primero donde nos superan, luego por nombre
   f.sort((a,b)=>{
     const diff=b.pierdeContra.length-a.pierdeContra.length;
     return diff!==0?diff:a.name.localeCompare(b.name);
@@ -578,15 +621,12 @@ function renderVIPTab(){
     const margenPct=costo?((vip-costo)/costo*100):null;
     html+='<tr>';
     html+='<td style="text-align:left">'+p.name+'</td>';
-    // COSTOS
     if(costo){
       html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span>';
       if(margenPct!==null)html+='<span class="diff" style="color:var(--muted)">margen +'+margenPct.toFixed(1)+'%</span>';
       html+='</td>';
     }else{html+='<td><span style="color:var(--border)">—</span></td>'}
-    // VIP
     html+='<td><span class="badge badge-blue">'+fmtRaw(vip)+'</span></td>';
-    // Proveedores seleccionados (con color)
     SELECTED_RIVALES.forEach(r=>{
       if(r in p.prices){
         const rp=p.prices[r];const wins=vip<=rp;
