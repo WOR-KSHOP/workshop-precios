@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Work Shop - Comparador de Precios</title>
 <style>
-:root{--bg:#f7f8fa;--surface:#fff;--border:#e4e7ec;--text:#111827;--muted:#6b7280;--green:#16a34a;--gl:#dcfce7;--blue:#2563eb;--bl:#dbeafe;--orange:#ea580c;--ol:#fff7ed;--red:#dc2626;--yellow:#ca8a04;--shadow:0 1px 3px rgba(0,0,0,.08);--r:10px}
+:root{--bg:#f7f8fa;--surface:#fff;--border:#e4e7ec;--text:#111827;--muted:#6b7280;--green:#16a34a;--gl:#dcfce7;--blue:#2563eb;--bl:#dbeafe;--orange:#ea580c;--ol:#fff7ed;--red:#dc2626;--rl:#fef2f2;--yellow:#ca8a04;--shadow:0 1px 3px rgba(0,0,0,.08);--r:10px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 .hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
@@ -17,7 +17,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:4px;overflow-x:auto}
 .tab{padding:11px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
 .tab:hover{color:var(--text)}.tab.active{color:var(--text);border-bottom-color:var(--text)}
-.main{padding:20px;max-width:960px;margin:0 auto}
+.main{padding:20px;max-width:1100px;margin:0 auto}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
 .sl{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
@@ -60,33 +60,41 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 .lt{font-size:14px;margin-bottom:6px}.lsub{font-size:12px}
 .eb{background:#fef2f2;border:1px solid #fecaca;border-radius:var(--r);padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--red)}
 .stag{display:inline-block;background:var(--ol);color:var(--orange);border:1px solid #fed7aa;border-radius:5px;font-size:11px;font-weight:700;padding:2px 7px;margin-left:6px}
+/* VIP TABLE */
+.vip-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow)}
+.vip-table{width:100%;border-collapse:collapse;font-size:12px;background:var(--surface)}
+.vip-table th{padding:10px 12px;background:var(--bg);border-bottom:2px solid var(--border);font-weight:700;white-space:nowrap;text-align:right}
+.vip-table th:first-child{text-align:left;min-width:220px}
+.vip-table td{padding:9px 12px;border-bottom:1px solid var(--border);text-align:right;vertical-align:middle}
+.vip-table td:first-child{text-align:left;font-weight:600;font-size:12px}
+.vip-table tr:last-child td{border-bottom:none}
+.vip-table tr:nth-child(even){background:var(--bg)}
+.vip-table tr:hover{background:#f0f4ff}
+.badge{display:inline-block;padding:2px 7px;border-radius:5px;font-weight:700;font-size:11px}
+.badge-green{background:var(--gl);color:var(--green)}
+.badge-red{background:var(--rl);color:var(--red)}
+.badge-blue{background:var(--bl);color:var(--blue)}
+.badge-gray{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.diff{font-size:10px;display:block;margin-top:2px}
+.th-costos{color:var(--muted)}
+.th-vip{color:var(--blue)}
 @media(max-width:640px){
   .stats{grid-template-columns:repeat(2,1fr);gap:8px}
-  .stat{padding:10px 12px}
-  .sv{font-size:22px}
-  .meta{display:none}
-  .main{padding:12px}
-  .mbar{gap:6px;padding:10px 12px}
-  .ml{width:100%;margin-bottom:2px}
+  .stat{padding:10px 12px}.sv{font-size:22px}
+  .meta{display:none}.main{padding:12px}
+  .mbar{gap:6px;padding:10px 12px}.ml{width:100%;margin-bottom:2px}
   .mb{padding:4px 10px;font-size:11px}
-  .ctrl{flex-direction:column;gap:8px}
-  .sw{min-width:100%}
+  .ctrl{flex-direction:column;gap:8px}.sw{min-width:100%}
   .sw input{font-size:14px;padding:10px 12px 10px 36px}
   select{width:100%;font-size:14px;padding:10px 12px}
   .cb{margin-left:0;text-align:right;width:100%}
   .bex{width:100%;text-align:center;padding:10px 14px}
-  .ptabs{gap:5px;padding-bottom:4px}
-  .pt{padding:5px 10px;font-size:11px}
-  .pc{padding:12px}
-  .pn{font-size:13px}
-  .bpr{font-size:16px}
-  .bp{font-size:11px}
+  .ptabs{gap:5px;padding-bottom:4px}.pt{padding:5px 10px;font-size:11px}
+  .pc{padding:12px}.pn{font-size:13px}.bpr{font-size:16px}.bp{font-size:11px}
   .ch{font-size:10px;padding:3px 7px}
-  .hdr{padding:10px 14px}
-  .logo{font-size:16px}
+  .hdr{padding:10px 14px}.logo{font-size:16px}
   .btnR{padding:6px 10px;font-size:12px}
-  .tabs{padding:0 12px}
-  .tab{padding:9px 12px;font-size:12px}
+  .tabs{padding:0 12px}.tab{padding:9px 12px;font-size:12px}
 }
 </style>
 </head>
@@ -98,11 +106,14 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 </div>
 <div class="tabs">
   <div class="tab active" onclick="sec('precios',this)">&#128176; Precios</div>
+  <div class="tab" onclick="sec('vip',this)">&#127775; VIP vs Rivales</div>
   <div class="tab" onclick="sec('oportunidades',this)">&#128161; Oportunidades</div>
   <div class="tab" onclick="sec('cuentas',this)">&#128203; Cuentas corrientes</div>
   <div class="tab" onclick="sec('pedidos',this)">&#128230; Pedidos por salir</div>
 </div>
 <div class="main">
+
+  <!-- PRECIOS -->
   <div id="sP">
     <div class="stats">
       <div class="stat"><div class="sl">Productos</div><div class="sv" id="sT">-</div><div class="ss">comparados</div></div>
@@ -131,6 +142,35 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
     <div class="ptabs" id="pTabs"></div>
     <div id="pList" class="pl"><div class="ls"><div class="sp"></div><div class="lt">Cargando...</div></div></div>
   </div>
+
+  <!-- VIP VS RIVALES -->
+  <div id="sVIP" style="display:none">
+    <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat"><div class="sl">Productos VIP</div><div class="sv" id="vipTotal">-</div><div class="ss">en lista</div></div>
+      <div class="stat"><div class="sl">Ganamos</div><div class="sv" id="vipGanamos" style="color:var(--green)">-</div><div class="ss">somos los más baratos</div></div>
+      <div class="stat"><div class="sl">Nos superan</div><div class="sv" id="vipPerdemos" style="color:var(--red)">-</div><div class="ss">algún rival es más barato</div></div>
+    </div>
+    <div class="ctrl">
+      <div class="sw"><span class="si">&#128269;</span><input type="text" id="vipSrch" placeholder="Buscar producto..." oninput="renderVIPTab()"></div>
+      <select id="vipF" onchange="renderVIPTab()">
+        <option value="all">Todos los productos VIP</option>
+        <option value="ganamos">Solo donde ganamos a todos</option>
+        <option value="perdemos">Solo donde nos superan</option>
+      </select>
+      <select id="vipBF" onchange="renderVIPTab()">
+        <option value="">Todas las marcas</option>
+        <option value="SAMSUNG">Samsung</option>
+        <option value="MOTOROLA">Motorola</option>
+        <option value="XIAOMI">Xiaomi</option>
+        <option value="IPHONE">iPhone</option>
+        <option value="INFINIX">Infinix</option>
+      </select>
+      <span class="cb" id="vipCnt">-</span>
+    </div>
+    <div id="vipList"></div>
+  </div>
+
+  <!-- OPORTUNIDADES -->
   <div id="sOp" style="display:none">
     <div class="stats">
       <div class="stat"><div class="sl">Oportunidades</div><div class="sv" id="oT" style="color:var(--orange)">-</div><div class="ss">detectadas</div></div>
@@ -139,6 +179,8 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
     </div>
     <div id="opList" class="pl"></div>
   </div>
+
+  <!-- CUENTAS CORRIENTES -->
   <div id="sC" style="display:none">
     <div class="stats">
       <div class="stat"><div class="sl">Clientes</div><div class="sv" id="ccT">-</div><div class="ss">con saldo</div></div>
@@ -149,6 +191,8 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
     </div>
     <div id="ccList" class="pl"></div>
   </div>
+
+  <!-- PEDIDOS -->
   <div id="sPed" style="display:none">
     <div class="stats">
       <div class="stat"><div class="sl">Pedidos</div><div class="sv" id="pdT">-</div><div class="ss">por salir</div></div>
@@ -159,6 +203,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
     </div>
     <div id="pedList" class="pl"></div>
   </div>
+
 </div>
 <script>
 const SID="1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g";
@@ -178,16 +223,18 @@ const SH=[
   {n:"TURCO",             g:"12113330",  ws:false,co:false,p:"vertical" },
   {n:"SEBASTIAN BELGRANO",g:"1798307347",ws:false,co:false,p:"vertical" },
   {n:"TODO ELECTRO",      g:"1765329200",ws:false,co:false,p:"vertical" },
-  {n:"ALAN",              g:"848565916",  ws:false,co:false,p:"vertical" },
-  {n:"KADABRA",          g:"1787123427", ws:false,co:false,p:"vertical" },
-  {n:"TOMY",             g:"1903415712", ws:false,co:false,p:"vertical" },
-  {n:"ATACADO PY",       g:"1688808981", ws:false,co:false,p:"vertical" },
-  {n:"LEO",              g:"301921775",  ws:false,co:false,p:"vertical" },
+  {n:"ALAN",              g:"848565916", ws:false,co:false,p:"vertical" },
+  {n:"KADABRA",           g:"1787123427",ws:false,co:false,p:"vertical" },
+  {n:"TOMY",              g:"1903415712",ws:false,co:false,p:"vertical" },
+  {n:"ATACADO PY",        g:"1688808981",ws:false,co:false,p:"vertical" },
+  {n:"LEO",               g:"301921775", ws:false,co:false,p:"vertical" },
 ];
+const RIVALES=["GUILLE GAMES","LALO","LUCHO PILAR","TODO ELECTRO"];
 const CC_GID="1313251460";
 const PED_GID="890878891";
 let CC_DATA=[],PED_DATA=[];
 let ALL=[],MAR=0,PRV="ALL",ERR=[];
+
 function csvR(l){const r=[];let c="",q=false;for(let i=0;i<l.length;i++){if(l[i]==='"'){q=!q}else if(l[i]===","&&!q){r.push(c);c=""}else c+=l[i]}r.push(c);return r}
 function cl(s){return(s||"").replace(/^["'\s]+|["'\s]+$/g,"").trim()}
 function toN(s){
@@ -195,52 +242,22 @@ function toN(s){
   let c=s.replace(/[$u\s]/g,"").trim();
   if(!c)return null;
   if(c.includes(",")&&c.includes(".")){
-    const lastComma=c.lastIndexOf(",");
-    const lastDot=c.lastIndexOf(".");
-    if(lastDot>lastComma){
-      c=c.replace(/,/g,"");
-    } else {
-      c=c.replace(/\./g,"").replace(",",".");
-    }
-  } else if(c.includes(",")){
+    const lastComma=c.lastIndexOf(","),lastDot=c.lastIndexOf(".");
+    if(lastDot>lastComma){c=c.replace(/,/g,"")}else{c=c.replace(/\./g,"").replace(",",".")}
+  }else if(c.includes(",")){
     const partes=c.split(",");
-    if(partes[partes.length-1].length<=2){
-      c=c.replace(",",".");
-    } else {
-      c=c.replace(/,/g,"");
-    }
-  } else if(c.includes(".")){
+    if(partes[partes.length-1].length<=2){c=c.replace(",",".")}else{c=c.replace(/,/g,"")}
+  }else if(c.includes(".")){
     const partes=c.split(".");
-    if(partes[partes.length-1].length>2){
-      c=c.replace(/\./g,"");
-    }
+    if(partes[partes.length-1].length>2){c=c.replace(/\./g,"")}
   }
-  const n=parseFloat(c);
-  return isNaN(n)?null:n;
+  const n=parseFloat(c);return isNaN(n)?null:n;
 }
 function isP(s){
   if(!s)return false;
   const stripped=s.replace(/^[$u\s]+/,"").trim();
-  if(!stripped)return false;
-  if(!/^\d/.test(stripped))return false;
-  if(/[a-zA-Z]{2,}/.test(stripped))return false;
-  const n=toN(s);
-  return n!==null&&n>0;
-}
-function findPrice(row){
-  for(let i=0;i<row.length;i++){
-    const v=cl(row[i]);
-    if(!v)continue;
-    if(/^[$u\s]*\d+$/.test(v)){
-      const next=cl(row[i+1]||"");
-      if(/^\d{1,2}$/.test(next)){
-        const n=toN(v+","+next);
-        if(n!==null&&n>0)return n;
-      }
-    }
-    if(isP(v))return toN(v);
-  }
-  return null;
+  if(!stripped||!/^\d/.test(stripped)||/[a-zA-Z]{2,}/.test(stripped))return false;
+  const n=toN(s);return n!==null&&n>0;
 }
 function isSt(s){return/^STOCK\s*[:\/]/i.test(s)||/^STOCK\s*\d/i.test(s)}
 function isHd(s){
@@ -262,7 +279,6 @@ function nn(s){
   r=r.replace(/\s+/g," ").trim();
   return r;
 }
-function isNombre(s){return s&&s.length>3&&/[a-zA-Z]/.test(s)&&!isP(s)&&!isSt(s)&&!isHd(s)}
 const MARCAS=/\b(SAMSUNG|MOTOROLA|XIAOMI|NOKIA|IPHONE|INFINIX|POCO|REDMI|APPLE|MOTO|GALAXY|NOTE|EDGE|RAZR|PLAYSTATION|JOYSTICK|TABLET|TCL|ZTE|GOOGLE|PIXEL|SONY|LG|HUAWEI)\b/i;
 function esProdName(s){
   if(!s||s.length<4)return false;
@@ -278,39 +294,26 @@ function extractPrice(s){
   if(!n||n<10||n>4999)return null;
   return n;
 }
-function cleanName(s){
-  return s.replace(/u?\$[\s\d.,]+$/i,"").replace(/\s*[-–]\s*$/,"").trim();
-}
+function cleanName(s){return s.replace(/u?\$[\s\d.,]+$/i,"").replace(/\s*[-–]\s*$/,"").trim()}
 function extractPriceFromRow(row){
   for(let i=0;i<row.length;i++){
-    const v=cl(row[i]);
-    if(!v)continue;
+    const v=cl(row[i]);if(!v)continue;
     if(/^[$u\s]*\d+$/.test(v)){
       const next=cl(row[i+1]||"");
-      if(/^\d{1,2}$/.test(next)){
-        const n=toN(v+","+next);
-        if(n&&n>10&&n<5000)return n;
-      }
+      if(/^\d{1,2}$/.test(next)){const n=toN(v+","+next);if(n&&n>10&&n<5000)return n}
     }
-    if(!/[a-zA-Z]{4,}/.test(v)){
-      const p=extractPrice(v);
-      if(p!==null)return p;
-    }
+    if(!/[a-zA-Z]{4,}/.test(v)){const p=extractPrice(v);if(p!==null)return p}
   }
   const full=row.map(c=>cl(c)).filter(Boolean).join(" ");
-  if(/[$u]\s*\d/.test(full)){const p=extractPrice(full);if(p)return p;}
+  if(/[$u]\s*\d/.test(full)){const p=extractPrice(full);if(p)return p}
   return null;
 }
 function parseAny(csv){
   const rows=csv.split("\n").map(r=>csvR(r));
-  const out=[];let i=0;
-  let marcaActual="";
+  const out=[];let i=0,marcaActual="";
   while(i<rows.length){
     const colA=cl(rows[i][0]);
-    if(isHd(colA)){
-      if(MARCAS.test(colA))marcaActual=colA.toUpperCase().trim();
-      i++;continue;
-    }
+    if(isHd(colA)){if(MARCAS.test(colA))marcaActual=colA.toUpperCase().trim();i++;continue}
     if(!colA||isSt(colA)){i++;continue}
     if(!esProdName(colA)){i++;continue}
     let rawName=cleanName(colA);
@@ -322,25 +325,21 @@ function parseAny(csv){
       price=inlinePrice;
       let j=i+1;
       while(j<rows.length&&j<i+4){
-        const nA=cl(rows[j][0]);
-        if(!nA){j++;break}
+        const nA=cl(rows[j][0]);if(!nA){j++;break}
         if(isSt(nA)){stock=exSt(nA);j++;continue}
         if(isHd(nA)||esProdName(nA)||extractPriceFromRow(rows[j])!==null)break;
-        if(!color)color=nA;
-        j++;
+        if(!color)color=nA;j++;
       }
       i=j;
-    } else {
+    }else{
       let j=i+1;
       while(j<rows.length&&j<i+8){
-        const nA=cl(rows[j][0]);
-        const rowP=extractPriceFromRow(rows[j]);
+        const nA=cl(rows[j][0]);const rowP=extractPriceFromRow(rows[j]);
         if(isSt(nA)){stock=exSt(nA);j++;continue}
-        if(isHd(nA)){break}
+        if(isHd(nA))break;
         if(rowP!==null){price=rowP;j++;break}
-        if(nA&&esProdName(nA)){break}
-        if(nA&&!color&&!esProdName(nA))color=nA;
-        j++;
+        if(nA&&esProdName(nA))break;
+        if(nA&&!color&&!esProdName(nA))color=nA;j++;
       }
       i=j;
     }
@@ -351,6 +350,7 @@ function parseAny(csv){
 function pVertical(csv){return parseAny(csv)}
 function pWsCostos(csv){return parseAny(csv)}
 function pInline(csv){return parseAny(csv)}
+
 async function fetchS(s){
   const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${s.g}`;
   try{
@@ -358,31 +358,232 @@ async function fetchS(s){
     if(!r.ok)throw new Error("HTTP "+r.status);
     const t=await r.text();
     let pr=[];
-    if(s.p==="inline")       pr=pInline(t);
+    if(s.p==="inline")pr=pInline(t);
     else if(s.p==="ws_costos")pr=pWsCostos(t);
-    else                      pr=pVertical(t);
+    else pr=pVertical(t);
     return{s,pr,ok:true}
   }catch(e){return{s,pr:[],ok:false,err:e.message}}
 }
+
+// FIX: PRO, MAX, PLUS, ULTRA, FE, SE, NEO son diferenciadores de modelo — NO se eliminan
+function mkKey(name){
+  let k=name.toUpperCase();
+  const mem=[];
+  k=k.replace(/(\d+)\s*\/\s*(\d+)\s*GB/g,function(_,a,b){
+    const x=parseInt(a),y=parseInt(b);
+    mem.push(Math.min(x,y)+"/"+Math.max(x,y));return"__MEM__";
+  });
+  k=k.replace(/(\d+)\s*GB/g,function(_,n){mem.push(n);return"__MEM__";});
+  k=k.replace(/\b(DS|SS|5G|4G|GLOBAL|SLIM|C\/CARGADOR|S\/CARGADOR|IMPORTADO|NACIONAL|EUR|BR|US|CH|INDIA|NFC|ESIM|L\.P|CX\.F|3P)\b/g," ");
+  k=k.replace(/[^A-Z0-9\s]/g," ").replace(/\s+/g," ").trim();
+  if(mem.length)k=k+" "+mem.sort().join("/");
+  return k.trim();
+}
+
+async function loadAll(){
+  const btn=document.getElementById("btnR");
+  btn.classList.add("loading");btn.textContent="↺ Cargando...";
+  document.getElementById("eb").style.display="none";ERR=[];
+  document.getElementById("pList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Leyendo '+SH.length+' hojas...</div><div class="lsub">Un momento...</div></div>';
+  const res=await Promise.all(SH.map(fetchS));
+  const wsR=res.find(r=>r.s.co);const wsP=wsR?wsR.pr:[];
+  const provR=res.filter(r=>!r.s.co);
+  res.forEach(r=>{if(!r.ok)ERR.push(r.s.n+": "+r.err)});
+  const map={};
+  function addToMap(p,provName){
+    const key=mkKey(p.name);
+    if(!map[key])map[key]={name:p.name,color:p.color,prices:{},stocks:{}};
+    if(p.name.length>map[key].name.length)map[key].name=p.name;
+    const ex=map[key].prices[provName];
+    if(ex===undefined||p.price<ex)map[key].prices[provName]=p.price;
+    if(p.stock!==null)map[key].stocks[provName]=p.stock;
+    if(!map[key].color&&p.color)map[key].color=p.color;
+  }
+  wsP.forEach(p=>addToMap(p,"COSTOS"));
+  provR.forEach(r=>{r.pr.forEach(p=>addToMap(p,r.s.n))});
+  ALL=Object.values(map);
+  updStats();buildTabs(res);render();
+  const now=new Date();
+  document.getElementById("hMeta").textContent=ALL.length+" prod · "+now.getHours()+":"+String(now.getMinutes()).padStart(2,"0");
+  btn.classList.remove("loading");btn.textContent="↺ Actualizar";
+  if(ERR.length){document.getElementById("eb").style.display="block";document.getElementById("eb").innerHTML="⚠️ No se pudieron leer: "+ERR.map(e=>e.split(":")[0]).join(", ")}
+}
+
+function best(p){
+  const e=Object.entries(p.prices);
+  if(!e.length)return{pr:"—",price:null,isWS:false,all:[]};
+  let m=Infinity;e.forEach(([,v])=>{if(v<m)m=v});
+  const w=e.filter(([,v])=>v===m).map(([k])=>k);
+  return{price:m,pr:w.join(" / "),isWS:w.includes("COSTOS"),all:w}
+}
+function fmt(p){return"u$"+(p*(1+MAR)).toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
+function fmtRaw(p){return"u$"+p.toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
+function sheetUrl(provName){const sh=SH.find(s=>s.n===provName);return sh?`https://docs.google.com/spreadsheets/d/${SID}/edit#gid=${sh.g}`:null}
+
+function updStats(){
+  let ww=0;const pv=new Set();let ts=0;
+  ALL.forEach(p=>{Object.keys(p.prices).forEach(k=>{if(k!=="COSTOS")pv.add(k)});if(best(p).isWS)ww++;if(p.stocks["COSTOS"])ts+=p.stocks["COSTOS"]});
+  document.getElementById("sT").textContent=ALL.length;
+  document.getElementById("sW").textContent=ww;
+  document.getElementById("sPr").textContent=pv.size;
+  document.getElementById("sSt").textContent=ts>0?ts:"—";
+}
+
+function buildTabs(res){
+  const ok=res.filter(r=>r.ok&&!r.s.co);
+  let h='<span class="pt active" onclick="fp(\'ALL\',this)">Comparativa <span>'+ALL.length+'</span></span>';
+  ok.forEach(r=>{if(r.pr.length>0)h+='<span class="pt" onclick="fp(\''+r.s.n+'\',this)">'+r.s.n+' <span>'+r.pr.length+'</span></span>'});
+  document.getElementById("pTabs").innerHTML=h;
+}
+
+function fp(n,el){PRV=n;document.querySelectorAll(".pt").forEach(t=>t.classList.remove("active"));el.classList.add("active");render()}
+function setM(v,el){MAR=v;document.querySelectorAll(".mb").forEach(b=>b.classList.remove("active"));el.classList.add("active");render()}
+
+function render(){
+  const sr=document.getElementById("srch").value.toLowerCase().trim();
+  const br=document.getElementById("bF").value.toUpperCase();
+  const st=document.getElementById("stF").value;
+  const wn=document.getElementById("wF").value;
+  let f=ALL.filter(p=>{
+    if(sr){const words=sr.split(/\s+/).filter(Boolean);if(!words.every(w=>p.name.toLowerCase().includes(w)))return false}
+    if(br&&!p.name.includes(br))return false;
+    const hw="COSTOS"in p.prices;
+    if(st==="yes"&&!hw)return false;if(st==="no"&&hw)return false;
+    const b=best(p);
+    if(wn==="ws"&&!b.isWS)return false;if(wn==="other"&&b.isWS)return false;
+    if(PRV!=="ALL"&&!(PRV in p.prices))return false;
+    return true;
+  });
+  f.sort((a,b)=>{const bA=best(a),bB=best(b);if(bA.isWS&&!bB.isWS)return -1;if(!bA.isWS&&bB.isWS)return 1;return a.name.localeCompare(b.name)});
+  document.getElementById("cnt").textContent=f.length+" productos";
+  if(!f.length){document.getElementById("pList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';return}
+  document.getElementById("pList").innerHTML=f.map(p=>{
+    const b=best(p);
+    const lbl=b.isWS?"&#129001; COSTOS":"&#128308; "+b.pr;
+    const wsSt=p.stocks&&p.stocks["COSTOS"]?"STOCK: "+p.stocks["COSTOS"]:"";
+    const chips=Object.entries(p.prices).sort(([,a],[,b])=>a-b).map(([pv,pr])=>{
+      const iw=b.all.includes(pv);const iws=pv==="COSTOS";
+      const cls=iw?"ch win":(iws?"ch wsc":"ch");
+      const stk=(iws&&wsSt)?'<span style="opacity:.6;font-size:10px;margin-left:3px">'+wsSt+"</span>":"";
+      const url=sheetUrl(pv);
+      const linkIcon=(!iws&&url)?'<a href="'+url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="margin-left:4px;text-decoration:none;opacity:.55">&#128279;</a>':"";
+      return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmtRaw(pr)+"</span>"+stk+linkIcon+"</span>"
+    }).join("");
+    const stag=MAR>0?'<span class="stag">Venta: '+fmt(b.price)+"</span>":"";
+    const meta=[p.color,wsSt].filter(Boolean).join(" · ");
+    const ct=p.name+(p.color?" - "+p.color:"")+" -> "+b.pr+": "+fmtRaw(b.price);
+    return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+" "+stag+"</div>"+(meta?'<div class="pm">'+meta+"</div>":"")+"</div>"
+      +'<div class="bb"><div class="bp'+(b.isWS?" wsw":"")+'">'+ lbl+"</div>"
+      +'<div class="bpr">'+fmtRaw(b.price)+"</div></div></div>"
+      +'<div class="cr">'+chips+"</div>"
+      +'<button class="bcp" onclick="cp(this,\''+ct.replace(/'/g,"&#39;")+'\')">&#128203; Copiar</button></div>'
+  }).join("");
+}
+
+// ── VIP VS RIVALES ────────────────────────────────────────────────────────────
+function renderVIPTab(){
+  const sr=(document.getElementById("vipSrch").value||"").toLowerCase().trim();
+  const filtro=document.getElementById("vipF").value;
+  const br=(document.getElementById("vipBF").value||"").toUpperCase();
+
+  let f=ALL.filter(p=>"VIP"in p.prices);
+  if(sr){const words=sr.split(/\s+/).filter(Boolean);f=f.filter(p=>words.every(w=>p.name.toLowerCase().includes(w)))}
+  if(br)f=f.filter(p=>p.name.includes(br));
+
+  // Clasificar cada producto
+  f=f.map(p=>{
+    const vip=p.prices["VIP"];
+    const rivalesConPrecio=RIVALES.filter(r=>r in p.prices);
+    const pierdeContra=rivalesConPrecio.filter(r=>p.prices[r]<vip);
+    const ganaContra=rivalesConPrecio.filter(r=>p.prices[r]>=vip);
+    return{...p,vip,rivalesConPrecio,pierdeContra,ganaContra};
+  });
+
+  // Stats
+  const ganamos=f.filter(p=>p.rivalesConPrecio.length>0&&p.pierdeContra.length===0).length;
+  const perdemos=f.filter(p=>p.pierdeContra.length>0).length;
+  document.getElementById("vipTotal").textContent=f.length;
+  document.getElementById("vipGanamos").textContent=ganamos;
+  document.getElementById("vipPerdemos").textContent=perdemos;
+
+  // Filtro
+  if(filtro==="ganamos")f=f.filter(p=>p.rivalesConPrecio.length>0&&p.pierdeContra.length===0);
+  else if(filtro==="perdemos")f=f.filter(p=>p.pierdeContra.length>0);
+
+  // Ordenar: primero los que pierden (mayor cantidad de rivales que ganan), luego los que ganan
+  f.sort((a,b)=>{
+    const diff=b.pierdeContra.length-a.pierdeContra.length;
+    if(diff!==0)return diff;
+    return a.name.localeCompare(b.name);
+  });
+
+  document.getElementById("vipCnt").textContent=f.length+" productos";
+
+  if(!f.length){
+    document.getElementById("vipList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';
+    return;
+  }
+
+  let html='<div class="vip-wrap"><table class="vip-table"><thead><tr>';
+  html+='<th style="text-align:left">Producto</th>';
+  html+='<th class="th-costos">COSTOS</th>';
+  html+='<th class="th-vip">VIP</th>';
+  RIVALES.forEach(r=>{html+='<th>'+r+'</th>'});
+  html+='</tr></thead><tbody>';
+
+  f.forEach(p=>{
+    const vip=p.vip;
+    const costo=p.prices["COSTOS"];
+    // Margen VIP sobre costo
+    const margenPct=costo?((vip-costo)/costo*100):null;
+
+    html+='<tr>';
+    // Nombre
+    html+='<td style="text-align:left">'+p.name+'</td>';
+    // COSTOS
+    if(costo){
+      html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span>';
+      if(margenPct!==null)html+='<span class="diff" style="color:var(--muted)">margen +'+margenPct.toFixed(1)+'%</span>';
+      html+='</td>';
+    }else{
+      html+='<td><span style="color:var(--border)">—</span></td>';
+    }
+    // VIP
+    html+='<td><span class="badge badge-blue">'+fmtRaw(vip)+'</span></td>';
+    // Rivales
+    RIVALES.forEach(r=>{
+      if(r in p.prices){
+        const rp=p.prices[r];
+        const wins=vip<=rp;
+        const diff=((vip-rp)/rp*100);
+        const cls=wins?"badge-green":"badge-red";
+        html+='<td><span class="badge '+cls+'">'+fmtRaw(rp)+'</span>';
+        if(!wins)html+='<span class="diff" style="color:var(--red)">nos gana '+Math.abs(diff).toFixed(1)+'%</span>';
+        else if(diff<0)html+='<span class="diff" style="color:var(--green)">ganamos '+Math.abs(diff).toFixed(1)+'%</span>';
+        html+='</td>';
+      }else{
+        html+='<td><span style="color:var(--border)">—</span></td>';
+      }
+    });
+    html+='</tr>';
+  });
+
+  html+='</tbody></table></div>';
+  document.getElementById("vipList").innerHTML=html;
+}
+
+// OPORTUNIDADES
 function renderOp(){
   const cercaList=[],sinStockList=[];
   ALL.forEach(p=>{
-    const b=best(p);
-    if(!b.price)return;
+    const b=best(p);if(!b.price)return;
     const hasWS="COSTOS"in p.prices;
     if(hasWS&&!b.isWS){
       const wsPrice=p.prices["COSTOS"];
       const diffPct=((wsPrice-b.price)/b.price)*100;
-      if(diffPct>0&&diffPct<=5){
-        cercaList.push({p,b,wsPrice,diffPct});
-      }
+      if(diffPct>0&&diffPct<=5)cercaList.push({p,b,wsPrice,diffPct});
     }
-    if(!hasWS){
-      const nProv=Object.keys(p.prices).length;
-      if(nProv>=3){
-        sinStockList.push({p,b,nProv});
-      }
-    }
+    if(!hasWS){const nProv=Object.keys(p.prices).length;if(nProv>=3)sinStockList.push({p,b,nProv})}
   });
   cercaList.sort((a,b)=>a.diffPct-b.diffPct);
   sinStockList.sort((a,b)=>b.nProv-a.nProv);
@@ -418,24 +619,19 @@ function opChips(p,b){
     const iw=b.all.includes(pv);const iws=pv==="COSTOS";
     const cls=iw?"ch win":(iws?"ch wsc":"ch");
     const url=sheetUrl(pv);
-    const linkIcon=(!iws&&url)?'<a href="'+url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="margin-left:4px;text-decoration:none;opacity:.55" title="Ver en Google Sheets">&#128279;</a>':"";
+    const linkIcon=(!iws&&url)?'<a href="'+url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="margin-left:4px;text-decoration:none;opacity:.55">&#128279;</a>':"";
     return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmtRaw(pr)+"</span>"+linkIcon+"</span>"
   }).join("");
 }
+
+// CUENTAS Y PEDIDOS
 function pTabla(csv){
-  const rows=csv.split("\n").map(r=>csvR(r));
-  const out=[];
+  const rows=csv.split("\n").map(r=>csvR(r));const out=[];
   for(const row of rows){
-    const name=cl(row[0]);
-    if(!name)continue;
-    let val=cl(row[1]||"");
-    let link=cl(row[2]||"");
-    if(val&&/^[\$]?\d+$/.test(val)&&link&&/^\d{3}(\.\d+)?$/.test(link)){
-      val=val+","+link;
-      link=cl(row[3]||"");
-    }
-    if(!val)continue;
-    const n=toN(val);
+    const name=cl(row[0]);if(!name)continue;
+    let val=cl(row[1]||""),link=cl(row[2]||"");
+    if(val&&/^[\$]?\d+$/.test(val)&&link&&/^\d{3}(\.\d+)?$/.test(link)){val=val+","+link;link=cl(row[3]||"")}
+    if(!val)continue;const n=toN(val);
     if(n===null||n===0)continue;
     out.push({name,amount:n,link:(link&&/^https?:\/\//i.test(link))?link:null});
   }
@@ -443,17 +639,11 @@ function pTabla(csv){
 }
 async function fetchSimple(gid){
   const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${gid}`;
-  try{
-    const r=await fetch(url,{cache:"no-cache"});
-    if(!r.ok)throw new Error("HTTP "+r.status);
-    const t=await r.text();
-    return pTabla(t);
-  }catch(e){return []}
+  try{const r=await fetch(url,{cache:"no-cache"});if(!r.ok)throw new Error("HTTP "+r.status);return pTabla(await r.text())}catch(e){return[]}
 }
 async function loadCC(){
   document.getElementById("ccList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Cargando...</div></div>';
-  CC_DATA=await fetchSimple(CC_GID);
-  renderCC();
+  CC_DATA=await fetchSimple(CC_GID);renderCC();
 }
 function renderCC(){
   const sr=(document.getElementById("ccSrch").value||"").toLowerCase().trim();
@@ -463,15 +653,11 @@ function renderCC(){
   document.getElementById("ccT").textContent=CC_DATA.length;
   document.getElementById("ccD").textContent=fmtRaw(total);
   if(!f.length){document.getElementById("ccList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';return}
-  document.getElementById("ccList").innerHTML=f.map(c=>{
-    return'<div class="pc"><div class="ct"><div><div class="pn">'+c.name+'</div></div>'
-      +'<div class="bb"><div class="bpr" style="color:var(--red)">'+fmtRaw(c.amount)+'</div></div></div></div>'
-  }).join("");
+  document.getElementById("ccList").innerHTML=f.map(c=>'<div class="pc"><div class="ct"><div><div class="pn">'+c.name+'</div></div><div class="bb"><div class="bpr" style="color:var(--red)">'+fmtRaw(c.amount)+'</div></div></div></div>').join("");
 }
 async function loadPed(){
   document.getElementById("pedList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Cargando...</div></div>';
-  PED_DATA=await fetchSimple(PED_GID);
-  renderPed();
+  PED_DATA=await fetchSimple(PED_GID);renderPed();
 }
 function renderPed(){
   const sr=(document.getElementById("pdSrch").value||"").toLowerCase().trim();
@@ -482,113 +668,12 @@ function renderPed(){
   if(!f.length){document.getElementById("pedList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';return}
   document.getElementById("pedList").innerHTML=f.map(c=>{
     const linkBtn=c.link?'<a href="'+c.link+'" target="_blank" rel="noopener" class="bcp" style="display:inline-block;text-decoration:none;margin-top:8px">&#128279; Ver en Cianbox</a>':"";
-    return'<div class="pc"><div class="ct"><div><div class="pn">'+c.name+'</div></div>'
-      +'<div class="bb"><div class="bpr" style="color:var(--blue)">'+fmtRaw(c.amount)+'</div></div></div>'
-      +linkBtn+'</div>'
+    return'<div class="pc"><div class="ct"><div><div class="pn">'+c.name+'</div></div><div class="bb"><div class="bpr" style="color:var(--blue)">'+fmtRaw(c.amount)+'</div></div></div>'+linkBtn+'</div>'
   }).join("");
 }
-function mkKey(name){
-  let k=name.toUpperCase();
-  const mem=[];
-  k=k.replace(/(\d+)\s*\/\s*(\d+)\s*GB/g,function(_,a,b){
-    const x=parseInt(a),y=parseInt(b);
-    mem.push(Math.min(x,y)+"/"+Math.max(x,y));return"__MEM__";
-  });
-  k=k.replace(/(\d+)\s*GB/g,function(_,n){mem.push(n);return"__MEM__";});
-  // FIX: PRO, MAX, PLUS, ULTRA, FE, SE, NEO son diferenciadores de modelo y NO deben eliminarse
-  k=k.replace(/\b(DS|SS|5G|4G|GLOBAL|SLIM|C\/CARGADOR|S\/CARGADOR|IMPORTADO|NACIONAL|EUR|BR|US|CH|INDIA|NFC|ESIM|L\.P|CX\.F|3P)\b/g," ");
-  k=k.replace(/[^A-Z0-9\s]/g," ").replace(/\s+/g," ").trim();
-  if(mem.length)k=k+" "+mem.sort().join("/");
-  return k.trim();
-}
-async function loadAll(){
-  const btn=document.getElementById("btnR");
-  btn.classList.add("loading");btn.textContent="↺ Cargando...";
-  document.getElementById("eb").style.display="none";ERR=[];
-  document.getElementById("pList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Leyendo '+SH.length+' hojas...</div><div class="lsub">Un momento...</div></div>';
-  const res=await Promise.all(SH.map(fetchS));
-  const wsR=res.find(r=>r.s.co);const wsP=wsR?wsR.pr:[];
-  const provR=res.filter(r=>!r.s.co);
-  res.forEach(r=>{if(!r.ok)ERR.push(r.s.n+": "+r.err)});
-  const map={};
-  function addToMap(p, provName){
-    const key=mkKey(p.name);
-    if(!map[key])map[key]={name:p.name,color:p.color,prices:{},stocks:{}};
-    if(p.name.length>map[key].name.length)map[key].name=p.name;
-    const ex=map[key].prices[provName];
-    if(ex===undefined||p.price<ex)map[key].prices[provName]=p.price;
-    if(p.stock!==null)map[key].stocks[provName]=p.stock;
-    if(!map[key].color&&p.color)map[key].color=p.color;
-  }
-  wsP.forEach(p=>addToMap(p,"COSTOS"));
-  provR.forEach(r=>{r.pr.forEach(p=>addToMap(p,r.s.n));});
-  ALL=Object.values(map);
-  updStats();buildTabs(res);render();
-  const now=new Date();document.getElementById("hMeta").textContent=ALL.length+" prod · "+now.getHours()+":"+String(now.getMinutes()).padStart(2,"0");
-  btn.classList.remove("loading");btn.textContent="↺ Actualizar";
-  if(ERR.length){document.getElementById("eb").style.display="block";document.getElementById("eb").innerHTML="⚠️ No se pudieron leer: "+ERR.map(e=>e.split(":")[0]).join(", ")}
-}
-function best(p){const e=Object.entries(p.prices);if(!e.length)return{pr:"—",price:null,isWS:false,all:[]};let m=Infinity;e.forEach(([,v])=>{if(v<m)m=v});const w=e.filter(([,v])=>v===m).map(([k])=>k);return{price:m,pr:w.join(" / "),isWS:w.includes("COSTOS"),all:w}}
-function fmt(p){return"u$"+(p*(1+MAR)).toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
-function fmtRaw(p){return"u$"+p.toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
-function sheetUrl(provName){const sh=SH.find(s=>s.n===provName);return sh?`https://docs.google.com/spreadsheets/d/${SID}/edit#gid=${sh.g}`:null}
-function updStats(){
-  let ww=0;const pv=new Set();let ts=0;
-  ALL.forEach(p=>{Object.keys(p.prices).forEach(k=>{if(k!=="COSTOS")pv.add(k)});if(best(p).isWS)ww++;if(p.stocks["COSTOS"])ts+=p.stocks["COSTOS"]});
-  document.getElementById("sT").textContent=ALL.length;
-  document.getElementById("sW").textContent=ww;
-  document.getElementById("sPr").textContent=pv.size;
-  document.getElementById("sSt").textContent=ts>0?ts:"—"
-}
-function buildTabs(res){
-  const ok=res.filter(r=>r.ok&&!r.s.co);
-  let h='<span class="pt active" onclick="fp(\'ALL\',this)">Comparativa <span>'+ALL.length+'</span></span>';
-  ok.forEach(r=>{if(r.pr.length>0)h+='<span class="pt" onclick="fp(\''+r.s.n+'\',this)">'+r.s.n+' <span>'+r.pr.length+'</span></span>'});
-  document.getElementById("pTabs").innerHTML=h
-}
-function fp(n,el){PRV=n;document.querySelectorAll(".pt").forEach(t=>t.classList.remove("active"));el.classList.add("active");render()}
-function setM(v,el){MAR=v;document.querySelectorAll(".mb").forEach(b=>b.classList.remove("active"));el.classList.add("active");render()}
-function render(){
-  const sr=document.getElementById("srch").value.toLowerCase().trim();
-  const br=document.getElementById("bF").value.toUpperCase();
-  const st=document.getElementById("stF").value;
-  const wn=document.getElementById("wF").value;
-  let f=ALL.filter(p=>{
-    if(sr){const words=sr.split(/\s+/).filter(Boolean);if(!words.every(w=>p.name.toLowerCase().includes(w)))return false;}
-    if(br&&!p.name.includes(br))return false;
-    const hw="COSTOS"in p.prices;
-    if(st==="yes"&&!hw)return false;if(st==="no"&&hw)return false;
-    const b=best(p);
-    if(wn==="ws"&&!b.isWS)return false;if(wn==="other"&&b.isWS)return false;
-    if(PRV!=="ALL"&&!(PRV in p.prices))return false;
-    return true
-  });
-  f.sort((a,b)=>{const bA=best(a),bB=best(b);if(bA.isWS&&!bB.isWS)return -1;if(!bA.isWS&&bB.isWS)return 1;return a.name.localeCompare(b.name)});
-  document.getElementById("cnt").textContent=f.length+" productos";
-  if(!f.length){document.getElementById("pList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';return}
-  document.getElementById("pList").innerHTML=f.map(p=>{
-    const b=best(p);
-    const lbl=b.isWS?"&#129001; COSTOS":"&#128308; "+b.pr;
-    const wsSt=p.stocks&&p.stocks["COSTOS"]?"STOCK: "+p.stocks["COSTOS"]:"";
-    const chips=Object.entries(p.prices).sort(([,a],[,b])=>a-b).map(([pv,pr])=>{
-      const iw=b.all.includes(pv);const iws=pv==="COSTOS";
-      const cls=iw?"ch win":(iws?"ch wsc":"ch");
-      const stk=(iws&&wsSt)?'<span style="opacity:.6;font-size:10px;margin-left:3px">'+wsSt+"</span>":"";
-      const url=sheetUrl(pv);
-      const linkIcon=(!iws&&url)?'<a href="'+url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="margin-left:4px;text-decoration:none;opacity:.55" title="Ver en Google Sheets">&#128279;</a>':"";
-      return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmtRaw(pr)+"</span>"+stk+linkIcon+"</span>"
-    }).join("");
-    const stag=MAR>0?'<span class="stag">Venta: '+fmt(b.price)+"</span>":"";
-    const meta=[p.color,wsSt].filter(Boolean).join(" · ");
-    const ct=p.name+(p.color?" - "+p.color:"")+" -> "+b.pr+": "+fmtRaw(b.price);
-    return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+" "+stag+"</div>"+(meta?'<div class="pm">'+meta+"</div>":"")+"</div>"
-      +'<div class="bb"><div class="bp'+( b.isWS?" wsw":"")+'">'+ lbl+"</div>"
-      +'<div class="bpr">'+fmtRaw(b.price)+"</div></div></div>"
-      +'<div class="cr">'+chips+"</div>"
-      +'<button class="bcp" onclick="cp(this,\''+ct.replace(/'/g,"&#39;")+'\')">&#128203; Copiar</button></div>'
-  }).join("")
-}
+
 function cp(btn,txt){navigator.clipboard.writeText(txt).then(()=>{btn.classList.add("ok");btn.textContent="✅ Copiado";setTimeout(()=>{btn.classList.remove("ok");btn.textContent="📋 Copiar"},1800)})}
+
 function exportXls(){
   const ps=SH.filter(s=>!s.ws);
   const rows=[["Producto","Color","Stock WS","Mejor Precio","Mejor Proveedor","Precio WS",...ps.map(s=>s.n)]];
@@ -596,12 +681,15 @@ function exportXls(){
   const csv=rows.map(r=>r.map(c=>'"'+c+'"').join(",")).join("\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8;"}));a.download="comparador_"+new Date().toISOString().slice(0,10)+".csv";a.click()
 }
+
 function sec(s,el){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));el.classList.add("active");
   document.getElementById("sP").style.display=s==="precios"?"":"none";
+  document.getElementById("sVIP").style.display=s==="vip"?"":"none";
   document.getElementById("sOp").style.display=s==="oportunidades"?"":"none";
   document.getElementById("sC").style.display=s==="cuentas"?"":"none";
   document.getElementById("sPed").style.display=s==="pedidos"?"":"none";
+  if(s==="vip")renderVIPTab();
   if(s==="oportunidades")renderOp();
   if(s==="cuentas"&&!CC_DATA.length)loadCC();
   if(s==="pedidos"&&!PED_DATA.length)loadPed();
