@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -161,7 +162,6 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 </div>
 <script>
 const SID="1dGsAcmnz55NGlvU1MG4Y-DyrqLg4QyE_Xp9dAa9q35g";
-// parser: vertical=nombre/color/precio_colC | ws_costos=nombre/STOCK:X/precio_colC | inline=linea_unica_con_USD
 const SH=[
   {n:"COSTOS",            g:"1169477995",ws:true, co:true, p:"ws_costos"},
   {n:"VIP",               g:"2103310165",ws:false,co:false,p:"vertical" },
@@ -188,7 +188,6 @@ const CC_GID="1313251460";
 const PED_GID="890878891";
 let CC_DATA=[],PED_DATA=[];
 let ALL=[],MAR=0,PRV="ALL",ERR=[];
-
 function csvR(l){const r=[];let c="",q=false;for(let i=0;i<l.length;i++){if(l[i]==='"'){q=!q}else if(l[i]===","&&!q){r.push(c);c=""}else c+=l[i]}r.push(c);return r}
 function cl(s){return(s||"").replace(/^["'\s]+|["'\s]+$/g,"").trim()}
 function toN(s){
@@ -199,46 +198,39 @@ function toN(s){
     const lastComma=c.lastIndexOf(",");
     const lastDot=c.lastIndexOf(".");
     if(lastDot>lastComma){
-      // formato AMERICANO: 8,474.00 → punto es decimal
-      c=c.replace(/,/g,""); // quitar comas de miles → 8474.00
+      c=c.replace(/,/g,"");
     } else {
-      // formato EUROPEO: 1.180,50 → coma es decimal
       c=c.replace(/\./g,"").replace(",",".");
     }
   } else if(c.includes(",")){
     const partes=c.split(",");
     if(partes[partes.length-1].length<=2){
-      c=c.replace(",","."); // coma decimal: 596,09 → 596.09
+      c=c.replace(",",".");
     } else {
-      c=c.replace(/,/g,""); // coma miles: 1,180 → 1180
+      c=c.replace(/,/g,"");
     }
   } else if(c.includes(".")){
     const partes=c.split(".");
     if(partes[partes.length-1].length>2){
-      c=c.replace(/\./g,""); // punto miles: 1.180 → 1180
+      c=c.replace(/\./g,"");
     }
   }
   const n=parseFloat(c);
   return isNaN(n)?null:n;
 }
-// Detecta si una celda contiene SOLO un precio (número con o sin $ al inicio)
 function isP(s){
   if(!s)return false;
   const stripped=s.replace(/^[$u\s]+/,"").trim();
   if(!stripped)return false;
-  if(!/^\d/.test(stripped))return false; // debe empezar con dígito
-  if(/[a-zA-Z]{2,}/.test(stripped))return false; // no debe tener palabras
+  if(!/^\d/.test(stripped))return false;
+  if(/[a-zA-Z]{2,}/.test(stripped))return false;
   const n=toN(s);
   return n!==null&&n>0;
 }
-// Busca precio en cualquier columna de la fila (A, B, C, D...)
-// Si un número quedó partido por la coma del CSV (ej: $596,09 -> "$596" | "09"),
-// lo reconstruye uniendo con la columna siguiente si esta es solo 1-2 dígitos
 function findPrice(row){
   for(let i=0;i<row.length;i++){
     const v=cl(row[i]);
     if(!v)continue;
-    // ¿Empieza como entero y la siguiente columna son 1-2 dígitos? → probablemente partido por coma decimal
     if(/^[$u\s]*\d+$/.test(v)){
       const next=cl(row[i+1]||"");
       if(/^\d{1,2}$/.test(next)){
@@ -246,7 +238,6 @@ function findPrice(row){
         if(n!==null&&n>0)return n;
       }
     }
-    // Si no se reconstruyó, ¿es un precio normal por sí solo?
     if(isP(v))return toN(v);
   }
   return null;
@@ -254,9 +245,7 @@ function findPrice(row){
 function isSt(s){return/^STOCK\s*[:\/]/i.test(s)||/^STOCK\s*\d/i.test(s)}
 function isHd(s){
   if(!s)return false;
-  // Headers de marca
   if(/^(SAMSUNG|MOTOROLA|XIAOMI|IPHONE|INFINIX|NOKIA|PLAYSTATION|OTROS|TABLETS|CONSOLAS|RAM BOOST|APPLE)$/i.test(s.trim()))return true;
-  // Frases descriptivas que no son nombres de producto
   if(/^(SIN CARGADOR|CON CARGADOR|NACIONAL|IMPORTADO|SIN GARANTIA|CON GARANTIA)$/i.test(s.trim()))return true;
   if(/^NACIONAL\s*[-–]/i.test(s.trim()))return true;
   return false;
@@ -265,33 +254,22 @@ function exSt(s){const m=s.match(/\d+/);return m?parseInt(m[0]):null}
 function nn(s){
   let r=s.toUpperCase().trim();
   r=r.replace(/[""\'']/g,"");
-  // Normalizar separador guión con espacios
   r=r.replace(/\s*-\s*/g," ");
-  // Normalizar RAM/Storage: "4GB/128GB" → "4/128GB"
   r=r.replace(/(\d+)\s*GB\s*\/\s*(\d+)\s*GB/gi,"$1/$2GB");
   r=r.replace(/(\d+)\s*GB\s*RAM/gi,"$1");
   r=r.replace(/(\d+)\s*RAM\s*\/\s*(\d+)\s*GB/gi,"$1/$2GB");
-  // Quitar palabras que varían entre proveedores pero no identifican el modelo
   r=r.replace(/\b(DS|SS|GLOBAL|SLIM|C\/CARGADOR|S\/CARGADOR|IMPORTADO|NACIONAL|EUR|BR|US|CH|INDIA|NFC|ESIM|L\.P|CX\.F|3P)\b/g,"");
-  // Limpiar espacios múltiples
   r=r.replace(/\s+/g," ").trim();
   return r;
 }
-// Un nombre válido: tiene letras, longitud razonable, no es solo número
 function isNombre(s){return s&&s.length>3&&/[a-zA-Z]/.test(s)&&!isP(s)&&!isSt(s)&&!isHd(s)}
-
-// ─── MARCAS Y PALABRAS CLAVE DE PRODUCTOS ───────────────────────────────────
 const MARCAS=/\b(SAMSUNG|MOTOROLA|XIAOMI|NOKIA|IPHONE|INFINIX|POCO|REDMI|APPLE|MOTO|GALAXY|NOTE|EDGE|RAZR|PLAYSTATION|JOYSTICK|TABLET|TCL|ZTE|GOOGLE|PIXEL|SONY|LG|HUAWEI)\b/i;
-
 function esProdName(s){
   if(!s||s.length<4)return false;
   if(isHd(s)||isSt(s))return false;
-  // Línea con precio inline (ej: "G04S 4/256GB - u$125") → siempre es producto
   if(/u?\$\s*\d/i.test(s))return true;
   return MARCAS.test(s)||/[A-Z]{2,}\s*\d+/i.test(s);
 }
-
-// Extrae precio de una cadena (puede estar mezclado con el nombre)
 function extractPrice(s){
   if(!s)return null;
   const m=s.match(/u?\$\s*([\d.,]+)/i)||s.match(/\b(\d{2,4}[.,]\d{2})\b/);
@@ -300,18 +278,13 @@ function extractPrice(s){
   if(!n||n<10||n>4999)return null;
   return n;
 }
-
-// Elimina el precio del nombre si están en la misma celda
 function cleanName(s){
   return s.replace(/u?\$[\s\d.,]+$/i,"").replace(/\s*[-–]\s*$/,"").trim();
 }
-
-// Busca precio en cualquier columna de la fila
 function extractPriceFromRow(row){
   for(let i=0;i<row.length;i++){
     const v=cl(row[i]);
     if(!v)continue;
-    // Número partido por coma CSV: "$596" + "09" → 596.09
     if(/^[$u\s]*\d+$/.test(v)){
       const next=cl(row[i+1]||"");
       if(/^\d{1,2}$/.test(next)){
@@ -319,43 +292,31 @@ function extractPriceFromRow(row){
         if(n&&n>10&&n<5000)return n;
       }
     }
-    // Solo precio (sin letras largas)
     if(!/[a-zA-Z]{4,}/.test(v)){
       const p=extractPrice(v);
       if(p!==null)return p;
     }
   }
-  // Precio incrustado en el texto de col A (ej: "SAMSUNG A16 $132")
   const full=row.map(c=>cl(c)).filter(Boolean).join(" ");
   if(/[$u]\s*\d/.test(full)){const p=extractPrice(full);if(p)return p;}
   return null;
 }
-
-// ─── PARSER ÚNICO INTELIGENTE ────────────────────────────────────────────────
 function parseAny(csv){
   const rows=csv.split("\n").map(r=>csvR(r));
   const out=[];let i=0;
-  let marcaActual=""; // track del último header de marca visto
-
+  let marcaActual="";
   while(i<rows.length){
     const colA=cl(rows[i][0]);
-
-    // Si es header de marca (SAMSUNG, MOTOROLA, etc.) → lo guardamos y seguimos
     if(isHd(colA)){
       if(MARCAS.test(colA))marcaActual=colA.toUpperCase().trim();
       i++;continue;
     }
     if(!colA||isSt(colA)){i++;continue}
     if(!esProdName(colA)){i++;continue}
-
-    // Construir nombre: si no tiene marca propia, prefixar con la última marca vista
     let rawName=cleanName(colA);
     const tieneMarca=MARCAS.test(rawName);
     const nameConMarca=(marcaActual&&!tieneMarca)?marcaActual+" "+rawName:rawName;
-
     let color="",stock=null,price=null;
-
-    // ¿El precio ya está en esta fila?
     const inlinePrice=extractPriceFromRow(rows[i]);
     if(inlinePrice!==null){
       price=inlinePrice;
@@ -383,17 +344,13 @@ function parseAny(csv){
       }
       i=j;
     }
-
     if(nameConMarca&&price&&price>0&&price<5000)out.push({name:nn(nameConMarca),color,price,stock});
   }
   return out;
 }
-
-// Un solo parser para todo — no más tipos distintos
 function pVertical(csv){return parseAny(csv)}
 function pWsCostos(csv){return parseAny(csv)}
 function pInline(csv){return parseAny(csv)}
-
 async function fetchS(s){
   const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${s.g}`;
   try{
@@ -407,10 +364,6 @@ async function fetchS(s){
     return{s,pr,ok:true}
   }catch(e){return{s,pr:[],ok:false,err:e.message}}
 }
-
-// OPORTUNIDADES: combina 2 criterios
-// A) WS tiene stock pero NO es el mejor precio, y está a menos de 5% del líder (cerca de ganar)
-// B) WS no tiene stock, pero hay 3+ proveedores compitiendo (señal de demanda activa)
 function renderOp(){
   const cercaList=[],sinStockList=[];
   ALL.forEach(p=>{
@@ -433,11 +386,9 @@ function renderOp(){
   });
   cercaList.sort((a,b)=>a.diffPct-b.diffPct);
   sinStockList.sort((a,b)=>b.nProv-a.nProv);
-
   document.getElementById("oT").textContent=cercaList.length+sinStockList.length;
   document.getElementById("oC").textContent=cercaList.length;
   document.getElementById("oD").textContent=sinStockList.length;
-
   let html="";
   if(cercaList.length){
     html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128997; Cerca de ganar (ajustando precio)</div>';
@@ -462,8 +413,6 @@ function renderOp(){
   if(!html)html='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#9989;</div>Sin oportunidades detectadas por ahora</div>';
   document.getElementById("opList").innerHTML=html;
 }
-
-// Genera los chips de todos los proveedores (con link a Sheets) para una card de Oportunidades
 function opChips(p,b){
   return Object.entries(p.prices).sort(([,a],[,b])=>a-b).map(([pv,pr])=>{
     const iw=b.all.includes(pv);const iws=pv==="COSTOS";
@@ -473,28 +422,18 @@ function opChips(p,b){
     return'<span class="'+cls+'"><span class="cn">'+pv+'</span><span class="cp">'+fmtRaw(pr)+"</span>"+linkIcon+"</span>"
   }).join("");
 }
-
-// Parser simple de tabla: columna A = nombre, columna B = importe, columna C = link opcional (ej: Cianbox)
-// Ignora filas de encabezado/sección (texto sin número en B) y filas vacías
 function pTabla(csv){
   const rows=csv.split("\n").map(r=>csvR(r));
   const out=[];
   for(const row of rows){
     const name=cl(row[0]);
     if(!name)continue;
-
-    // El importe puede estar partido por la coma del CSV:
-    // "$8,474.00" sin comillas → col[1]="$8" col[2]="474.00"
-    // Intentar reconstruir el número completo
     let val=cl(row[1]||"");
     let link=cl(row[2]||"");
-
-    // Si col[1] parece un número truncado ($8, $1) y col[2] son decimales/miles (474.00)
     if(val&&/^[\$]?\d+$/.test(val)&&link&&/^\d{3}(\.\d+)?$/.test(link)){
-      val=val+","+link; // reconstruir: "$8,474.00"
-      link=cl(row[3]||""); // el link real está en col[3]
+      val=val+","+link;
+      link=cl(row[3]||"");
     }
-
     if(!val)continue;
     const n=toN(val);
     if(n===null||n===0)continue;
@@ -502,7 +441,6 @@ function pTabla(csv){
   }
   return out;
 }
-
 async function fetchSimple(gid){
   const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${gid}`;
   try{
@@ -512,7 +450,6 @@ async function fetchSimple(gid){
     return pTabla(t);
   }catch(e){return []}
 }
-
 async function loadCC(){
   document.getElementById("ccList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Cargando...</div></div>';
   CC_DATA=await fetchSimple(CC_GID);
@@ -531,7 +468,6 @@ function renderCC(){
       +'<div class="bb"><div class="bpr" style="color:var(--red)">'+fmtRaw(c.amount)+'</div></div></div></div>'
   }).join("");
 }
-
 async function loadPed(){
   document.getElementById("pedList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Cargando...</div></div>';
   PED_DATA=await fetchSimple(PED_GID);
@@ -551,27 +487,20 @@ function renderPed(){
       +linkBtn+'</div>'
   }).join("");
 }
-
-// Genera una clave simplificada para comparar productos entre proveedores
-// Extrae solo marca + modelo base + storage, ignorando orden de RAM/GB y palabras extra
 function mkKey(name){
   let k=name.toUpperCase();
-  // Extraer números de memoria: normalizar "8/256GB" y "256GB/8GB" al mismo formato
   const mem=[];
   k=k.replace(/(\d+)\s*\/\s*(\d+)\s*GB/g,function(_,a,b){
-    // ordenar los dos números: el menor es RAM, el mayor es storage
     const x=parseInt(a),y=parseInt(b);
     mem.push(Math.min(x,y)+"/"+Math.max(x,y));return"__MEM__";
   });
   k=k.replace(/(\d+)\s*GB/g,function(_,n){mem.push(n);return"__MEM__";});
-  // Quitar palabras no identificadoras
-  k=k.replace(/\b(DS|SS|5G|4G|GLOBAL|SLIM|C\/CARGADOR|S\/CARGADOR|IMPORTADO|NACIONAL|EUR|BR|US|CH|INDIA|NFC|ESIM|L\.P|CX\.F|3P|POWER|PRO|PLUS|\+|MAX|ULTRA|NEO|FE|SE)\b/g," ");
+  // FIX: PRO, MAX, PLUS, ULTRA, FE, SE, NEO son diferenciadores de modelo y NO deben eliminarse
+  k=k.replace(/\b(DS|SS|5G|4G|GLOBAL|SLIM|C\/CARGADOR|S\/CARGADOR|IMPORTADO|NACIONAL|EUR|BR|US|CH|INDIA|NFC|ESIM|L\.P|CX\.F|3P)\b/g," ");
   k=k.replace(/[^A-Z0-9\s]/g," ").replace(/\s+/g," ").trim();
-  // Reincorporar memoria normalizada
   if(mem.length)k=k+" "+mem.sort().join("/");
   return k.trim();
 }
-
 async function loadAll(){
   const btn=document.getElementById("btnR");
   btn.classList.add("loading");btn.textContent="↺ Cargando...";
@@ -582,11 +511,9 @@ async function loadAll(){
   const provR=res.filter(r=>!r.s.co);
   res.forEach(r=>{if(!r.ok)ERR.push(r.s.n+": "+r.err)});
   const map={};
-  // Función helper para agregar producto al mapa usando clave normalizada
   function addToMap(p, provName){
     const key=mkKey(p.name);
     if(!map[key])map[key]={name:p.name,color:p.color,prices:{},stocks:{}};
-    // Preferir el nombre más descriptivo (más largo)
     if(p.name.length>map[key].name.length)map[key].name=p.name;
     const ex=map[key].prices[provName];
     if(ex===undefined||p.price<ex)map[key].prices[provName]=p.price;
@@ -601,12 +528,10 @@ async function loadAll(){
   btn.classList.remove("loading");btn.textContent="↺ Actualizar";
   if(ERR.length){document.getElementById("eb").style.display="block";document.getElementById("eb").innerHTML="⚠️ No se pudieron leer: "+ERR.map(e=>e.split(":")[0]).join(", ")}
 }
-
 function best(p){const e=Object.entries(p.prices);if(!e.length)return{pr:"—",price:null,isWS:false,all:[]};let m=Infinity;e.forEach(([,v])=>{if(v<m)m=v});const w=e.filter(([,v])=>v===m).map(([k])=>k);return{price:m,pr:w.join(" / "),isWS:w.includes("COSTOS"),all:w}}
 function fmt(p){return"u$"+(p*(1+MAR)).toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
 function fmtRaw(p){return"u$"+p.toFixed(2).replace(/\.00$/,"").replace(/\B(?=(\d{3})+(?!\d))/g,".")}
 function sheetUrl(provName){const sh=SH.find(s=>s.n===provName);return sh?`https://docs.google.com/spreadsheets/d/${SID}/edit#gid=${sh.g}`:null}
-
 function updStats(){
   let ww=0;const pv=new Set();let ts=0;
   ALL.forEach(p=>{Object.keys(p.prices).forEach(k=>{if(k!=="COSTOS")pv.add(k)});if(best(p).isWS)ww++;if(p.stocks["COSTOS"])ts+=p.stocks["COSTOS"]});
@@ -615,7 +540,6 @@ function updStats(){
   document.getElementById("sPr").textContent=pv.size;
   document.getElementById("sSt").textContent=ts>0?ts:"—"
 }
-
 function buildTabs(res){
   const ok=res.filter(r=>r.ok&&!r.s.co);
   let h='<span class="pt active" onclick="fp(\'ALL\',this)">Comparativa <span>'+ALL.length+'</span></span>';
@@ -624,7 +548,6 @@ function buildTabs(res){
 }
 function fp(n,el){PRV=n;document.querySelectorAll(".pt").forEach(t=>t.classList.remove("active"));el.classList.add("active");render()}
 function setM(v,el){MAR=v;document.querySelectorAll(".mb").forEach(b=>b.classList.remove("active"));el.classList.add("active");render()}
-
 function render(){
   const sr=document.getElementById("srch").value.toLowerCase().trim();
   const br=document.getElementById("bF").value.toUpperCase();
@@ -665,17 +588,14 @@ function render(){
       +'<button class="bcp" onclick="cp(this,\''+ct.replace(/'/g,"&#39;")+'\')">&#128203; Copiar</button></div>'
   }).join("")
 }
-
 function cp(btn,txt){navigator.clipboard.writeText(txt).then(()=>{btn.classList.add("ok");btn.textContent="✅ Copiado";setTimeout(()=>{btn.classList.remove("ok");btn.textContent="📋 Copiar"},1800)})}
-
 function exportXls(){
   const ps=SH.filter(s=>!s.ws);
   const rows=[["Producto","Color","Stock WS","Mejor Precio","Mejor Proveedor","Precio WS",...ps.map(s=>s.n)]];
   ALL.forEach(p=>{const b=best(p);const st=p.stocks["COSTOS"]||"";rows.push([p.name,p.color,st,b.price||"",b.pr,p.prices["COSTOS"]||"",...ps.map(s=>p.prices[s.n]||"")])});
   const csv=rows.map(r=>r.map(c=>'"'+c+'"').join(",")).join("\n");
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}));a.download="comparador_"+new Date().toISOString().slice(0,10)+".csv";a.click()
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8;"}));a.download="comparador_"+new Date().toISOString().slice(0,10)+".csv";a.click()
 }
-
 function sec(s,el){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));el.classList.add("active");
   document.getElementById("sP").style.display=s==="precios"?"":"none";
@@ -686,7 +606,6 @@ function sec(s,el){
   if(s==="cuentas"&&!CC_DATA.length)loadCC();
   if(s==="pedidos"&&!PED_DATA.length)loadPed();
 }
-
 loadAll();
 </script>
 </body>
