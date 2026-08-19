@@ -78,6 +78,23 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 .diff{font-size:10px;display:block;margin-top:2px}
 .th-costos{color:var(--muted)}
 .th-vip{color:var(--blue)}
+@media print{
+  .hdr,.tabs,.ctrl,.stats,.mbar,#vipProvChips,.ptabs,.bcp,.bex,.btnR,.stag{display:none!important}
+  body{background:#fff;color:#000}
+  .main{padding:0;max-width:100%}
+  .vip-wrap{border:none;box-shadow:none;border-radius:0}
+  .vip-table{font-size:10px}
+  .vip-table th,.vip-table td{padding:5px 7px;border:1px solid #ccc}
+  .vip-table th{background:#f0f0f0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .badge{padding:1px 4px;font-size:9px;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .badge-green{background:#dcfce7!important;color:#16a34a!important}
+  .badge-red{background:#fef2f2!important;color:#dc2626!important}
+  .badge-blue{background:#dbeafe!important;color:#2563eb!important}
+  .badge-gray{background:#f3f4f6!important;color:#6b7280!important}
+  .diff{font-size:8px}
+  #printHeader{display:block!important}
+}
+#printHeader{display:none;font-size:14px;font-weight:700;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #000}
 @media(max-width:640px){
   .stats{grid-template-columns:repeat(2,1fr);gap:8px}
   .stat{padding:10px 12px}.sv{font-size:22px}
@@ -166,10 +183,12 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
         <option value="INFINIX">Infinix</option>
       </select>
       <span class="cb" id="vipCnt">-</span>
+      <button class="bex" onclick="printVIP()" style="background:var(--surface);color:var(--text);border-color:var(--border)">&#128438; Imprimir</button>
     </div>
     <div class="mbar" id="vipProvChips" style="margin-bottom:12px;display:none">
       <span class="ml">&#128101; Proveedores:</span>
     </div>
+    <div id="printHeader"></div>
     <div id="vipList"></div>
   </div>
 
@@ -686,6 +705,16 @@ function renderPed(){
   }).join("");
 }
 
+function printVIP(){
+  const now=new Date();
+  const fecha=now.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
+  const hora=now.getHours()+":"+String(now.getMinutes()).padStart(2,"0");
+  const rivs=SELECTED_RIVALES.length?SELECTED_RIVALES.join(" · "):"ninguno";
+  document.getElementById("printHeader").innerHTML=
+    "Work Shop — Lista VIP vs Rivales &nbsp;|&nbsp; "+fecha+" "+hora+
+    '<span style="font-size:11px;font-weight:400;margin-left:12px">Comparando con: '+rivs+'</span>';
+  window.print();
+}
 function cp(btn,txt){navigator.clipboard.writeText(txt).then(()=>{btn.classList.add("ok");btn.textContent="✅ Copiado";setTimeout(()=>{btn.classList.remove("ok");btn.textContent="📋 Copiar"},1800)})}
 
 function exportXls(){
