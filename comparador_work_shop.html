@@ -166,6 +166,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
         <option value="INFINIX">Infinix</option>
       </select>
       <span class="cb" id="vipCnt">-</span>
+      <button class="bex" id="btnOtros" onclick="toggleOtros()">&#128196; Ver otros proveedores</button>
     </div>
     <div id="vipList"></div>
   </div>
@@ -230,6 +231,8 @@ const SH=[
   {n:"LEO",               g:"301921775", ws:false,co:false,p:"vertical" },
 ];
 const RIVALES=["GUILLE GAMES","LALO","LUCHO PILAR","TODO ELECTRO"];
+let MOSTRAR_OTROS=false;
+function getOtros(){return SH.filter(s=>!s.co&&s.n!=="VIP"&&!RIVALES.includes(s.n)).map(s=>s.n)}
 const CC_GID="1313251460";
 const PED_GID="890878891";
 let CC_DATA=[],PED_DATA=[];
@@ -375,6 +378,8 @@ function mkKey(name){
   });
   k=k.replace(/(\d+)\s*GB/g,function(_,n){mem.push(n);return"__MEM__";});
   k=k.replace(/\b(DS|SS|5G|4G|GLOBAL|SLIM|C\/CARGADOR|S\/CARGADOR|IMPORTADO|NACIONAL|EUR|BR|US|CH|INDIA|NFC|ESIM|L\.P|CX\.F|3P)\b/g," ");
+  // FIX COSTOS: eliminar colores — varían entre proveedores y rompen el matching
+  k=k.replace(/\b(BLACK|WHITE|BLUE|GREEN|RED|GREY|GRAY|ORANGE|PINK|PURPLE|SILVER|GOLD|BROWN|YELLOW|NAVY|VIOLET|ROSE|CREAM|MINT|GRAPHITE|GRAPHITO|CEREZA|AZUL|NEGRO|BLANCO|ROJO|VERDE|GRIS|DORADO|CELESTE|LILA|LAVENDER|MIDNIGHT|STARLIGHT|NATURAL|DESERT|TITANIUM|MORADO|CAMUFLADO|SAND|CORAL|TEAL|JADE|SAGE|OLIVE|LILAC|CHARCOAL|LIGHTBLUE|LIGHTGRAY|ICEBLUE|ICYBLUE|SKYBLUE|ULTRAMARINE|CHAMPAGNE|ONYX|PEARL|PHANTOM|SHADOW|CHROME|CYAN|LIME|COBALT|MOCHA|KHAKI|PARACHUTE|PRISM|AURORA|MAROON|BEIGE|IVORY|AQUA|INDIGO|MAGENTA|TURQUOISE|CEREZA|ESMERALDA|LIMA|CAFE|NARANJA|ROSA|AMARILLO|SIHOUETTE|SLIPSTREAM|ZEPHYR|AMAZONITE|GRAPE|WALNUT|LILY|ARANDANO|GRAYGREEN|SILVERBLUE|PINKGOLD|PORCELAIN|CITRUS|STORM|SAPPHIRE|COFFEE|RASPBERRY|CHERRY|BURGUNDY|PUMPKIN|LEMON|MANGO|ARCTIC|CLOUD|EMBER|LIGHTBLUE|ICEBLUE)\b/g," ");
   k=k.replace(/[^A-Z0-9\s]/g," ").replace(/\s+/g," ").trim();
   if(mem.length)k=k+" "+mem.sort().join("/");
   return k.trim();
@@ -524,46 +529,54 @@ function renderVIPTab(){
     return;
   }
 
+  const otros=MOSTRAR_OTROS?getOtros():[];
   let html='<div class="vip-wrap"><table class="vip-table"><thead><tr>';
   html+='<th style="text-align:left">Producto</th>';
   html+='<th class="th-costos">COSTOS</th>';
   html+='<th class="th-vip">VIP</th>';
   RIVALES.forEach(r=>{html+='<th>'+r+'</th>'});
+  if(otros.length){
+    html+='<th colspan="'+otros.length+'" style="text-align:center;color:var(--muted);border-left:2px solid var(--border)">— Referencia —</th>';
+    html+='</tr><tr>';
+    html+='<th style="text-align:left"></th><th></th><th></th>';
+    RIVALES.forEach(()=>{html+='<th></th>'});
+    otros.forEach(r=>{html+='<th style="color:var(--muted);font-weight:600;border-left:'+( r===otros[0]?"2px":"1px")+' solid var(--border)">'+r+'</th>'});
+  }
   html+='</tr></thead><tbody>';
 
   f.forEach(p=>{
     const vip=p.vip;
     const costo=p.prices["COSTOS"];
-    // Margen VIP sobre costo
     const margenPct=costo?((vip-costo)/costo*100):null;
 
     html+='<tr>';
-    // Nombre
     html+='<td style="text-align:left">'+p.name+'</td>';
     // COSTOS
     if(costo){
       html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span>';
       if(margenPct!==null)html+='<span class="diff" style="color:var(--muted)">margen +'+margenPct.toFixed(1)+'%</span>';
       html+='</td>';
-    }else{
-      html+='<td><span style="color:var(--border)">—</span></td>';
-    }
+    }else{html+='<td><span style="color:var(--border)">—</span></td>'}
     // VIP
     html+='<td><span class="badge badge-blue">'+fmtRaw(vip)+'</span></td>';
-    // Rivales
+    // Rivales (con color)
     RIVALES.forEach(r=>{
       if(r in p.prices){
-        const rp=p.prices[r];
-        const wins=vip<=rp;
+        const rp=p.prices[r];const wins=vip<=rp;
         const diff=((vip-rp)/rp*100);
         const cls=wins?"badge-green":"badge-red";
         html+='<td><span class="badge '+cls+'">'+fmtRaw(rp)+'</span>';
         if(!wins)html+='<span class="diff" style="color:var(--red)">nos gana '+Math.abs(diff).toFixed(1)+'%</span>';
         else if(diff<0)html+='<span class="diff" style="color:var(--green)">ganamos '+Math.abs(diff).toFixed(1)+'%</span>';
         html+='</td>';
-      }else{
-        html+='<td><span style="color:var(--border)">—</span></td>';
-      }
+      }else{html+='<td><span style="color:var(--border)">—</span></td>'}
+    });
+    // Otros (referencia, sin color)
+    otros.forEach((r,idx)=>{
+      const border=idx===0?"border-left:2px solid var(--border)":"border-left:1px solid var(--border)";
+      if(r in p.prices){
+        html+='<td style="'+border+'"><span class="badge badge-gray">'+fmtRaw(p.prices[r])+'</span></td>';
+      }else{html+='<td style="'+border+'"><span style="color:var(--border)">—</span></td>'}
     });
     html+='</tr>';
   });
@@ -672,6 +685,12 @@ function renderPed(){
   }).join("");
 }
 
+function toggleOtros(){
+  MOSTRAR_OTROS=!MOSTRAR_OTROS;
+  const btn=document.getElementById("btnOtros");
+  btn.textContent=MOSTRAR_OTROS?"📄 Ocultar otros proveedores":"📄 Ver otros proveedores";
+  renderVIPTab();
+}
 function cp(btn,txt){navigator.clipboard.writeText(txt).then(()=>{btn.classList.add("ok");btn.textContent="✅ Copiado";setTimeout(()=>{btn.classList.remove("ok");btn.textContent="📋 Copiar"},1800)})}
 
 function exportXls(){
