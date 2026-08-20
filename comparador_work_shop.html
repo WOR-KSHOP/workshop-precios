@@ -201,9 +201,34 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
     <div class="stats">
       <div class="stat"><div class="sl">Oportunidades</div><div class="sv" id="oT" style="color:var(--orange)">-</div><div class="ss">detectadas</div></div>
       <div class="stat"><div class="sl">Cerca del mejor precio</div><div class="sv" id="oC" style="color:var(--yellow)">-</div><div class="ss">a menos de 5%</div></div>
-      <div class="stat"><div class="sl">Sin stock + demanda</div><div class="sv" id="oD" style="color:var(--red)">-</div><div class="ss">3+ proveedores</div></div>
+      <div class="stat"><div class="sl">Sin stock WS</div><div class="sv" id="oD" style="color:var(--red)">-</div><div class="ss">solo en rivales</div></div>
+      <div class="stat"><div class="sl">Con stock WS</div><div class="sv" id="oCon" style="color:var(--green)">-</div><div class="ss">en COSTOS</div></div>
     </div>
     <div id="opList" class="pl"></div>
+    <!-- CATÁLOGO POR MARCA -->
+    <div style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:14px">&#128230; Catálogo completo por marca</div>
+      <div class="ctrl" style="margin-bottom:16px">
+        <div class="sw"><span class="si">&#128269;</span><input type="text" id="catSrch" placeholder="Buscar en catálogo..." oninput="renderCatalogo()"></div>
+        <select id="catBF" onchange="renderCatalogo()">
+          <option value="">Todas las marcas</option>
+          <option value="IPHONE">iPhone</option>
+          <option value="SAMSUNG">Samsung</option>
+          <option value="MOTOROLA">Motorola</option>
+          <option value="XIAOMI">Xiaomi</option>
+          <option value="INFINIX">Infinix</option>
+          <option value="NOKIA">Nokia</option>
+          <option value="NOBLEX">Noblex</option>
+        </select>
+        <select id="catSF" onchange="renderCatalogo()">
+          <option value="all">Con y sin stock WS</option>
+          <option value="con">Solo con stock WS</option>
+          <option value="sin">Solo sin stock WS</option>
+        </select>
+        <span class="cb" id="catCnt">-</span>
+      </div>
+      <div id="catList"></div>
+    </div>
   </div>
 
   <!-- CUENTAS CORRIENTES -->
@@ -604,7 +629,35 @@ function renderVIPTab(){
   document.getElementById("vipCnt").textContent=f.length+" productos";
 
   if(!f.length){
-    document.getElementById("vipList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';
+    // Buscar si hay resultados en rivales para mostrar como fallback
+    let rivals=ALL.filter(p=>!("VIP"in p.prices)&&SELECTED_RIVALES.some(r=>r in p.prices));
+    if(sr){const words=sr.split(/\s+/).filter(Boolean);rivals=rivals.filter(p=>words.every(w=>p.name.toLowerCase().includes(w)))}
+    if(br)rivals=rivals.filter(p=>p.name.includes(br));
+    rivals.sort((a,b)=>a.name.localeCompare(b.name));
+    if(rivals.length){
+      document.getElementById("vipCnt").textContent=rivals.length+" en rivales (sin VIP propio)";
+      let html='<div style="background:var(--ol);border:1px solid #fed7aa;border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--orange)">⚠️ No tenés <strong>VIP propio</strong> para esta búsqueda. Mostrando lo que tienen los rivales:</div>';
+      html+='<div class="vip-wrap"><table class="vip-table"><thead><tr>';
+      html+='<th style="text-align:left">Producto (sin VIP propio)</th><th class="th-costos">COSTOS</th>';
+      SELECTED_RIVALES.forEach(r=>{html+='<th>'+r+'</th>'});
+      html+='</tr></thead><tbody>';
+      rivals.forEach(p=>{
+        const costo=p.prices["COSTOS"];
+        html+='<tr>';
+        html+='<td style="text-align:left;color:var(--orange);font-weight:600">'+p.name+'</td>';
+        if(costo){html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span></td>'}
+        else{html+='<td><span style="color:var(--border)">—</span></td>'}
+        SELECTED_RIVALES.forEach(r=>{
+          if(r in p.prices){html+='<td><span class="badge badge-gray">'+fmtRaw(p.prices[r])+'</span></td>'}
+          else{html+='<td><span style="color:var(--border)">—</span></td>'}
+        });
+        html+='</tr>';
+      });
+      html+='</tbody></table></div>';
+      document.getElementById("vipList").innerHTML=html;
+    }else{
+      document.getElementById("vipList").innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin resultados</div>';
+    }
     return;
   }
 
@@ -646,11 +699,28 @@ function renderVIPTab(){
 }
 
 // OPORTUNIDADES
+function getBrand(name){
+  const n=name.toUpperCase();
+  if(n.includes("IPHONE")||n.includes("APPLE"))return"IPHONE";
+  if(n.includes("SAMSUNG")||n.includes("GALAXY"))return"SAMSUNG";
+  if(n.includes("MOTOROLA")||n.includes("MOTO "))return"MOTOROLA";
+  if(n.includes("XIAOMI")||n.includes("REDMI")||n.includes("POCO"))return"XIAOMI";
+  if(n.includes("INFINIX"))return"INFINIX";
+  if(n.includes("NOKIA"))return"NOKIA";
+  if(n.includes("NOBLEX"))return"NOBLEX";
+  if(n.includes("PLAYSTATION")||n.includes("JOYSTICK"))return"CONSOLA";
+  if(n.includes("TABLET")||n.includes("BLACKVIEW"))return"TABLET";
+  return"OTROS";
+}
+const BRAND_ORDER=["IPHONE","SAMSUNG","MOTOROLA","XIAOMI","INFINIX","NOKIA","NOBLEX","TABLET","CONSOLA","OTROS"];
+
 function renderOp(){
   const cercaList=[],sinStockList=[];
+  let conStock=0,sinStock=0;
   ALL.forEach(p=>{
     const b=best(p);if(!b.price)return;
     const hasWS="COSTOS"in p.prices;
+    if(hasWS)conStock++;else sinStock++;
     if(hasWS&&!b.isWS){
       const wsPrice=p.prices["COSTOS"];
       const diffPct=((wsPrice-b.price)/b.price)*100;
@@ -662,10 +732,11 @@ function renderOp(){
   sinStockList.sort((a,b)=>b.nProv-a.nProv);
   document.getElementById("oT").textContent=cercaList.length+sinStockList.length;
   document.getElementById("oC").textContent=cercaList.length;
-  document.getElementById("oD").textContent=sinStockList.length;
+  document.getElementById("oD").textContent=sinStock;
+  document.getElementById("oCon").textContent=conStock;
   let html="";
   if(cercaList.length){
-    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128997; Cerca de ganar (ajustando precio)</div>';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#9888;&#65039; Cerca de ganar (ajustando precio)</div>';
     html+=cercaList.map(({p,b,wsPrice,diffPct})=>{
       const chips=opChips(p,b);
       return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+'</div>'
@@ -675,7 +746,7 @@ function renderOp(){
     }).join("");
   }
   if(sinStockList.length){
-    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128997; Sin stock, con demanda activa</div>';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128308; Sin stock WS, con demanda activa (3+ proveedores)</div>';
     html+=sinStockList.map(({p,b,nProv})=>{
       const chips=opChips(p,b);
       return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+'</div>'
@@ -686,6 +757,81 @@ function renderOp(){
   }
   if(!html)html='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#9989;</div>Sin oportunidades detectadas por ahora</div>';
   document.getElementById("opList").innerHTML=html;
+  renderCatalogo();
+}
+
+function renderCatalogo(){
+  const sr=(document.getElementById("catSrch").value||"").toLowerCase().trim();
+  const brF=(document.getElementById("catBF").value||"").toUpperCase();
+  const sf=document.getElementById("catSF").value;
+  const words=sr?sr.split(/\s+/).filter(Boolean):[];
+
+  let items=ALL.filter(p=>{
+    if(words.length&&!words.every(w=>p.name.toLowerCase().includes(w)))return false;
+    if(brF&&getBrand(p.name)!==brF)return false;
+    const has="COSTOS"in p.prices;
+    if(sf==="con"&&!has)return false;
+    if(sf==="sin"&&has)return false;
+    return true;
+  });
+
+  document.getElementById("catCnt").textContent=items.length+" artículos";
+
+  if(!items.length){
+    document.getElementById("catList").innerHTML='<div class="es"><div style="font-size:28px;margin-bottom:8px">&#128269;</div>Sin resultados</div>';
+    return;
+  }
+
+  // Agrupar por marca
+  const grupos={};
+  items.forEach(p=>{
+    const br=getBrand(p.name);
+    if(!grupos[br])grupos[br]={con:[],sin:[]};
+    if("COSTOS"in p.prices)grupos[br].con.push(p);
+    else grupos[br].sin.push(p);
+  });
+
+  let html="";
+  BRAND_ORDER.forEach(br=>{
+    const g=grupos[br];if(!g)return;
+    const total=g.con.length+g.sin.length;
+    html+='<div style="margin-bottom:20px">';
+    html+='<div style="font-size:13px;font-weight:700;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">';
+    html+='<span>'+br+'</span><span style="font-size:11px;color:var(--muted)">'+total+' artículos · &#9989; '+g.con.length+' con stock · &#128308; '+g.sin.length+' sin stock</span></div>';
+
+    if(g.con.length&&sf!=="sin"){
+      html+='<div style="font-size:11px;font-weight:600;color:var(--green);margin:6px 0 6px 4px">&#9989; CON STOCK WS ('+g.con.length+')</div>';
+      html+='<div class="pl" style="gap:6px;margin-bottom:10px">';
+      g.con.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
+        const costo=p.prices["COSTOS"];const b2=best(p);
+        const chips=opChips(p,b2);
+        html+='<div class="pc" style="border-left:3px solid var(--green)">';
+        html+='<div class="ct"><div><div class="pn">'+p.name+'</div>';
+        if(costo)html+='<div class="pm">Costo: '+fmtRaw(costo)+'</div>';
+        html+='</div><div class="bb"><div class="bpr" style="font-size:14px">'+fmtRaw(b2.price)+'</div></div></div>';
+        html+='<div class="cr">'+chips+'</div></div>';
+      });
+      html+='</div>';
+    }
+
+    if(g.sin.length&&sf!=="con"){
+      html+='<div style="font-size:11px;font-weight:600;color:var(--red);margin:6px 0 6px 4px">&#128308; SIN STOCK WS ('+g.sin.length+') — solo en rivales</div>';
+      html+='<div class="pl" style="gap:6px;margin-bottom:10px">';
+      g.sin.sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
+        const b2=best(p);
+        const chips=opChips(p,b2);
+        html+='<div class="pc" style="border-left:3px solid var(--red);opacity:.9">';
+        html+='<div class="ct"><div><div class="pn" style="color:var(--red)">'+p.name+'</div>';
+        html+='<div class="pm">'+Object.keys(p.prices).length+' proveedores</div>';
+        html+='</div><div class="bb"><div class="bp" style="color:var(--red)">Sin stock</div><div class="bpr" style="font-size:14px">'+fmtRaw(b2.price)+'</div></div></div>';
+        html+='<div class="cr">'+chips+'</div></div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+
+  document.getElementById("catList").innerHTML=html;
 }
 function opChips(p,b){
   return Object.entries(p.prices).sort(([,a],[,b])=>a-b).map(([pv,pr])=>{
