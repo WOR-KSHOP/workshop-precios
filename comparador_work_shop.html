@@ -204,6 +204,10 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
       <div class="stat"><div class="sl">Sin stock WS</div><div class="sv" id="oD" style="color:var(--red)">-</div><div class="ss">solo en rivales</div></div>
       <div class="stat"><div class="sl">Con stock WS</div><div class="sv" id="oCon" style="color:var(--green)">-</div><div class="ss">en COSTOS</div></div>
     </div>
+    <div class="ctrl" style="margin-bottom:12px">
+      <div class="sw"><span class="si">&#128269;</span><input type="text" id="opSrch" placeholder="Buscar en oportunidades..." oninput="renderOp()"></div>
+      <span class="cb" id="opCnt">-</span>
+    </div>
     <div id="opList" class="pl"></div>
     <!-- CATÁLOGO POR MARCA -->
     <div style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px">
@@ -715,6 +719,10 @@ function getBrand(name){
 const BRAND_ORDER=["IPHONE","SAMSUNG","MOTOROLA","XIAOMI","INFINIX","NOKIA","NOBLEX","TABLET","CONSOLA","OTROS"];
 
 function renderOp(){
+  const sr=(document.getElementById("opSrch")?document.getElementById("opSrch").value:"").toLowerCase().trim();
+  const words=sr?sr.split(/\s+/).filter(Boolean):[];
+  const match=p=>!words.length||words.every(w=>p.name.toLowerCase().includes(w));
+
   const cercaList=[],sinStockList=[];
   let conStock=0,sinStock=0;
   ALL.forEach(p=>{
@@ -726,18 +734,26 @@ function renderOp(){
       const diffPct=((wsPrice-b.price)/b.price)*100;
       if(diffPct>0&&diffPct<=5)cercaList.push({p,b,wsPrice,diffPct});
     }
-    if(!hasWS){const nProv=Object.keys(p.prices).length;if(nProv>=3)sinStockList.push({p,b,nProv})}
+    if(!hasWS){const nProv=Object.keys(p.prices).length;if(nProv>=2)sinStockList.push({p,b,nProv})}
   });
-  cercaList.sort((a,b)=>a.diffPct-b.diffPct);
-  sinStockList.sort((a,b)=>b.nProv-a.nProv);
+  // Ordenar alfabéticamente
+  cercaList.sort((a,b)=>a.p.name.localeCompare(b.p.name));
+  sinStockList.sort((a,b)=>a.p.name.localeCompare(b.p.name));
+
   document.getElementById("oT").textContent=cercaList.length+sinStockList.length;
   document.getElementById("oC").textContent=cercaList.length;
   document.getElementById("oD").textContent=sinStock;
   document.getElementById("oCon").textContent=conStock;
+
+  // Filtrar por búsqueda
+  const cercaF=cercaList.filter(({p})=>match(p));
+  const sinF=sinStockList.filter(({p})=>match(p));
+  document.getElementById("opCnt").textContent=(cercaF.length+sinF.length)+" resultados";
+
   let html="";
-  if(cercaList.length){
-    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#9888;&#65039; Cerca de ganar (ajustando precio)</div>';
-    html+=cercaList.map(({p,b,wsPrice,diffPct})=>{
+  if(cercaF.length){
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#9888;&#65039; Cerca de ganar — ajustando precio ('+cercaF.length+')</div>';
+    html+=cercaF.map(({p,b,wsPrice,diffPct})=>{
       const chips=opChips(p,b);
       return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+'</div>'
         +'<div class="pm">Tu costo: '+fmtRaw(wsPrice)+' · Líder: '+b.pr+' a '+fmtRaw(b.price)+' · Diferencia: +'+diffPct.toFixed(1)+'%</div></div>'
@@ -745,17 +761,17 @@ function renderOp(){
         +'<div class="cr">'+chips+'</div></div>'
     }).join("");
   }
-  if(sinStockList.length){
-    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128308; Sin stock WS, con demanda activa (3+ proveedores)</div>';
-    html+=sinStockList.map(({p,b,nProv})=>{
+  if(sinF.length){
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128308; Sin stock WS — disponibles en rivales ('+sinF.length+')</div>';
+    html+=sinF.map(({p,b,nProv})=>{
       const chips=opChips(p,b);
       return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+'</div>'
-        +'<div class="pm">'+nProv+' proveedores compitiendo · Mejor precio: '+b.pr+'</div></div>'
+        +'<div class="pm">'+nProv+' proveedor'+(nProv>1?'es':'')+' · Mejor precio: '+b.pr+'</div></div>'
         +'<div class="bb"><div class="bp" style="color:var(--red)">&#128308; Sin stock</div><div class="bpr">'+fmtRaw(b.price)+'</div></div></div>'
         +'<div class="cr">'+chips+'</div></div>'
     }).join("");
   }
-  if(!html)html='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#9989;</div>Sin oportunidades detectadas por ahora</div>';
+  if(!html)html='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#9989;</div>'+(sr?"Sin resultados para esa búsqueda":"Sin oportunidades detectadas por ahora")+'</div>';
   document.getElementById("opList").innerHTML=html;
   renderCatalogo();
 }
