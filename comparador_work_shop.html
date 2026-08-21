@@ -458,7 +458,7 @@ function getEntrandoHtml(name){
     if(d.provs.size)parts.push([...d.provs].join("/"));
     if(minP>=30){parts.push("u$"+minP);if(d.cants.length)parts.push(d.cants[0]+" u.")}
     else{parts.push(minP+" u.")}
-    return'<span class="badge-entrando">&#9889; LLEGA '+f+(parts.length?" · "+parts.join(" · "):"")+'</span>';
+    return'<span class="badge-entrando">&#9889; COMPRADO '+f+(parts.length?" · "+parts.join(" · "):"")+'</span>';
   }).join(" ");
 }
 
