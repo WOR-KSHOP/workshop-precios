@@ -412,15 +412,23 @@ function pWsCostos(csv){return parseAny(csv)}
 function pInline(csv){return parseAny(csv)}
 function parseEntrando(csv){
   const rows=csv.split("\n").map(r=>csvR(r));
-  const out=[];let fechaActual="";let esperandoFecha=false;
+  const out=[];let fechaActual="";let esperandoFecha=false;let proveedorActual="";
   for(let i=0;i<rows.length;i++){
-    const colA=cl(rows[i][0]);
+    const colA=cl(rows[i][0]);const colB=cl(rows[i][1]||"");
     if(!colA)continue;
     if(/^FECHA(\s+DE)?\s+COMPRA/i.test(colA)){esperandoFecha=true;continue}
     if(esperandoFecha){fechaActual=colA.trim();esperandoFecha=false;continue}
+    if(/^PROVEEDOR/i.test(colA)){
+      const inline=colA.replace(/^PROVEEDOR\s*/i,"").trim();
+      proveedorActual=inline||colB||"";continue;
+    }
+    if(isHd(colA))continue;
     if(esProdName(colA)){
       const price=extractPriceFromRow(rows[i]);
-      if(price){out.push({name:nn(cleanName(colA)),price,fecha:fechaActual})}
+      if(price){
+        const cantB=(colB&&/^\d+$/.test(colB.trim()))?parseInt(colB):null;
+        out.push({name:nn(cleanName(colA)),price,fecha:fechaActual,proveedor:proveedorActual,cantidad:cantB});
+      }
     }
   }
   return out;
@@ -430,7 +438,7 @@ function buildEntrandoMap(){
   ENTRANDO.forEach(e=>{
     const key=mkKey(e.name);
     if(!ENTRANDO_MAP[key])ENTRANDO_MAP[key]=[];
-    ENTRANDO_MAP[key].push({price:e.price,fecha:e.fecha});
+    ENTRANDO_MAP[key].push(e);
   });
 }
 function getEntrandoHtml(name){
@@ -438,11 +446,19 @@ function getEntrandoHtml(name){
   const hits=ENTRANDO_MAP[key];
   if(!hits||!hits.length)return"";
   const byFecha={};
-  hits.forEach(h=>{if(!byFecha[h.fecha])byFecha[h.fecha]=[];byFecha[h.fecha].push(h.price)});
-  return Object.entries(byFecha).map(([f,prices])=>{
-    const minP=Math.min(...prices);
-    const info=minP>=30?" · u$"+minP:" · "+minP+" u.";
-    return'<span class="badge-entrando">&#9889; LLEGA '+f+info+'</span>';
+  hits.forEach(h=>{
+    if(!byFecha[h.fecha])byFecha[h.fecha]={prices:[],provs:new Set(),cants:[]};
+    byFecha[h.fecha].prices.push(h.price);
+    if(h.proveedor)byFecha[h.fecha].provs.add(h.proveedor);
+    if(h.cantidad)byFecha[h.fecha].cants.push(h.cantidad);
+  });
+  return Object.entries(byFecha).map(([f,d])=>{
+    const minP=Math.min(...d.prices);
+    let parts=[];
+    if(d.provs.size)parts.push([...d.provs].join("/"));
+    if(minP>=30){parts.push("u$"+minP);if(d.cants.length)parts.push(d.cants[0]+" u.")}
+    else{parts.push(minP+" u.")}
+    return'<span class="badge-entrando">&#9889; LLEGA '+f+(parts.length?" · "+parts.join(" · "):"")+'</span>';
   }).join(" ");
 }
 
