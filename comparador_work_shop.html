@@ -75,6 +75,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 .badge-red{background:var(--rl);color:var(--red)}
 .badge-blue{background:var(--bl);color:var(--blue)}
 .badge-gray{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.badge-entrando{background:#fff7ed;color:#c2410c;border:1px solid #fdba74;display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:5px;font-weight:700;font-size:11px}
 .diff{font-size:10px;display:block;margin-top:2px}
 .th-costos{color:var(--muted)}
 .th-vip{color:var(--blue)}
@@ -91,6 +92,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
   .badge-red{background:#fef2f2!important;color:#dc2626!important}
   .badge-blue{background:#dbeafe!important;color:#2563eb!important}
   .badge-gray{background:#f3f4f6!important;color:#6b7280!important}
+  .badge-entrando{background:#fff7ed!important;color:#c2410c!important;border-color:#fdba74!important}
   .diff{font-size:8px}
   #printHeader{display:block!important}
 }
@@ -290,6 +292,7 @@ const CC_GID="1313251460";
 const PED_GID="890878891";
 let CC_DATA=[],PED_DATA=[];
 let ALL=[],MAR=0,PRV="ALL",ERR=[];
+let ENTRANDO=[],ENTRANDO_MAP={};
 
 function csvR(l){const r=[];let c="",q=false;for(let i=0;i<l.length;i++){if(l[i]==='"'){q=!q}else if(l[i]===","&&!q){r.push(c);c=""}else c+=l[i]}r.push(c);return r}
 function cl(s){return(s||"").replace(/^["'\s]+|["'\s]+$/g,"").trim()}
@@ -407,6 +410,41 @@ function parseAny(csv){
 function pVertical(csv){return parseAny(csv)}
 function pWsCostos(csv){return parseAny(csv)}
 function pInline(csv){return parseAny(csv)}
+function parseEntrando(csv){
+  const rows=csv.split("\n").map(r=>csvR(r));
+  const out=[];let fechaActual="";let esperandoFecha=false;
+  for(let i=0;i<rows.length;i++){
+    const colA=cl(rows[i][0]);
+    if(!colA)continue;
+    if(/^FECHA(\s+DE)?\s+COMPRA/i.test(colA)){esperandoFecha=true;continue}
+    if(esperandoFecha){fechaActual=colA.trim();esperandoFecha=false;continue}
+    if(esProdName(colA)){
+      const price=extractPriceFromRow(rows[i]);
+      if(price){out.push({name:nn(cleanName(colA)),price,fecha:fechaActual})}
+    }
+  }
+  return out;
+}
+function buildEntrandoMap(){
+  ENTRANDO_MAP={};
+  ENTRANDO.forEach(e=>{
+    const key=mkKey(e.name);
+    if(!ENTRANDO_MAP[key])ENTRANDO_MAP[key]=[];
+    ENTRANDO_MAP[key].push({price:e.price,fecha:e.fecha});
+  });
+}
+function getEntrandoHtml(name){
+  const key=mkKey(name);
+  const hits=ENTRANDO_MAP[key];
+  if(!hits||!hits.length)return"";
+  const byFecha={};
+  hits.forEach(h=>{if(!byFecha[h.fecha])byFecha[h.fecha]=[];byFecha[h.fecha].push(h.price)});
+  return Object.entries(byFecha).map(([f,prices])=>{
+    const minP=Math.min(...prices);
+    const info=minP>=30?" · u$"+minP:" · "+minP+" u.";
+    return'<span class="badge-entrando">&#9889; LLEGA '+f+info+'</span>';
+  }).join(" ");
+}
 
 async function fetchS(s){
   const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${s.g}`;
@@ -444,7 +482,11 @@ async function loadAll(){
   btn.classList.add("loading");btn.textContent="↺ Cargando...";
   document.getElementById("eb").style.display="none";ERR=[];
   document.getElementById("pList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Leyendo '+SH.length+' hojas...</div><div class="lsub">Un momento...</div></div>';
-  const res=await Promise.all(SH.map(fetchS));
+  const [res,entCsv]=await Promise.all([
+    Promise.all(SH.map(fetchS)),
+    fetch(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=1210657174`,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null)
+  ]);
+  if(entCsv){ENTRANDO=parseEntrando(entCsv);buildEntrandoMap();}
   const wsR=res.find(r=>r.s.co);const wsP=wsR?wsR.pr:[];
   const provR=res.filter(r=>!r.s.co);
   res.forEach(r=>{if(!r.ok)ERR.push(r.s.n+": "+r.err)});
@@ -531,7 +573,8 @@ function render(){
     const stag=MAR>0?'<span class="stag">Venta: '+fmt(b.price)+"</span>":"";
     const meta=[p.color,wsSt].filter(Boolean).join(" · ");
     const ct=p.name+(p.color?" - "+p.color:"")+" -> "+b.pr+": "+fmtRaw(b.price);
-    return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+" "+stag+"</div>"+(meta?'<div class="pm">'+meta+"</div>":"")+"</div>"
+    const entrHtml=getEntrandoHtml(p.name);
+    return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+" "+stag+(entrHtml?" "+entrHtml:"")+"</div>"+(meta?'<div class="pm">'+meta+"</div>":"")+"</div>"
       +'<div class="bb"><div class="bp'+(b.isWS?" wsw":"")+'">'+ lbl+"</div>"
       +'<div class="bpr">'+fmtRaw(b.price)+"</div></div></div>"
       +'<div class="cr">'+chips+"</div>"
@@ -589,8 +632,9 @@ function renderVIPTab(){
     html+='</tr></thead><tbody>';
     f.forEach(p=>{
       const costo=p.prices["COSTOS"];
+      const entrSV=getEntrandoHtml(p.name);
       html+='<tr>';
-      html+='<td style="text-align:left;color:var(--orange);font-weight:600">'+p.name+'</td>';
+      html+='<td style="text-align:left;color:var(--orange);font-weight:600">'+p.name+(entrSV?" "+entrSV:"")+'</td>';
       if(costo){html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span></td>'}
       else{html+='<td><span style="color:var(--border)">—</span></td>'}
       SELECTED_RIVALES.forEach(r=>{
@@ -647,9 +691,9 @@ function renderVIPTab(){
       SELECTED_RIVALES.forEach(r=>{html+='<th>'+r+'</th>'});
       html+='</tr></thead><tbody>';
       rivals.forEach(p=>{
-        const costo=p.prices["COSTOS"];
+        const costo=p.prices["COSTOS"];const entrR=getEntrandoHtml(p.name);
         html+='<tr>';
-        html+='<td style="text-align:left;color:var(--orange);font-weight:600">'+p.name+'</td>';
+        html+='<td style="text-align:left;color:var(--orange);font-weight:600">'+p.name+(entrR?" "+entrR:"")+'</td>';
         if(costo){html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span></td>'}
         else{html+='<td><span style="color:var(--border)">—</span></td>'}
         SELECTED_RIVALES.forEach(r=>{
@@ -677,8 +721,9 @@ function renderVIPTab(){
     const vip=p.vip;
     const costo=p.prices["COSTOS"];
     const margenPct=costo?((vip-costo)/costo*100):null;
+    const entrVIP=getEntrandoHtml(p.name);
     html+='<tr>';
-    html+='<td style="text-align:left">'+p.name+'</td>';
+    html+='<td style="text-align:left">'+p.name+(entrVIP?" "+entrVIP:"")+'</td>';
     if(costo){
       html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span>';
       if(margenPct!==null)html+='<span class="diff" style="color:var(--muted)">margen +'+margenPct.toFixed(1)+'%</span>';
@@ -755,8 +800,8 @@ function renderOp(){
   if(cercaF.length){
     html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#9888;&#65039; Cerca de ganar — ajustando precio ('+cercaF.length+')</div>';
     html+=cercaF.map(({p,b,wsPrice,diffPct})=>{
-      const chips=opChips(p,b);
-      return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+'</div>'
+      const chips=opChips(p,b);const eH=getEntrandoHtml(p.name);
+      return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+(eH?" "+eH:"")+'</div>'
         +'<div class="pm">Tu costo: '+fmtRaw(wsPrice)+' · Líder: '+b.pr+' a '+fmtRaw(b.price)+' · Diferencia: +'+diffPct.toFixed(1)+'%</div></div>'
         +'<div class="bb"><div class="bp" style="color:var(--yellow)">&#9888; A '+diffPct.toFixed(1)+'%</div><div class="bpr">'+fmtRaw(wsPrice)+'</div></div></div>'
         +'<div class="cr">'+chips+'</div></div>'
@@ -765,8 +810,8 @@ function renderOp(){
   if(sinF.length){
     html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128308; Sin stock WS — disponibles en rivales ('+sinF.length+')</div>';
     html+=sinF.map(({p,b,nProv})=>{
-      const chips=opChips(p,b);
-      return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+'</div>'
+      const chips=opChips(p,b);const eH2=getEntrandoHtml(p.name);
+      return'<div class="pc"><div class="ct"><div><div class="pn">'+p.name+(eH2?" "+eH2:"")+'</div>'
         +'<div class="pm">'+nProv+' proveedor'+(nProv>1?'es':'')+' · Mejor precio: '+b.pr+'</div></div>'
         +'<div class="bb"><div class="bp" style="color:var(--red)">&#128308; Sin stock</div><div class="bpr">'+fmtRaw(b.price)+'</div></div></div>'
         +'<div class="cr">'+chips+'</div></div>'
