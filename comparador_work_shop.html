@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -287,6 +286,7 @@ const SH=[
   {n:"LEO",               g:"301921775", ws:false,co:false,p:"vertical" },
 ];
 let SELECTED_RIVALES=["GUILLE GAMES","LALO","LUCHO PILAR","TODO ELECTRO"];
+let SHOW_COSTOS=true,SHOW_VIP_COL=false;
 function getAllProveedores(){return SH.filter(s=>!s.co&&s.n!=="VIP").map(s=>s.n)}
 const CC_GID="1313251460";
 const PED_GID="890878891";
@@ -601,7 +601,10 @@ function render(){
 // ── VIP VS RIVALES ────────────────────────────────────────────────────────────
 function buildVIPChips(){
   const todos=getAllProveedores();
-  let html='<span class="ml">&#128101; Proveedores:</span>';
+  let html='<span class="ml">&#128194; Columnas:</span>';
+  html+='<span class="mb '+(SHOW_COSTOS?"active":"")+" mbcol"+'" onclick="toggleFixedCol(\'COSTOS\',this)">COSTOS</span>';
+  html+='<span class="mb '+(SHOW_VIP_COL?"active":"")+" mbcol"+'" onclick="toggleFixedCol(\'VIP\',this)">VIP</span>';
+  html+='<span class="ml" style="margin-left:6px">&#128101; Rivales:</span>';
   todos.forEach(n=>{
     const active=SELECTED_RIVALES.includes(n)?"active":"";
     html+='<span class="mb '+active+'" onclick="toggleRival(\''+n.replace(/'/g,"&#39;")+'\',this)">'+n+'</span>';
@@ -609,6 +612,12 @@ function buildVIPChips(){
   const el=document.getElementById("vipProvChips");
   el.innerHTML=html;
   el.style.display="flex";
+}
+function toggleFixedCol(col,el){
+  if(col==="COSTOS")SHOW_COSTOS=!SHOW_COSTOS;
+  else if(col==="VIP")SHOW_VIP_COL=!SHOW_VIP_COL;
+  el.classList.toggle("active");
+  renderVIPTab();
 }
 function toggleRival(name,el){
   const idx=SELECTED_RIVALES.indexOf(name);
@@ -643,16 +652,18 @@ function renderVIPTab(){
       return;
     }
     let html='<div class="vip-wrap"><table class="vip-table"><thead><tr>';
-    html+='<th style="text-align:left">Producto (sin VIP propio)</th><th class="th-costos">COSTOS</th>';
+    html+='<th style="text-align:left">Producto (sin VIP propio)</th>';
+    if(SHOW_COSTOS)html+='<th class="th-costos">COSTOS</th>';
+    if(SHOW_VIP_COL)html+='<th class="th-vip">VIP</th>';
     SELECTED_RIVALES.forEach(r=>{html+='<th>'+r+'</th>'});
     html+='</tr></thead><tbody>';
     f.forEach(p=>{
-      const costo=p.prices["COSTOS"];
+      const costo=p.prices["COSTOS"];const vipP=p.prices["VIP"];
       const entrSV=getEntrandoHtml(p.name);
       html+='<tr>';
       html+='<td style="text-align:left;color:var(--orange);font-weight:600">'+p.name+(entrSV?" "+entrSV:"")+'</td>';
-      if(costo){html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span></td>'}
-      else{html+='<td><span style="color:var(--border)">—</span></td>'}
+      if(SHOW_COSTOS){if(costo)html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span></td>';else html+='<td><span style="color:var(--border)">—</span></td>'}
+      if(SHOW_VIP_COL){if(vipP)html+='<td><span class="badge badge-blue">'+fmtRaw(vipP)+'</span></td>';else html+='<td><span style="color:var(--border)">—</span></td>'}
       SELECTED_RIVALES.forEach(r=>{
         if(r in p.prices){html+='<td><span class="badge badge-gray">'+fmtRaw(p.prices[r])+'</span></td>'}
         else{html+='<td><span style="color:var(--border)">—</span></td>'}
@@ -703,15 +714,17 @@ function renderVIPTab(){
       document.getElementById("vipCnt").textContent=rivals.length+" en rivales (sin VIP propio)";
       let html='<div style="background:var(--ol);border:1px solid #fed7aa;border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--orange)">⚠️ No tenés <strong>VIP propio</strong> para esta búsqueda. Mostrando lo que tienen los rivales:</div>';
       html+='<div class="vip-wrap"><table class="vip-table"><thead><tr>';
-      html+='<th style="text-align:left">Producto (sin VIP propio)</th><th class="th-costos">COSTOS</th>';
+      html+='<th style="text-align:left">Producto (sin VIP propio)</th>';
+      if(SHOW_COSTOS)html+='<th class="th-costos">COSTOS</th>';
+      if(SHOW_VIP_COL)html+='<th class="th-vip">VIP</th>';
       SELECTED_RIVALES.forEach(r=>{html+='<th>'+r+'</th>'});
       html+='</tr></thead><tbody>';
       rivals.forEach(p=>{
-        const costo=p.prices["COSTOS"];const entrR=getEntrandoHtml(p.name);
+        const costo=p.prices["COSTOS"];const vipPR=p.prices["VIP"];const entrR=getEntrandoHtml(p.name);
         html+='<tr>';
         html+='<td style="text-align:left;color:var(--orange);font-weight:600">'+p.name+(entrR?" "+entrR:"")+'</td>';
-        if(costo){html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span></td>'}
-        else{html+='<td><span style="color:var(--border)">—</span></td>'}
+        if(SHOW_COSTOS){if(costo)html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span></td>';else html+='<td><span style="color:var(--border)">—</span></td>'}
+        if(SHOW_VIP_COL){if(vipPR)html+='<td><span class="badge badge-blue">'+fmtRaw(vipPR)+'</span></td>';else html+='<td><span style="color:var(--border)">—</span></td>'}
         SELECTED_RIVALES.forEach(r=>{
           if(r in p.prices){html+='<td><span class="badge badge-gray">'+fmtRaw(p.prices[r])+'</span></td>'}
           else{html+='<td><span style="color:var(--border)">—</span></td>'}
@@ -728,7 +741,7 @@ function renderVIPTab(){
 
   let html='<div class="vip-wrap"><table class="vip-table"><thead><tr>';
   html+='<th style="text-align:left">Producto</th>';
-  html+='<th class="th-costos">COSTOS</th>';
+  if(SHOW_COSTOS)html+='<th class="th-costos">COSTOS</th>';
   html+='<th class="th-vip">VIP</th>';
   SELECTED_RIVALES.forEach(r=>{html+='<th>'+r+'</th>'});
   html+='</tr></thead><tbody>';
@@ -740,11 +753,13 @@ function renderVIPTab(){
     const entrVIP=getEntrandoHtml(p.name);
     html+='<tr>';
     html+='<td style="text-align:left">'+p.name+(entrVIP?" "+entrVIP:"")+'</td>';
-    if(costo){
-      html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span>';
-      if(margenPct!==null)html+='<span class="diff" style="color:var(--muted)">margen +'+margenPct.toFixed(1)+'%</span>';
-      html+='</td>';
-    }else{html+='<td><span style="color:var(--border)">—</span></td>'}
+    if(SHOW_COSTOS){
+      if(costo){
+        html+='<td><span class="badge badge-gray">'+fmtRaw(costo)+'</span>';
+        if(margenPct!==null)html+='<span class="diff" style="color:var(--muted)">margen +'+margenPct.toFixed(1)+'%</span>';
+        html+='</td>';
+      }else{html+='<td><span style="color:var(--border)">—</span></td>'}
+    }
     html+='<td><span class="badge badge-blue">'+fmtRaw(vip)+'</span></td>';
     SELECTED_RIVALES.forEach(r=>{
       if(r in p.prices){
