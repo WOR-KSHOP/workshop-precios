@@ -386,6 +386,15 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
         <option value="7">Margen ≥ 7%</option>
         <option value="10">Margen ≥ 10%</option>
       </select>
+      <select id="compSort" onchange="renderCompras()">
+        <option value="mg_desc">Margen ↓</option>
+        <option value="mg_asc">Margen ↑</option>
+        <option value="prov">Proveedor A–Z</option>
+        <option value="name">Producto A–Z</option>
+      </select>
+      <select id="compProv" onchange="renderCompras()">
+        <option value="">Todos los proveedores</option>
+      </select>
       <span class="cb" id="compCnt">-</span>
       <button onclick="exportComprasCSV()" style="margin-left:8px;padding:6px 14px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">⬇ CSV</button>
     </div>
@@ -1765,13 +1774,35 @@ function renderCompras(){
   document.getElementById("compBestMg").textContent=(conStock.length||sinStock.length)?"+"+bestMg.toFixed(1)+"%":"—";
   document.getElementById("compBestProv").textContent=topProv?topProv[0]:"—";
 
+  // Poblar dropdown de proveedores (preservando selección actual)
+  const provSel=document.getElementById("compProv");
+  if(provSel){
+    const allProvs=new Set();
+    sinStock.forEach(({allCandidates})=>{if(allCandidates)allCandidates.forEach(([pv])=>allProvs.add(pv));});
+    const curProv=provSel.value;
+    provSel.innerHTML='<option value="">Todos los proveedores</option>'+[...allProvs].sort().map(pv=>'<option value="'+pv+'"'+(pv===curProv?' selected':'')+'>'+pv+'</option>').join('');
+  }
+  const provFilt=((document.getElementById("compProv")||{}).value||"");
+  const sortBy=((document.getElementById("compSort")||{}).value||"mg_desc");
+
   // Filtrar
   const words=sr?sr.split(/\s+/).filter(Boolean):[];
   const matchName=name=>!words.length||words.every(w=>name.toLowerCase().includes(w));
   let fCon=conStock.filter(({p})=>matchName(p.name)&&(!br||p.name.toUpperCase().includes(br)));
   let fSin=sinStock.filter(({p})=>matchName(p.name)&&(!br||p.name.toUpperCase().includes(br)));
-  fCon.sort((a,b)=>b.mg-a.mg);
-  fSin.sort((a,b)=>b.mg-a.mg);
+
+  // Filtrar por proveedor (cualquiera en allCandidates)
+  if(provFilt)fSin=fSin.filter(({allCandidates})=>allCandidates&&allCandidates.some(([pv])=>pv===provFilt));
+
+  // Ordenar
+  const sortFn=(a,b)=>{
+    if(sortBy==="mg_asc")return a.mg-b.mg;
+    if(sortBy==="prov")return(a.bestProv||"").localeCompare(b.bestProv||"");
+    if(sortBy==="name")return a.p.name.localeCompare(b.p.name);
+    return b.mg-a.mg;
+  };
+  fCon.sort(sortFn);
+  fSin.sort(sortFn);
   document.getElementById("compCnt").textContent=(fCon.length+fSin.length)+" productos";
 
   let html="";
