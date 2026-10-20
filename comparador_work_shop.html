@@ -380,9 +380,6 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
         <option value="NOKIA">Nokia</option>
         <option value="NOBLEX">Noblex</option>
       </select>
-      <select id="compProv" onchange="renderCompras()">
-        <option value="">🏭 Todos los proveedores</option>
-      </select>
       <select id="compMg" onchange="renderCompras()">
         <option value="3">Margen ≥ 3%</option>
         <option value="5">Margen ≥ 5%</option>
@@ -1730,7 +1727,7 @@ function buildComprasItems(mgMin){
       const [bestProv,bestCost]=candidates[0];
       const mg=((ggPrice-bestCost)/bestCost)*100;
       if(mg<mgMin)return;
-      sinStock.push({p,ggPrice,bestProv,bestCost,mg});
+      sinStock.push({p,ggPrice,bestProv,bestCost,mg,allCandidates:candidates});
       provCount[bestProv]=(provCount[bestProv]||0)+1;
       if(mg>bestMg)bestMg=mg;
     }
@@ -1761,15 +1758,6 @@ function renderCompras(){
   const mgMin=parseFloat(((document.getElementById("compMg")||{}).value)||"3");
   const {conStock,sinStock,provCount,bestMg}=buildComprasItems(mgMin);
 
-  // Populate provider dropdown dynamically
-  const allProvs=[...new Set(sinStock.map(x=>x.bestProv))].sort();
-  const provSel=document.getElementById("compProv");
-  if(provSel){
-    const cur=provSel.value;
-    provSel.innerHTML='<option value="">🏭 Todos los proveedores</option>'+allProvs.map(p=>'<option value="'+p+'"'+(p===cur?' selected':'')+'>'+p+'</option>').join('');
-  }
-  const provF=((document.getElementById("compProv")||{}).value||"");
-
   // Stats (sin filtro)
   const topProv=Object.entries(provCount).sort(([,a],[,b])=>b-a)[0];
   document.getElementById("compConStock").textContent=conStock.length;
@@ -1781,7 +1769,7 @@ function renderCompras(){
   const words=sr?sr.split(/\s+/).filter(Boolean):[];
   const matchName=name=>!words.length||words.every(w=>name.toLowerCase().includes(w));
   let fCon=conStock.filter(({p})=>matchName(p.name)&&(!br||p.name.toUpperCase().includes(br)));
-  let fSin=sinStock.filter(({p,bestProv})=>matchName(p.name)&&(!br||p.name.toUpperCase().includes(br))&&(!provF||bestProv===provF));
+  let fSin=sinStock.filter(({p})=>matchName(p.name)&&(!br||p.name.toUpperCase().includes(br)));
   fCon.sort((a,b)=>b.mg-a.mg);
   fSin.sort((a,b)=>b.mg-a.mg);
   document.getElementById("compCnt").textContent=(fCon.length+fSin.length)+" productos";
@@ -1813,7 +1801,7 @@ function renderCompras(){
 
   // ── SIN STOCK ──
   if(fSin.length){
-    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128230; Sin stock WS — '+(provF?'comprar de '+provF:' comprar y revender')+' ('+fSin.length+')</div>';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 10px">&#128230; Sin stock WS — comprar y revender ('+fSin.length+')</div>';
     html+='<div class="vip-wrap"><table class="vip-table"><thead><tr>'
       +'<th style="text-align:left;min-width:240px">Producto</th>'
       +'<th>Comprar a</th>'
@@ -1822,16 +1810,27 @@ function renderCompras(){
       +'<th>Margen</th>'
       +'<th>&#128722;</th>'
       +'</tr></thead><tbody>';
-    fSin.forEach(({p,ggPrice,bestProv,bestCost,mg})=>{
+    fSin.forEach(({p,ggPrice,bestProv,bestCost,mg,allCandidates},idx)=>{
       const esc=p.name.replace(/'/g,"\\'");
       const entrH=getEntrandoHtml(p.name);
+      const rk='r'+idx;
+      let provCell;
+      if(allCandidates&&allCandidates.length>1){
+        const opts=allCandidates.map(([pv,pr])=>{
+          const pmg=((ggPrice-pr)/pr*100).toFixed(1);
+          return'<option value="'+pr+'" '+(pv===bestProv?'selected':'')+'>'+pv+' — '+fmtRaw(pr)+' (+'+pmg+'%)</option>';
+        }).join('');
+        provCell='<select data-gg="'+ggPrice+'" onchange="updComprasRow(this,\''+rk+'\')" style="font-size:12px;padding:3px 7px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--blue);font-weight:700;cursor:pointer;max-width:220px">'+opts+'</select>';
+      }else{
+        provCell='<span style="font-weight:700;color:var(--blue)">'+bestProv+'</span>';
+      }
       const mgBadge='<span style="font-weight:800;color:var(--green);background:#dcfce7;padding:3px 9px;border-radius:6px">+'+mg.toFixed(1)+'%</span>';
       html+='<tr>'
         +'<td style="text-align:left"><span class="prod-link" onclick="selProducto(this.dataset.n)" data-n="'+p.name.replace(/"/g,'&quot;')+'">'+p.name+'</span>'+(entrH?" "+entrH:"")+'</td>'
-        +'<td style="font-weight:700;color:var(--blue)">'+bestProv+'</td>'
-        +'<td><span class="badge badge-gray">'+fmtRaw(bestCost)+'</span></td>'
+        +'<td>'+provCell+'</td>'
+        +'<td id="ccost_'+rk+'"><span class="badge badge-gray">'+fmtRaw(bestCost)+'</span></td>'
         +'<td><span class="badge badge-blue">'+fmtRaw(ggPrice)+'</span></td>'
-        +'<td style="text-align:center">'+mgBadge+'</td>'
+        +'<td id="cmg_'+rk+'" style="text-align:center">'+mgBadge+'</td>'
         +'<td style="text-align:center"><button onclick="selProducto(\''+esc+'\')" style="background:var(--orange);color:#fff;border:none;border-radius:6px;padding:5px 11px;cursor:pointer;font-size:13px">&#128722;</button></td>'
         +'</tr>';
     });
@@ -1840,6 +1839,17 @@ function renderCompras(){
 
   if(!html)html='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#128269;</div>Sin productos con ese margen</div>';
   document.getElementById("compList").innerHTML=html;
+}
+
+function updComprasRow(sel,rk){
+  const price=parseFloat(sel.value);
+  const ggPrice=parseFloat(sel.dataset.gg);
+  const mg=((ggPrice-price)/price*100);
+  const mgColor=mg>=5?'var(--green)':mg>=2?'var(--orange)':'var(--red)';
+  const mgBg=mg>=5?'#dcfce7':mg>=2?'#fff7ed':'#fee2e2';
+  const mgBadge='<span style="font-weight:800;color:'+mgColor+';background:'+mgBg+';padding:3px 9px;border-radius:6px">+'+mg.toFixed(1)+'%</span>';
+  document.getElementById('ccost_'+rk).innerHTML='<span class="badge badge-gray">'+fmtRaw(price)+'</span>';
+  document.getElementById('cmg_'+rk).innerHTML=mgBadge;
 }
 
 let SM_DATA=[];
