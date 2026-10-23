@@ -692,7 +692,7 @@ function mkKey(name){
 
 // ── VENTAS / COMPRAS POR ARTICULO (hoja MOVIMIENTOS) — solo uso interno ──
 const MOV_GID="275485390";
-let MOV={};
+let MOV={},MOVMIN="",MOVMAX="";
 let INTERNO=false;
 try{if(location.hash.indexOf("interno")>-1)localStorage.setItem("ws_interno","1");if(location.hash.indexOf("publico")>-1)localStorage.removeItem("ws_interno");INTERNO=localStorage.getItem("ws_interno")==="1"}catch(e){}
 function toggleInterno(){try{if(INTERNO)localStorage.removeItem("ws_interno");else localStorage.setItem("ws_interno","1")}catch(e){alert("Tu navegador bloquea el modo interno");return}location.reload()}
@@ -716,7 +716,7 @@ function movEntidad(det){
   x=x.replace(/\s+Rem\s+.*$/i,"").trim();return x;
 }
 function buildMov(csv){
-  MOV={};
+  MOV={};MOVMIN="";MOVMAX="";
   const lines=csv.split(/\r?\n/);
   for(let i=1;i<lines.length;i++){
     const l=lines[i];if(!l)continue;
@@ -724,6 +724,7 @@ function buildMov(csv){
     const prod=cl(c[0]),fecha=cl(c[4]),det=cl(c[5]);
     if(!prod||!/^(Compra|Venta)\b/i.test(det))continue;
     const esV=/^Venta/i.test(det);
+    if(/^\d{4}-\d{2}-\d{2}/.test(fecha)){const fd=fecha.slice(0,10);if(!MOVMIN||fd<MOVMIN)MOVMIN=fd;if(!MOVMAX||fd>MOVMAX)MOVMAX=fd}
     const u=esV?numAR(c[9]):numAR(c[6]);
     const p=Math.abs(esV?numAR(c[10]):numAR(c[7]));
     if(p>3000)continue; // pesos
@@ -732,6 +733,15 @@ function buildMov(csv){
     (esV?MOV[k].v:MOV[k].c).push({f:fecha,e:movEntidad(det),u:u,p:p});
   }
 }
+function fFull(f){const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(f||"");return m?m[3]+"/"+m[2]+"/"+m[1]:(f||"")}
+function diasHab(a,b){ // lunes a viernes, ambos extremos incluidos
+  if(!a||!b)return 0;
+  const d=new Date(a+"T12:00:00"),e=new Date(b+"T12:00:00");let n=0;
+  while(d<=e){const w=d.getDay();if(w>0&&w<6)n++;d.setDate(d.getDate()+1)}
+  return n;
+}
+function fN(n){return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,".")}
+function fmtU(n){return"u$"+fN(n)}
 function fFecha(f){const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(f||"");return m?m[3]+"/"+m[2]:(f||"")}
 function movAgg(arr){
   const g={};
@@ -776,7 +786,16 @@ function toggleMov(btn){
     const cu=cA.reduce((s,a)=>s+a.u,0),cm=cA.reduce((s,a)=>s+a.m,0);
     const pv=tu?tm/tu:0,pc=cu?cm/cu:0;
     const inp='style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;margin:2px 0 4px"';
-    h='<div class="sm">Vendidas: <b>'+tu+'</b>'+(tu?' · Prom. venta <b>'+fmtRaw(pv)+'</b>':"")+' · Compradas: <b>'+cu+'</b>'+(cu?' · Costo prom. <b>'+fmtRaw(pc)+'</b>':"")+((tu&&cu)?' · Margen <b>'+((pv/pc-1)*100).toFixed(1)+'%</b>':"")+'</div>'
+    const dh=diasHab(MOVMIN,MOVMAX);
+    const box='style="display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 4px"';
+    const cx=(t,v,sub)=>'<div style="flex:1;min-width:130px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase">'+t+'</div><div style="font-size:15px;font-weight:700">'+v+'</div>'+(sub?'<div style="font-size:11px;color:var(--muted)">'+sub+'</div>':"")+'</div>';
+    h='<div class="sm">Periodo informado: <b>'+fFull(MOVMIN)+' al '+fFull(MOVMAX)+'</b> · '+dh+' dias habiles (lunes a viernes)</div>'
+     +'<div '+box+'>'
+     +cx("Total ventas",tu+" u.",fmtU(tm)+(tu?" · prom. "+fmtRaw(pv):""))
+     +cx("Total compras",cu+" u.",fmtU(cm)+(cu?" · costo prom. "+fmtRaw(pc):""))
+     +cx("Venta por dia habil",(dh?(tu/dh).toFixed(1):"-")+" u./dia",dh?fmtU(tm/dh)+" /dia":"")
+     +cx("Margen",(tu&&cu)?((pv/pc-1)*100).toFixed(1)+"%":"—",(tu&&cu)?fmtRaw(pv-pc)+" por unidad":"")
+     +'</div>'
      +'<h4>Vendido a cada cliente</h4><input type="search" placeholder="&#128269; Buscar cliente..." '+inp+' oninput="movFilt(\''+id+'\',\'v\',this.value)"><div id="'+id+'_v">'+movFiltHtml(id,"v","")+'</div>'
      +'<h4>Pagado a cada proveedor</h4><input type="search" placeholder="&#128269; Buscar proveedor..." '+inp+' oninput="movFilt(\''+id+'\',\'c\',this.value)"><div id="'+id+'_c">'+movFiltHtml(id,"c","")+'</div>'
      +'<div class="sm">Uso interno: contiene costos y proveedores. No mostrar ni copiar a clientes.</div>';
