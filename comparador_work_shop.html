@@ -55,7 +55,10 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 .ch.win{background:var(--gl);border-color:#86efac}.ch.win .cn{color:var(--green)}
 .ch.wsc{background:var(--bl);border-color:#93c5fd}.ch.wsc .cn{color:var(--blue)}
 .bcp{margin-top:8px;padding:5px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;color:var(--muted);transition:.15s}
-.bcp:hover{background:var(--surface);color:var(--text)}.bcp.ok{color:var(--green);border-color:#86efac;background:var(--gl)}
+.bcp:hover{background:var(--surface);color:var(--text)}
+.mvb{margin-left:6px;background:var(--bl);color:var(--blue);border-color:#bfdbfe}
+.mvp{margin-top:8px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:12px;display:none}
+.mvp table{width:100%;border-collapse:collapse;margin:4px 0 10px}.mvp th{text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;padding:3px 6px;border-bottom:1px solid var(--border)}.mvp td{padding:3px 6px;border-bottom:1px solid #f0f1f4}.mvp .r{text-align:right}.mvp h4{font-size:12px;margin:6px 0 2px}.mvp .sm{color:var(--muted);font-size:11px}.bcp.ok{color:var(--green);border-color:#86efac;background:var(--gl)}
 .ls,.es{text-align:center;padding:60px 20px;color:var(--muted)}
 .sp{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -163,7 +166,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 </head>
 <body>
 <div class="hdr">
-  <div class="logo">Work <span>Shop</span> <span style="font-size:10px;opacity:.5;font-weight:400">v12</span></div>
+  <div class="logo">Work <span>Shop</span> <span style="font-size:10px;opacity:.5;font-weight:400">v13</span></div>
   <div class="meta" id="hMeta">Cargando...</div>
   <button class="btnR" id="btnR" onclick="loadAll()">&#8635; Actualizar</button>
 </div>
@@ -682,18 +685,98 @@ function mkKey(name){
   return k.trim();
 }
 
+
+// ── VENTAS / COMPRAS POR ARTICULO (hoja MOVIMIENTOS) — solo uso interno ──
+const MOV_GID="275485390";
+let MOV={};
+let INTERNO=false;
+try{if(location.hash.indexOf("interno")>-1)localStorage.setItem("ws_interno","1");if(location.hash.indexOf("publico")>-1)localStorage.removeItem("ws_interno");INTERNO=localStorage.getItem("ws_interno")==="1"}catch(e){}
+function movNorm(n){
+  n=(n||"").toUpperCase().replace(/\s+\d+\s*U\.?\s*$/,"");
+  n=n.replace(/(\d+)\s*GB\s+(\d+)\s*(?:GB\s*)?RAM(?:\s*GB)?/g,"$2/$1GB");
+  n=n.replace(/(\d+)\s*GB\s+(\d+)\s*GB\b/g,"$2/$1GB");
+  n=n.replace(/(\d+)\s*GB\s+(\d+)\s*RAM/g,"$2/$1GB");
+  return n;
+}
+function movKey(n){return mkKey(movNorm(n))}
+function numAR(s){
+  s=(s||"").replace(/["\s]/g,"");if(!s)return 0;
+  if(s.indexOf(",")>-1)s=s.replace(/\./g,"").replace(",",".");
+  const v=parseFloat(s);return isNaN(v)?0:v;
+}
+function movEntidad(det){
+  let x=det.replace(/^(Compra|Venta)\s*-\s*/i,"");
+  x=x.replace(/\s+Rem\s+.*$/i,"").trim();return x;
+}
+function buildMov(csv){
+  MOV={};
+  const lines=csv.split(/\r?\n/);
+  for(let i=1;i<lines.length;i++){
+    const l=lines[i];if(!l)continue;
+    const c=csvR(l);
+    const prod=cl(c[0]),fecha=cl(c[4]),det=cl(c[5]);
+    if(!prod||!/^(Compra|Venta)\b/i.test(det))continue;
+    const esV=/^Venta/i.test(det);
+    const u=esV?numAR(c[9]):numAR(c[6]);
+    const p=Math.abs(esV?numAR(c[10]):numAR(c[7]));
+    if(p>3000)continue; // pesos
+    const k=movKey(prod);
+    if(!MOV[k])MOV[k]={v:[],c:[]};
+    (esV?MOV[k].v:MOV[k].c).push({f:fecha,e:movEntidad(det),u:u,p:p});
+  }
+}
+function fFecha(f){const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(f||"");return m?m[3]+"/"+m[2]:(f||"")}
+function movAgg(arr){
+  const g={};
+  arr.forEach(x=>{
+    const a=g[x.e]||(g[x.e]={e:x.e,u:0,m:0,f:"",pl:0,mn:Infinity,mx:0});
+    a.u+=x.u;a.m+=x.u*x.p;
+    if(x.p>0){if(x.p<a.mn)a.mn=x.p;if(x.p>a.mx)a.mx=x.p}
+    if(x.f>=a.f){a.f=x.f;a.pl=x.p}
+  });
+  return Object.values(g).filter(a=>a.u>0).sort((a,b)=>b.f.localeCompare(a.f)||b.u-a.u);
+}
+function movTable(rows,col){
+  if(!rows.length)return'<div class="sm">Sin movimientos en el periodo cargado.</div>';
+  return'<table><tr><th>'+col+'</th><th>Ultima</th><th class="r">Unid.</th><th class="r">Ultimo</th><th class="r">Prom.</th><th class="r">Min-Max</th></tr>'
+   +rows.slice(0,25).map(a=>'<tr><td>'+a.e+'</td><td>'+fFecha(a.f)+'</td><td class="r">'+a.u+'</td><td class="r">'+fmtRaw(a.pl)+'</td><td class="r">'+fmtRaw(a.m/a.u)+'</td><td class="r">'+(a.mn===a.mx?"—":fmtRaw(a.mn)+" - "+fmtRaw(a.mx))+'</td></tr>').join("")
+   +(rows.length>25?'<tr><td colspan="6" class="sm">+'+(rows.length-25)+' mas...</td></tr>':"")+'</table>';
+}
+function toggleMov(btn){
+  const pn=btn.parentNode.querySelector(".mvp");
+  if(pn.style.display==="block"){pn.style.display="none";return}
+  const name=decodeURIComponent(btn.getAttribute("data-n"));
+  const d=MOV[movKey(name)];
+  let h="";
+  if(!Object.keys(MOV).length)h='<div class="sm">No se pudo leer la hoja MOVIMIENTOS (revisa que sea la misma planilla y este compartida).</div>';
+  else if(!d)h='<div class="sm">Sin ventas ni compras de este articulo en el periodo cargado (o el nombre en Cianbox es distinto).</div>';
+  else{
+    const vA=movAgg(d.v),cA=movAgg(d.c);
+    const tu=vA.reduce((s,a)=>s+a.u,0),tm=vA.reduce((s,a)=>s+a.m,0);
+    const cu=cA.reduce((s,a)=>s+a.u,0),cm=cA.reduce((s,a)=>s+a.m,0);
+    const pv=tu?tm/tu:0,pc=cu?cm/cu:0;
+    h='<div class="sm">Vendidas: <b>'+tu+'</b>'+(tu?' · Prom. venta <b>'+fmtRaw(pv)+'</b>':"")+' · Compradas: <b>'+cu+'</b>'+(cu?' · Costo prom. <b>'+fmtRaw(pc)+'</b>':"")+((tu&&cu)?' · Margen <b>'+((pv/pc-1)*100).toFixed(1)+'%</b>':"")+'</div>'
+     +'<h4>Vendido a cada cliente</h4>'+movTable(vA,"Cliente")
+     +'<h4>Pagado a cada proveedor</h4>'+movTable(cA,"Proveedor")
+     +'<div class="sm">Uso interno: contiene costos y proveedores. No mostrar ni copiar a clientes.</div>';
+  }
+  pn.innerHTML=h;pn.style.display="block";
+}
+
 async function loadAll(){
   const btn=document.getElementById("btnR");
   btn.classList.add("loading");btn.textContent="↺ Cargando...";
   document.getElementById("eb").style.display="none";ERR=[];
   document.getElementById("pList").innerHTML='<div class="ls"><div class="sp"></div><div class="lt">Leyendo '+SH.length+' hojas...</div><div class="lsub">Un momento...</div></div>';
-  const [res,entCsv,histCsv]=await Promise.all([
+  const [res,entCsv,histCsv,movCsv]=await Promise.all([
     Promise.all(SH.map(fetchS)),
     fetch(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=1210657174`,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null),
-    fetch(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=2101810888`,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null)
+    fetch(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=2101810888`,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null),
+    INTERNO?fetch(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${MOV_GID}`,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null):Promise.resolve(null)
   ]);
   if(entCsv){ENTRANDO=parseEntrando(entCsv);buildEntrandoMap();}
   if(histCsv)parseHistorial(histCsv);
+  if(movCsv)buildMov(movCsv);
   const wsR=res.find(r=>r.s.co);const wsP=wsR?wsR.pr:[];
   const provR=res.filter(r=>!r.s.co);
   res.forEach(r=>{if(!r.ok)ERR.push(r.s.n+": "+r.err)});
@@ -787,7 +870,8 @@ function render(){
       +'<div class="bb"><div class="bp'+(b.isWS?" wsw":"")+'">'+ lbl+"</div>"
       +'<div class="bpr">'+fmtRaw(b.price)+"</div></div></div>"
       +'<div class="cr">'+chips+"</div>"
-      +'<button class="bcp" onclick="cp(this,\''+ct.replace(/'/g,"&#39;")+'\')">&#128203; Copiar</button></div>'
+      +'<button class="bcp" onclick="cp(this,\''+ct.replace(/'/g,"&#39;")+'\')">&#128203; Copiar</button>'
+      +(INTERNO?'<button class="bcp mvb" data-n="'+encodeURIComponent(p.name)+'" onclick="toggleMov(this)">&#128202; Ventas y compras</button><div class="mvp"></div>':"")+'</div>'
   }).join("");
 }
 
