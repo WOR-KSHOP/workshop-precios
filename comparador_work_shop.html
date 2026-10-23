@@ -742,6 +742,29 @@ function diasHab(a,b){ // lunes a viernes, ambos extremos incluidos
 }
 function fN(n){return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,".")}
 function fmtU(n){return"u$"+fN(n)}
+const MOV_SEG=0.20; // colchon de seguridad sobre la demanda semanal
+function movReponer(name,stk){
+  if(!INTERNO||!Object.keys(MOV).length)return null;
+  const d=MOV[movKey(name)];
+  const dh=diasHab(MOVMIN,MOVMAX);
+  if(!d||!dh)return{rate:0,dem:0,need:0,stk:stk,ent:0,cob:null,sinHist:true};
+  const vend=movAgg(d.v).reduce((a,x)=>a+x.u,0);
+  const rate=vend/dh;
+  const dem=rate*5;
+  let ent=0;
+  try{(ENTRANDO_MAP[mkKey(name)]||[]).forEach(e=>{if(e.cantidad)ent+=e.cantidad})}catch(e){}
+  const obj=dem*(1+MOV_SEG);
+  const need=Math.max(0,Math.ceil(obj-stk-ent));
+  const cob=rate>0?stk/rate:null;
+  return{rate:rate,dem:dem,need:need,stk:stk,ent:ent,cob:cob,sinHist:false};
+}
+function movReponerCell(r){
+  if(!r)return"";
+  if(r.sinHist||r.rate===0)return'<td style="text-align:center;color:var(--muted);font-size:11px">Sin ventas en el periodo</td>';
+  const sub='<div style="font-size:10px;color:var(--muted);font-weight:400">'+r.rate.toFixed(1)+' u./dia · sem. '+Math.round(r.dem)+' u. · stock '+r.stk+(r.ent?' · entra '+r.ent:'')+'</div>';
+  if(r.need>0)return'<td style="text-align:center"><div style="font-weight:800;color:var(--orange)">Comprar '+r.need+' u.</div>'+sub+'</td>';
+  return'<td style="text-align:center"><div style="font-weight:700;color:var(--green)">OK &#10003;'+(r.cob!==null?' ('+Math.floor(r.cob)+' dias)':'')+'</div>'+sub+'</td>';
+}
 function fFecha(f){const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(f||"");return m?m[3]+"/"+m[2]:(f||"")}
 function movAgg(arr){
   const g={};
@@ -1929,7 +1952,13 @@ function renderCompras(){
   fSin.sort(sortFn);
   document.getElementById("compCnt").textContent=(fCon.length+fSin.length)+" productos";
 
+  const showRep=INTERNO&&Object.keys(MOV).length>0;
   let html="";
+  if(showRep){
+    let tN=0,tA=0;const cnt=(arr,st)=>arr.forEach(x=>{const r=movReponer(x.p.name,st(x));if(r&&r.need>0){tN+=r.need;tA++}});
+    cnt(fCon,x=>x.stk);cnt(fSin,x=>0);
+    html+='<div style="margin:10px 0;padding:10px 14px;background:var(--ol);border:1px solid #fed7aa;border-radius:8px;font-size:13px">&#128260; <b>Reposicion para la proxima semana</b> (5 dias habiles + '+Math.round(MOV_SEG*100)+'% de colchon, descontando stock y mercaderia entrando): <b>'+tN+' unidades</b> en <b>'+tA+' articulos</b>. Periodo base: '+fFull(MOVMIN)+' al '+fFull(MOVMAX)+'.</div>';
+  }
 
   // ── CON STOCK ──
   if(fCon.length){
@@ -1939,7 +1968,7 @@ function renderCompras(){
       +'<th>Stock</th>'
       +'<th>Nuestro costo</th>'
       +'<th>Precio GG (venta)</th>'
-      +'<th>Margen</th>'
+      +'<th>Margen</th>'+(showRep?'<th>Reponer prox. semana</th>':'')
       +'</tr></thead><tbody>';
     fCon.forEach(({p,ggPrice,wsCost,mg,stk})=>{
       const mgBadge='<span style="font-weight:800;color:var(--green);background:#dcfce7;padding:3px 9px;border-radius:6px">+'+mg.toFixed(1)+'%</span>';
@@ -1949,6 +1978,7 @@ function renderCompras(){
         +'<td><span class="badge badge-gray">'+fmtRaw(wsCost)+'</span></td>'
         +'<td><span class="badge badge-blue">'+fmtRaw(ggPrice)+'</span></td>'
         +'<td style="text-align:center">'+mgBadge+'</td>'
+        +(showRep?movReponerCell(movReponer(p.name,stk)):'')
         +'</tr>';
     });
     html+='</tbody></table></div>';
@@ -1962,7 +1992,7 @@ function renderCompras(){
       +'<th>Comprar a</th>'
       +'<th>Costo</th>'
       +'<th>Precio GG (venta)</th>'
-      +'<th>Margen</th>'
+      +'<th>Margen</th>'+(showRep?'<th>Reponer prox. semana</th>':'')
       +'<th>&#128722;</th>'
       +'</tr></thead><tbody>';
     fSin.forEach(({p,ggPrice,bestProv,bestCost,mg,allCandidates},idx)=>{
@@ -1986,6 +2016,7 @@ function renderCompras(){
         +'<td id="ccost_'+rk+'"><span class="badge badge-gray">'+fmtRaw(bestCost)+'</span></td>'
         +'<td><span class="badge badge-blue">'+fmtRaw(ggPrice)+'</span></td>'
         +'<td id="cmg_'+rk+'" style="text-align:center">'+mgBadge+'</td>'
+        +(showRep?movReponerCell(movReponer(p.name,0)):'')
         +'<td style="text-align:center"><button onclick="selProducto(\''+esc+'\')" style="background:var(--orange);color:#fff;border:none;border-radius:6px;padding:5px 11px;cursor:pointer;font-size:13px">&#128722;</button></td>'
         +'</tr>';
     });
