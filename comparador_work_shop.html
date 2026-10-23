@@ -168,7 +168,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
 <div class="hdr">
   <div class="logo">Work <span>Shop</span> <span style="font-size:10px;opacity:.5;font-weight:400">v13</span></div>
   <div class="meta" id="hMeta">Cargando...</div>
-  <button class="btnR" id="btnR" onclick="loadAll()">&#8635; Actualizar</button>
+  <span><button class="btnR" id="btnI" onclick="toggleInterno()" style="margin-right:8px">&#128274; Interno</button><button class="btnR" id="btnR" onclick="loadAll()">&#8635; Actualizar</button></span>
 </div>
 <div class="tabs">
   <div class="tab active" onclick="sec('precios',this)">&#128176; Precios</div>
@@ -691,6 +691,9 @@ const MOV_GID="275485390";
 let MOV={};
 let INTERNO=false;
 try{if(location.hash.indexOf("interno")>-1)localStorage.setItem("ws_interno","1");if(location.hash.indexOf("publico")>-1)localStorage.removeItem("ws_interno");INTERNO=localStorage.getItem("ws_interno")==="1"}catch(e){}
+function toggleInterno(){try{if(INTERNO)localStorage.removeItem("ws_interno");else localStorage.setItem("ws_interno","1")}catch(e){alert("Tu navegador bloquea el modo interno");return}location.reload()}
+function paintInterno(){const b=document.getElementById("btnI");if(b){b.textContent=INTERNO?"\uD83D\uDD13 Interno ON":"\uD83D\uDD12 Interno";if(INTERNO){b.style.background="var(--gl)";b.style.color="var(--green)"}}}
+window.addEventListener("load",paintInterno);
 function movNorm(n){
   n=(n||"").toUpperCase().replace(/\s+\d+\s*U\.?\s*$/,"");
   n=n.replace(/(\d+)\s*GB\s+(\d+)\s*(?:GB\s*)?RAM(?:\s*GB)?/g,"$2/$1GB");
