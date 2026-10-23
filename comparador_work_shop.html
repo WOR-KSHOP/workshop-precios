@@ -739,12 +739,24 @@ function movAgg(arr){
   });
   return Object.values(g).filter(a=>a.u>0).sort((a,b)=>b.f.localeCompare(a.f)||b.u-a.u);
 }
-function movTable(rows,col){
-  if(!rows.length)return'<div class="sm">Sin movimientos en el periodo cargado.</div>';
+let MOVST={},MOVN=0;
+function movTable(rows,col,lim,filtrado){
+  if(!rows.length)return'<div class="sm">'+(filtrado?"Sin resultados para esa busqueda.":"Sin movimientos en el periodo cargado.")+'</div>';
+  let tu=0,tm=0;rows.forEach(a=>{tu+=a.u;tm+=a.m});
   return'<table><tr><th>'+col+'</th><th>Ultima</th><th class="r">Unid.</th><th class="r">Ultimo</th><th class="r">Prom.</th><th class="r">Min-Max</th></tr>'
-   +rows.slice(0,25).map(a=>'<tr><td>'+a.e+'</td><td>'+fFecha(a.f)+'</td><td class="r">'+a.u+'</td><td class="r">'+fmtRaw(a.pl)+'</td><td class="r">'+fmtRaw(a.m/a.u)+'</td><td class="r">'+(a.mn===a.mx?"—":fmtRaw(a.mn)+" - "+fmtRaw(a.mx))+'</td></tr>').join("")
-   +(rows.length>25?'<tr><td colspan="6" class="sm">+'+(rows.length-25)+' mas...</td></tr>':"")+'</table>';
+   +rows.slice(0,lim).map(a=>'<tr><td>'+a.e+'</td><td>'+fFecha(a.f)+'</td><td class="r">'+a.u+'</td><td class="r">'+fmtRaw(a.pl)+'</td><td class="r">'+fmtRaw(a.m/a.u)+'</td><td class="r">'+(a.mn===a.mx?"—":fmtRaw(a.mn)+" - "+fmtRaw(a.mx))+'</td></tr>').join("")
+   +(rows.length>lim?'<tr><td colspan="6" class="sm">+'+(rows.length-lim)+' mas... (usa el buscador)</td></tr>':"")
+   +(filtrado&&rows.length>0?'<tr><td><b>Total ('+rows.length+')</b></td><td></td><td class="r"><b>'+tu+'</b></td><td></td><td class="r"><b>'+fmtRaw(tm/tu)+'</b></td><td></td></tr>':"")
+   +'</table>';
 }
+function movFiltHtml(id,kind,q){
+  const st=MOVST[id];if(!st)return"";
+  const rows=kind==="v"?st.v:st.c;
+  const words=(q||"").toLowerCase().split(/\s+/).filter(Boolean);
+  const fr=words.length?rows.filter(a=>words.every(w=>a.e.toLowerCase().includes(w))):rows;
+  return movTable(fr,kind==="v"?"Cliente":"Proveedor",words.length?300:25,words.length>0);
+}
+function movFilt(id,kind,q){const el=document.getElementById(id+"_"+kind);if(el)el.innerHTML=movFiltHtml(id,kind,q)}
 function toggleMov(btn){
   const pn=btn.parentNode.querySelector(".mvp");
   if(pn.style.display==="block"){pn.style.display="none";return}
@@ -755,12 +767,14 @@ function toggleMov(btn){
   else if(!d)h='<div class="sm">Sin ventas ni compras de este articulo en el periodo cargado (o el nombre en Cianbox es distinto).</div>';
   else{
     const vA=movAgg(d.v),cA=movAgg(d.c);
+    const id="mv"+(++MOVN);MOVST[id]={v:vA,c:cA};
     const tu=vA.reduce((s,a)=>s+a.u,0),tm=vA.reduce((s,a)=>s+a.m,0);
     const cu=cA.reduce((s,a)=>s+a.u,0),cm=cA.reduce((s,a)=>s+a.m,0);
     const pv=tu?tm/tu:0,pc=cu?cm/cu:0;
+    const inp='style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;margin:2px 0 4px"';
     h='<div class="sm">Vendidas: <b>'+tu+'</b>'+(tu?' · Prom. venta <b>'+fmtRaw(pv)+'</b>':"")+' · Compradas: <b>'+cu+'</b>'+(cu?' · Costo prom. <b>'+fmtRaw(pc)+'</b>':"")+((tu&&cu)?' · Margen <b>'+((pv/pc-1)*100).toFixed(1)+'%</b>':"")+'</div>'
-     +'<h4>Vendido a cada cliente</h4>'+movTable(vA,"Cliente")
-     +'<h4>Pagado a cada proveedor</h4>'+movTable(cA,"Proveedor")
+     +'<h4>Vendido a cada cliente</h4><input type="search" placeholder="&#128269; Buscar cliente..." '+inp+' oninput="movFilt(\''+id+'\',\'v\',this.value)"><div id="'+id+'_v">'+movFiltHtml(id,"v","")+'</div>'
+     +'<h4>Pagado a cada proveedor</h4><input type="search" placeholder="&#128269; Buscar proveedor..." '+inp+' oninput="movFilt(\''+id+'\',\'c\',this.value)"><div id="'+id+'_c">'+movFiltHtml(id,"c","")+'</div>'
      +'<div class="sm">Uso interno: contiene costos y proveedores. No mostrar ni copiar a clientes.</div>';
   }
   pn.innerHTML=h;pn.style.display="block";
