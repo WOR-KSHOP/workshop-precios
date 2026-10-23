@@ -508,7 +508,7 @@ function nn(s){
   r=r.replace(/(\d+)\s*GB\s*\/\s*(\d+)\s*GB/gi,"$1/$2GB");
   r=r.replace(/(\d+)\s*GB\s*RAM/gi,"$1GB");  // preserva GB para que mkKey pueda leer la memoria
   r=r.replace(/(\d+)\s*RAM\s*\/\s*(\d+)\s*GB/gi,"$1/$2GB");
-  r=r.replace(/\b(DS|SS|GLOBAL|SLIM|C\/CARGADOR|S\/CARGADOR|IMPORTADO|NACIONAL|EUR|BR|US|CH|INDIA|NFC|ESIM|L\.P|CX\.F|3P)\b/g,"");
+  r=r.replace(/\b(DS|SS|GLOBAL|SLIM|IMPORTADO|NACIONAL|EUR|BR|US|CH|INDIA|NFC|ESIM|L\.P|CX\.F|3P)\b/g,"");  // C/CARGADOR y S/CARGADOR se conservan: son artículos distintos
   r=r.replace(/\s+/g," ").trim();
   return r;
 }
