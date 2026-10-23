@@ -671,6 +671,7 @@ async function fetchS(s){
 // FIX: PRO, MAX, PLUS, ULTRA, FE, SE, NEO son diferenciadores de modelo — NO se eliminan
 function mkKey(name){
   let k=name.toUpperCase();
+  k=k.replace(/\s+\d+\s*U\.?\s*$/,""); // cantidad al final ("21 U.") no es parte del modelo
   const mem=[];
   k=k.replace(/(\d+)\s*\/\s*(\d+)\s*GB/g,function(_,a,b){
     const x=parseInt(a),y=parseInt(b);
