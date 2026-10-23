@@ -729,7 +729,8 @@ function buildMov(csv){
     const p=Math.abs(esV?numAR(c[10]):numAR(c[7]));
     if(p>3000)continue; // pesos
     const k=movKey(prod);
-    if(!MOV[k])MOV[k]={v:[],c:[]};
+    if(!MOV[k])MOV[k]={v:[],c:[],st:null,stf:""};
+    {const sv=numAR(c[12]);if(/^\d{4}-/.test(fecha)&&fecha>=MOV[k].stf){MOV[k].st=sv;MOV[k].stf=fecha}}
     (esV?MOV[k].v:MOV[k].c).push({f:fecha,e:movEntidad(det),u:u,p:p});
   }
 }
@@ -799,6 +800,7 @@ function toggleMov(btn){
   if(pn.style.display==="block"){pn.style.display="none";return}
   const name=decodeURIComponent(btn.getAttribute("data-n"));
   const d=MOV[movKey(name)];
+  const stAttr=btn.getAttribute("data-s");
   let h="";
   if(!Object.keys(MOV).length)h='<div class="sm">No se pudo leer la hoja MOVIMIENTOS (revisa que sea la misma planilla y este compartida).</div>';
   else if(!d)h='<div class="sm">Sin ventas ni compras de este articulo en el periodo cargado (o el nombre en Cianbox es distinto).</div>';
@@ -817,6 +819,18 @@ function toggleMov(btn){
      +cx("Total ventas",tu+" u.",fmtU(tm)+(tu?" · prom. "+fmtRaw(pv):""))
      +cx("Total compras",cu+" u.",fmtU(cm)+(cu?" · costo prom. "+fmtRaw(pc):""))
      +cx("Venta por dia habil",(dh?(tu/dh).toFixed(1):"-")+" u./dia",dh?fmtU(tm/dh)+" /dia":"")
+     +(function(){
+        let stk=null,src="";
+        if(stAttr!==null&&stAttr!==""&&!isNaN(parseFloat(stAttr))){stk=parseFloat(stAttr);src="stock WS (COSTOS)"}
+        else if(d.st!==null){stk=d.st;src="Cianbox al "+fFull(d.stf)}
+        if(stk===null)return cx("Stock restante","—","sin dato de stock");
+        const rate=dh?tu/dh:0;
+        if(stk<=0)return cx("Stock restante","<span style=\"color:var(--red)\">Sin stock</span>",src);
+        if(!rate)return cx("Stock restante",stk+" u.","sin ventas en el periodo · "+src);
+        const dias=stk/rate;
+        const col=dias<5?"var(--red)":(dias<10?"var(--orange)":"var(--green)");
+        return cx("Stock restante","<span style=\"color:"+col+"\">"+dias.toFixed(1)+" dias</span>",stk+" u. · "+src+" · a "+rate.toFixed(1)+" u./dia");
+      })()
      +cx("Margen",(tu&&cu)?((pv/pc-1)*100).toFixed(1)+"%":"—",(tu&&cu)?fmtRaw(pv-pc)+" por unidad":"")
      +'</div>'
      +'<h4>Vendido a cada cliente</h4><input type="search" placeholder="&#128269; Buscar cliente..." '+inp+' oninput="movFilt(\''+id+'\',\'v\',this.value)"><div id="'+id+'_v">'+movFiltHtml(id,"v","")+'</div>'
@@ -934,7 +948,7 @@ function render(){
       +'<div class="bpr">'+fmtRaw(b.price)+"</div></div></div>"
       +'<div class="cr">'+chips+"</div>"
       +'<button class="bcp" onclick="cp(this,\''+ct.replace(/'/g,"&#39;")+'\')">&#128203; Copiar</button>'
-      +(INTERNO?'<button class="bcp mvb" data-n="'+encodeURIComponent(p.name)+'" onclick="toggleMov(this)">&#128202; Ventas y compras</button><div class="mvp"></div>':"")+'</div>'
+      +(INTERNO?'<button class="bcp mvb" data-n="'+encodeURIComponent(p.name)+'" data-s="'+((p.stocks&&p.stocks["COSTOS"]!=null)?p.stocks["COSTOS"]:"")+'" onclick="toggleMov(this)">&#128202; Ventas y compras</button><div class="mvp"></div>':"")+'</div>'
   }).join("");
 }
 
