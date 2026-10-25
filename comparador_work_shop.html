@@ -718,19 +718,26 @@ function movEntidad(det){
 function buildMov(csv){
   MOV={};MOVMIN="";MOVMAX="";
   const lines=csv.split(/\r?\n/);
+  // Columnas por NOMBRE de encabezado (si la hoja cambia de formato sigue funcionando); si no hay encabezados usa las posiciones viejas
+  const nz=x=>(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  const h=csvR(lines[0]||"").map(nz);
+  const ix=(n,d)=>{const j=h.indexOf(n);return j>-1?j:d};
+  const I=h.indexOf("detalle")>-1
+    ?{prod:ix("producto",0),fecha:ix("fecha",2),det:ix("detalle",3),ing:ix("ingreso",4),pc:ix("precio compra",5),egr:ix("egreso",7),pv:ix("precio venta",8),stk:ix("stock",10)}
+    :{prod:0,fecha:4,det:5,ing:6,pc:7,egr:9,pv:10,stk:12};
   for(let i=1;i<lines.length;i++){
     const l=lines[i];if(!l)continue;
     const c=csvR(l);
-    const prod=cl(c[0]),fecha=cl(c[4]),det=cl(c[5]);
+    const prod=cl(c[I.prod]),fecha=cl(c[I.fecha]),det=cl(c[I.det]);
     if(!prod||!/^(Compra|Venta)\b/i.test(det))continue;
     const esV=/^Venta/i.test(det);
     if(/^\d{4}-\d{2}-\d{2}/.test(fecha)){const fd=fecha.slice(0,10);if(!MOVMIN||fd<MOVMIN)MOVMIN=fd;if(!MOVMAX||fd>MOVMAX)MOVMAX=fd}
-    const u=esV?numAR(c[9]):numAR(c[6]);
-    const p=Math.abs(esV?numAR(c[10]):numAR(c[7]));
+    const u=esV?numAR(c[I.egr]):numAR(c[I.ing]);
+    const p=Math.abs(esV?numAR(c[I.pv]):numAR(c[I.pc]));
     if(p>3000)continue; // pesos
     const k=movKey(prod);
     if(!MOV[k])MOV[k]={v:[],c:[],st:null,stf:""};
-    {const sv=numAR(c[12]);if(/^\d{4}-/.test(fecha)&&fecha>=MOV[k].stf){MOV[k].st=sv;MOV[k].stf=fecha}}
+    {const sv=numAR(c[I.stk]);if(/^\d{4}-/.test(fecha)&&fecha>=MOV[k].stf){MOV[k].st=sv;MOV[k].stf=fecha}}
     (esV?MOV[k].v:MOV[k].c).push({f:fecha,e:movEntidad(det),u:u,p:p});
   }
 }
@@ -848,11 +855,11 @@ async function loadAll(){
   const [res,entCsv,histCsv,movCsv]=await Promise.all([
     Promise.all(SH.map(fetchS)),
     fetch(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=1210657174`,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null),
-    fetch(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=2101810888`,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null),
+    fetchHistAll(),
     INTERNO?fetch(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${MOV_GID}`,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null):Promise.resolve(null)
   ]);
   if(entCsv){ENTRANDO=parseEntrando(entCsv);buildEntrandoMap();}
-  if(histCsv)parseHistorial(histCsv);
+  if(histCsv&&histCsv.length)parseHistorial(histCsv);
   if(movCsv)buildMov(movCsv);
   const wsR=res.find(r=>r.s.co);const wsP=wsR?wsR.pr:[];
   const provR=res.filter(r=>!r.s.co);
@@ -1597,21 +1604,40 @@ function goToHistorial(name){
 }
 
 // ── HISTORIAL DE PRECIOS ───────────────────────────────
-function parseHistorial(csv){
+// Pestañas de historial: se leen por gid (conocidos) y por NOMBRE (HISTORIAL, HISTORIAL 2 ... HISTORIAL 30).
+// Las pestañas nuevas se leen solas, sin tocar el codigo.
+const HIST_GIDS=["2101810888","1038817587","366046926"]; // HISTORIAL, HISTORIAL 12, HISTORIAL 13
+const HIST_MAX=30;
+async function fetchHistAll(){
+  const urls=HIST_GIDS.map(g=>`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${g}`);
+  const names=["HISTORIAL"];for(let i=2;i<=HIST_MAX;i++)names.push("HISTORIAL "+i);
+  names.forEach(n=>urls.push(`https://docs.google.com/spreadsheets/d/${SID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(n)}`));
+  const out=await Promise.all(urls.map(u=>fetch(u,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null)));
+  return out.filter(Boolean);
+}
+function parseHistorial(csvs){
   HIST={};
-  const lines=csv.split(/\r?\n/).filter(Boolean);
-  if(lines.length<2)return; // sin datos aún
-  // Fila 0 = headers: FECHA,PRODUCTO,PROVEEDOR,PRECIO,TIPO
-  for(let i=1;i<lines.length;i++){
-    const row=csvR(lines[i]);
-    const fecha=cl(row[0]||""),prod=cl(row[1]||""),prov=cl(row[2]||"");
-    const precio=parseFloat((cl(row[3]||"")).replace(",","."));
-    const tipo=cl(row[4]||"");
-    if(!fecha||!prod||isNaN(precio)||precio<=0)continue;
-    const k=gamaAltaKey(prod);
-    if(!HIST[k])HIST[k]=[];
-    HIST[k].push({fecha,prod,prov,precio,tipo});
-  }
+  if(!Array.isArray(csvs))csvs=[csvs];
+  const seen=new Set();
+  csvs.forEach(csv=>{
+    const lines=csv.split(/\r?\n/).filter(Boolean);
+    if(lines.length<2)return;
+    // Debe ser una pestaña de historial (gviz devuelve otra hoja si el nombre no existe)
+    const h=csvR(lines[0]).map(x=>cl(x||"").toUpperCase());
+    if(h[0]!=="FECHA"||h[1]!=="PRODUCTO"||h[3]!=="PRECIO")return;
+    for(let i=1;i<lines.length;i++){
+      const row=csvR(lines[i]);
+      const fecha=cl(row[0]||""),prod=cl(row[1]||""),prov=cl(row[2]||"");
+      const precio=parseFloat((cl(row[3]||"")).replace(",","."));
+      const tipo=cl(row[4]||"");
+      if(!fecha||!prod||isNaN(precio)||precio<=0)continue;
+      const dk=fecha+"|"+prod+"|"+prov+"|"+precio;
+      if(seen.has(dk))continue;seen.add(dk);
+      const k=gamaAltaKey(prod);
+      if(!HIST[k])HIST[k]=[];
+      HIST[k].push({fecha,prod,prov,precio,tipo});
+    }
+  });
 }
 // Convierte "DD/MM/YYYY" a Date
 function fechaToDate(f){
