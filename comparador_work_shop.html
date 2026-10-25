@@ -1606,13 +1606,15 @@ function goToHistorial(name){
 // ── HISTORIAL DE PRECIOS ───────────────────────────────
 // Pestañas de historial: se leen por gid (conocidos) y por NOMBRE (HISTORIAL, HISTORIAL 2 ... HISTORIAL 30).
 // Las pestañas nuevas se leen solas, sin tocar el codigo.
-const HIST_GIDS=["2101810888","1038817587","366046926"]; // HISTORIAL, HISTORIAL 12, HISTORIAL 13
-const HIST_MAX=30;
 async function fetchHistAll(){
+  // (constantes dentro de la funcion: loadAll() se ejecuta antes de que el script llegue a esta zona)
+  const HIST_GIDS=["2101810888","1038817587","366046926"]; // HISTORIAL, HISTORIAL 12, HISTORIAL 13
+  const HIST_MAX=30;
   const urls=HIST_GIDS.map(g=>`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${g}`);
   const names=["HISTORIAL"];for(let i=2;i<=HIST_MAX;i++)names.push("HISTORIAL "+i);
   names.forEach(n=>urls.push(`https://docs.google.com/spreadsheets/d/${SID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(n)}`));
-  const out=await Promise.all(urls.map(u=>fetch(u,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null)));
+  const tmo=(p,ms)=>Promise.race([p,new Promise(r=>setTimeout(()=>r(null),ms))]);
+  const out=await Promise.all(urls.map(u=>tmo(fetch(u,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null),15000)));
   return out.filter(Boolean);
 }
 function parseHistorial(csvs){
