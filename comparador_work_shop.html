@@ -856,7 +856,7 @@ async function loadAll(){
     Promise.all(SH.map(fetchS)),
     fetch(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=1210657174`,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null),
     fetchHistAll(),
-    INTERNO?fetch(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${MOV_GID}`,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null):Promise.resolve(null)
+    INTERNO?fetchRetry(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${MOV_GID}`,4):Promise.resolve(null)
   ]);
   if(entCsv){ENTRANDO=parseEntrando(entCsv);buildEntrandoMap();}
   if(histCsv&&histCsv.length)parseHistorial(histCsv);
@@ -881,6 +881,7 @@ async function loadAll(){
   const now=new Date();
   document.getElementById("hMeta").textContent=ALL.length+" prod · "+now.getHours()+":"+String(now.getMinutes()).padStart(2,"0");
   btn.classList.remove("loading");btn.textContent="↺ Actualizar";
+  if(!window.__bgH){window.__bgH=1;setTimeout(bgHist,1500)}
   if(ERR.length){document.getElementById("eb").style.display="block";document.getElementById("eb").innerHTML="⚠️ No se pudieron leer: "+ERR.map(e=>e.split(":")[0]).join(", ")}
 }
 
@@ -1606,16 +1607,38 @@ function goToHistorial(name){
 // ── HISTORIAL DE PRECIOS ───────────────────────────────
 // Pestañas de historial: se leen por gid (conocidos) y por NOMBRE (HISTORIAL, HISTORIAL 2 ... HISTORIAL 30).
 // Las pestañas nuevas se leen solas, sin tocar el codigo.
+async function fetchRetry(url,n){
+  // Google limita pedidos simultaneos: si falla, reintenta con pausa
+  for(let t=0;t<(n||3);t++){
+    try{
+      const r=await Promise.race([fetch(url,{cache:"no-cache"}),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),15000))]);
+      if(r.ok)return await r.text();
+    }catch(e){}
+    await new Promise(r=>setTimeout(r,800*(t+1)));
+  }
+  return null;
+}
+let HIST_CSVS=[];
 async function fetchHistAll(){
-  // (constantes dentro de la funcion: loadAll() se ejecuta antes de que el script llegue a esta zona)
+  // Camino critico: solo las pestanas conocidas (pocos pedidos). Las nuevas se buscan despues, en segundo plano (bgHist).
   const HIST_GIDS=["2101810888","1038817587","366046926"]; // HISTORIAL, HISTORIAL 12, HISTORIAL 13
-  const HIST_MAX=30;
-  const urls=HIST_GIDS.map(g=>`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${g}`);
-  const names=["HISTORIAL"];for(let i=2;i<=HIST_MAX;i++)names.push("HISTORIAL "+i);
-  names.forEach(n=>urls.push(`https://docs.google.com/spreadsheets/d/${SID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(n)}`));
-  const tmo=(p,ms)=>Promise.race([p,new Promise(r=>setTimeout(()=>r(null),ms))]);
-  const out=await Promise.all(urls.map(u=>tmo(fetch(u,{cache:"no-cache"}).then(r=>r.ok?r.text():null).catch(()=>null),15000)));
-  return out.filter(Boolean);
+  const out=await Promise.all(HIST_GIDS.map(g=>fetchRetry(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${g}`,3)));
+  HIST_CSVS=out.filter(Boolean);
+  return HIST_CSVS;
+}
+// Busca pestanas HISTORIAL 14..30 por nombre, de a una, sin frenar la carga. Si aparece alguna, actualiza el historial.
+async function bgHist(){
+  let nuevo=false;
+  for(let i=14;i<=30;i++){
+    try{
+      const r=await fetch(`https://docs.google.com/spreadsheets/d/${SID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("HISTORIAL "+i)}`,{cache:"no-cache"});
+      if(!r.ok)continue;
+      const t=await r.text();
+      const h=csvR((t.split(/\r?\n/)[0])||"").map(x=>cl(x||"").toUpperCase());
+      if(h[0]==="FECHA"&&h[1]==="PRODUCTO"&&h[3]==="PRECIO"){HIST_CSVS.push(t);nuevo=true}
+    }catch(e){}
+  }
+  if(nuevo){parseHistorial(HIST_CSVS);try{renderHistorialTab()}catch(e){}}
 }
 function parseHistorial(csvs){
   HIST={};
