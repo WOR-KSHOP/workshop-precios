@@ -178,6 +178,7 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
   <div class="tab" onclick="sec('pedidos',this)">&#128230; Pedidos por salir</div>
   <div class="tab" onclick="sec('apple',this)">&#11088; Gama Alta</div>
   <div class="tab" onclick="sec('compras',this)">&#128722; Compras</div>
+  <div class="tab" id="tabSB" style="display:none" onclick="sec('stockbajo',this)">&#128315; Stock bajo</div>
   <div class="tab" onclick="sec('historial',this)">&#128200; Historial</div>
 </div>
 <div class="main">
@@ -404,6 +405,28 @@ select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-si
     <div id="compList"></div>
   </div>
 
+  <!-- STOCK BAJO -->
+  <div id="sStockBajo" style="display:none">
+    <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat"><div class="sl">Equipos bajo el promedio</div><div class="sv" id="sbN" style="color:var(--red)">-</div><div class="ss">stock + entrando &lt; venta semanal</div></div>
+      <div class="stat"><div class="sl">Sin stock</div><div class="sv" id="sbCero" style="color:var(--red)">-</div><div class="ss">stock 0 con ventas en el periodo</div></div>
+      <div class="stat"><div class="sl">Comprar (mín. 1 semana)</div><div class="sv" id="sbMin" style="color:var(--orange)">-</div><div class="ss">unidades para cubrir la semana</div></div>
+      <div class="stat"><div class="sl">Sugerido con colchón</div><div class="sv" id="sbSug" style="color:var(--blue)">-</div><div class="ss">unidades (semana + 20%)</div></div>
+    </div>
+    <div class="sm" id="sbPer" style="margin:0 0 10px"></div>
+    <div class="ctrl" style="margin-bottom:12px">
+      <div class="sw"><span class="si">&#128269;</span><input type="text" id="sbSrch" placeholder="Buscar producto..." oninput="renderStockBajo()"></div>
+      <select id="sbSort" onchange="renderStockBajo()">
+        <option value="cob">Más urgente primero (cobertura)</option>
+        <option value="min">Más unidades a comprar</option>
+        <option value="name">Producto A–Z</option>
+      </select>
+      <span class="cb" id="sbCnt">-</span>
+      <button onclick="exportStockBajoCSV()" style="margin-left:8px;padding:6px 14px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">⬇ CSV</button>
+    </div>
+    <div id="sbList"></div>
+  </div>
+
   <!-- HISTORIAL -->
   <div id="sHistorial" style="display:none">
     <div class="stats" style="grid-template-columns:repeat(3,1fr)">
@@ -454,7 +477,6 @@ const SH=[
   {n:"TOMY",              g:"1903415712",ws:false,co:false,p:"vertical" },
   {n:"ATACADO PY",        g:"1688808981",ws:false,co:false,p:"vertical" },
   {n:"LEO",               g:"301921775", ws:false,co:false,p:"vertical" },
-  {n:"PIXCEL ALI",        g:"1683571964",ws:false,co:false,p:"vertical" },
 ];
 let SELECTED_RIVALES=["GUILLE GAMES","LALO","LUCHO PILAR","TODO ELECTRO"];
 let SHOW_COSTOS=true,SHOW_VIP_COL=false;
@@ -696,7 +718,7 @@ let MOV={},MOVMIN="",MOVMAX="";
 let INTERNO=false;
 try{if(location.hash.indexOf("interno")>-1)localStorage.setItem("ws_interno","1");if(location.hash.indexOf("publico")>-1)localStorage.removeItem("ws_interno");INTERNO=localStorage.getItem("ws_interno")==="1"}catch(e){}
 function toggleInterno(){try{if(INTERNO)localStorage.removeItem("ws_interno");else localStorage.setItem("ws_interno","1")}catch(e){alert("Tu navegador bloquea el modo interno");return}location.reload()}
-function paintInterno(){const b=document.getElementById("btnI");if(b){b.textContent=INTERNO?"\uD83D\uDD13 Interno ON":"\uD83D\uDD12 Interno";if(INTERNO){b.style.background="var(--gl)";b.style.color="var(--green)"}}}
+function paintInterno(){const tb=document.getElementById("tabSB");if(tb)tb.style.display=INTERNO?"":"none";const b=document.getElementById("btnI");if(b){b.textContent=INTERNO?"\uD83D\uDD13 Interno ON":"\uD83D\uDD12 Interno";if(INTERNO){b.style.background="var(--gl)";b.style.color="var(--green)"}}}
 window.addEventListener("load",paintInterno);
 function movNorm(n){
   n=(n||"").toUpperCase().replace(/\s+\d+\s*U\.?\s*$/,"");
@@ -736,7 +758,7 @@ function buildMov(csv){
     const p=Math.abs(esV?numAR(c[I.pv]):numAR(c[I.pc]));
     if(p>3000)continue; // pesos
     const k=movKey(prod);
-    if(!MOV[k])MOV[k]={v:[],c:[],st:null,stf:""};
+    if(!MOV[k])MOV[k]={v:[],c:[],st:null,stf:"",n:prod};
     {const sv=numAR(c[I.stk]);if(/^\d{4}-/.test(fecha)&&fecha>=MOV[k].stf){MOV[k].st=sv;MOV[k].stf=fecha}}
     (esV?MOV[k].v:MOV[k].c).push({f:fecha,e:movEntidad(det),u:u,p:p});
   }
@@ -1383,6 +1405,7 @@ function sec(s,el){
   document.getElementById("sPed").style.display=s==="pedidos"?"":"none";
   document.getElementById("sApple").style.display=s==="apple"?"":"none";
   document.getElementById("sCompras").style.display=s==="compras"?"":"none";
+  document.getElementById("sStockBajo").style.display=s==="stockbajo"?"":"none";
   document.getElementById("sHistorial").style.display=s==="historial"?"":"none";
   if(s==="vip")renderVIPTab();
   if(s==="oportunidades")renderOp();
@@ -1391,6 +1414,7 @@ function sec(s,el){
   if(s==="apple")renderAppleTab();
   if(s==="compras")renderCompras();
   if(s==="historial")renderHistorialTab();
+  if(s==="stockbajo")renderStockBajo();
 }
 loadAll();
 
@@ -2101,6 +2125,69 @@ function updComprasRow(sel,rk){
   const mgBadge='<span style="font-weight:800;color:'+mgColor+';background:'+mgBg+';padding:3px 9px;border-radius:6px">+'+mg.toFixed(1)+'%</span>';
   document.getElementById('ccost_'+rk).innerHTML='<span class="badge badge-gray">'+fmtRaw(price)+'</span>';
   document.getElementById('cmg_'+rk).innerHTML=mgBadge;
+}
+
+// ── STOCK BAJO: equipos con stock (+ entrando) por debajo de la venta semanal promedio ──
+function stockBajoItems(){
+  const out=[],seen=new Set();
+  const add=(name,stk,p)=>{
+    const k=movKey(name);if(seen.has(k))return;seen.add(k);
+    const r=movReponer(name,stk);
+    if(!r||r.sinHist||!(r.rate>0))return;
+    const disp=stk+r.ent;
+    if(!(disp<r.dem))return;
+    const minBuy=Math.max(1,Math.ceil(r.dem-disp));
+    let prov="—",costo=null;
+    if(p){const e=Object.entries(p.prices).filter(([pv])=>pv!=="COSTOS"&&pv!=="VIP").sort(([,a],[,b])=>a-b);if(e.length){prov=e[0][0];costo=e[0][1]}}
+    out.push({name,stk,ent:r.ent,rate:r.rate,dem:r.dem,cob:stk/r.rate,minBuy,sug:Math.max(minBuy,r.need),prov,costo});
+  };
+  ALL.forEach(p=>{
+    const d=MOV[movKey(p.name)];if(!d)return;
+    const ws=p.stocks&&p.stocks["COSTOS"]!=null?p.stocks["COSTOS"]:null;
+    add(p.name,ws!==null?ws:(d.st!==null?d.st:0),p);
+  });
+  Object.keys(MOV).forEach(k=>{const d=MOV[k];if(d.n)add(d.n,d.st!==null?d.st:0,null)});
+  return out;
+}
+function renderStockBajo(){
+  const el=document.getElementById("sbList");
+  if(!INTERNO){el.innerHTML='<div class="es">Esta solapa es de uso interno. Activá el modo Interno (botón de arriba).</div>';return}
+  if(!Object.keys(MOV).length){el.innerHTML='<div class="es">No se pudo leer la hoja MOVIMIENTOS. Probá con ↺ Actualizar.</div>';return}
+  const all=stockBajoItems();
+  const sr=(document.getElementById("sbSrch").value||"").toLowerCase().trim();
+  const words=sr?sr.split(/\s+/).filter(Boolean):[];
+  let f=all.filter(x=>!words.length||words.every(w=>x.name.toLowerCase().includes(w)));
+  const so=document.getElementById("sbSort").value;
+  if(so==="min")f.sort((a,b)=>b.minBuy-a.minBuy);
+  else if(so==="name")f.sort((a,b)=>a.name.localeCompare(b.name));
+  else f.sort((a,b)=>a.cob-b.cob||b.minBuy-a.minBuy);
+  document.getElementById("sbN").textContent=all.length;
+  document.getElementById("sbCero").textContent=all.filter(x=>x.stk<=0).length;
+  document.getElementById("sbMin").textContent=all.reduce((s,x)=>s+x.minBuy,0);
+  document.getElementById("sbSug").textContent=all.reduce((s,x)=>s+x.sug,0);
+  document.getElementById("sbPer").innerHTML="Base de ventas: <b>"+fFull(MOVMIN)+" al "+fFull(MOVMAX)+"</b> ("+diasHab(MOVMIN,MOVMAX)+" días hábiles). Demanda semanal = ventas por día hábil × 5. Un equipo aparece cuando <b>stock + mercadería entrando</b> es menor a esa demanda.";
+  document.getElementById("sbCnt").textContent=f.length+" equipos";
+  if(!f.length){el.innerHTML='<div class="es"><div style="font-size:36px;margin-bottom:12px">&#9989;</div>'+(all.length?"Sin resultados para esa búsqueda":"Ningún equipo por debajo del promedio semanal")+'</div>';return}
+  let h='<div class="vip-wrap"><table class="vip-table"><thead><tr><th style="text-align:left;min-width:240px">Producto</th><th>Stock</th><th>Entrando</th><th>Ventas/día</th><th>Demanda semanal</th><th>Cobertura</th><th>Comprar mín. 1 sem.</th><th>Sugerido (+20%)</th><th>Mejor costo</th></tr></thead><tbody>';
+  f.forEach(x=>{
+    const cc=x.stk<=0?"var(--red)":(x.cob<2?"var(--red)":(x.cob<5?"var(--orange)":"var(--green)"));
+    h+='<tr><td style="text-align:left;font-weight:600">'+x.name+'</td>'
+     +'<td style="font-weight:700;color:'+(x.stk>0?"var(--text)":"var(--red)")+'">'+x.stk+'</td>'
+     +'<td>'+(x.ent?x.ent:'<span style="color:var(--muted)">—</span>')+'</td>'
+     +'<td>'+x.rate.toFixed(1)+'</td><td>'+Math.round(x.dem)+'</td>'
+     +'<td style="font-weight:700;color:'+cc+'">'+(x.stk<=0?"Sin stock":x.cob.toFixed(1)+" días")+'</td>'
+     +'<td><span style="font-weight:800;color:var(--orange)">'+x.minBuy+' u.</span></td>'
+     +'<td><span style="font-weight:700;color:var(--blue)">'+x.sug+' u.</span></td>'
+     +'<td>'+(x.costo!==null?'<span class="badge badge-gray">'+fmtRaw(x.costo)+'</span><div style="font-size:10px;color:var(--muted)">'+x.prov+'</div>':'<span style="color:var(--muted)">—</span>')+'</td></tr>';
+  });
+  el.innerHTML=h+'</tbody></table></div>';
+}
+function exportStockBajoCSV(){
+  if(!INTERNO||!Object.keys(MOV).length)return;
+  const rows=[["Producto","Stock","Entrando","Ventas por dia","Demanda semanal","Cobertura (dias)","Comprar min 1 semana","Sugerido +20%","Mejor costo USD","Proveedor"]];
+  stockBajoItems().sort((a,b)=>a.cob-b.cob).forEach(x=>rows.push([x.name,x.stk,x.ent,x.rate.toFixed(2),x.dem.toFixed(1),x.cob.toFixed(1),x.minBuy,x.sug,x.costo!==null?x.costo:"",x.prov]));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\n");
+  const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,\uFEFF"+encodeURIComponent(csv);a.download="stock_bajo_"+new Date().toISOString().slice(0,10)+".csv";a.click();
 }
 
 let SM_DATA=[];
